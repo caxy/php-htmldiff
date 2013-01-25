@@ -16,6 +16,7 @@
                                 Here is a number 2 <sup>32</sup>";
 	$diff = new HtmlDiff( $html1, $html2 );
 	$comp = $diff->build();
+	echo "<h2>Old html</h2>";
 	echo $html1;
 	echo "<h2>New html</h2>";
 	echo $html2;
