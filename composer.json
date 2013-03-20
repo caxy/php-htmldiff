@@ -7,7 +7,7 @@
         "html"
     ],
     "homepage": "https://github.com/rashid2538/php-htmldiff",
-    "license": "",
+    "license": "GNU General Public License, version 2",
     "authors": [
         {
             "name": "Rashid Mohamad",
