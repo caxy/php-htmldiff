@@ -1,0 +1,36 @@
+{
+    "name": "rashid2538/php-htmldiff",
+    "type": "library",
+    "description": "A library for comparing two HTML files/snippets and highlighting the differences using simple HTML.",
+    "keywords": [
+        "diff",
+        "html"
+    ],
+    "homepage": "https://github.com/rashid2538/php-htmldiff",
+    "license": "",
+    "authors": [
+        {
+            "name": "Rashid Mohamad",
+            "email": "rashid2538@gmail.com",
+            "homepage": "http://www.dexteratlab.com/",
+            "role": "Developer"
+        },
+        {
+            "name": "Michael Robinson",
+            "email": "mike@pagesofinterest.net",
+            "homepage": "http://pagesofinterest.net/",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/rashid2538/php-htmldiff/issues"
+    },
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "files": [
+            "HtmlDiff.php"
+        ]
+    }
+}
