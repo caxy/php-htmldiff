@@ -129,7 +129,8 @@
 		}
 
 		private function Explode( $value ) {
-			return str_split( $value );
+			// as suggested by @onassar
+			return preg_split( '//u', $value );
 		}
 
 		private function PerformOperation( $operation ) {
