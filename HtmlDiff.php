@@ -66,7 +66,7 @@
 							$current_word = $character;
 							$mode = 'whitespace';
 						} else {
-							if( ctype_alnum( $character ) ) {
+							if( ctype_alnum( $character ) && ( strlen($current_word) == 0 || ctype_alnum( $current_word ) ) ) {
 								$current_word .= $character;
 							} else {
 								$words[] = $current_word;
