@@ -228,7 +228,17 @@
 				if( $specialCaseTagInjectionIsBefore ) {
 					$this->content .= $specialCaseTagInjection . implode( "", $this->ExtractConsecutiveWords( $words, 'tag' ) );
 				} else {
-					$this->content .= implode( "", $this->ExtractConsecutiveWords( $words, 'tag' ) ) . $specialCaseTagInjection;
+					$workTag = $this->ExtractConsecutiveWords( $words, 'tag' );,
+
+			                if( $this->IsOpeningTag( $workTag[ 0 ] ) && !$this->IsClosingTag( $workTag[ 0 ] ) ) {
+			                    if( strpos( $workTag[ 0 ], 'class=' ) ) {
+			                        $workTag[ 0 ] = str_replace( 'class="', 'class="diffmod ', $workTag[ 0 ] );
+			                        $workTag[ 0 ] = str_replace( "class='", "class='diffmod ", $workTag[ 0 ] );
+			                    } else {
+			                        $workTag[ 0 ] = str_replace( ">", " class='diffmod'>", $workTag[ 0 ] );
+			                    }
+			                }
+			                $this->content .= implode( "", $workTag ) . $specialCaseTagInjection;
 				}
 			}
 		}
