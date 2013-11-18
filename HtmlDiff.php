@@ -228,7 +228,7 @@
 				if( $specialCaseTagInjectionIsBefore ) {
 					$this->content .= $specialCaseTagInjection . implode( "", $this->ExtractConsecutiveWords( $words, 'tag' ) );
 				} else {
-					$workTag = $this->ExtractConsecutiveWords( $words, 'tag' );,
+					$workTag = $this->ExtractConsecutiveWords( $words, 'tag' );
 
 			                if( $this->IsOpeningTag( $workTag[ 0 ] ) && !$this->IsClosingTag( $workTag[ 0 ] ) ) {
 			                    if( strpos( $workTag[ 0 ], 'class=' ) ) {
