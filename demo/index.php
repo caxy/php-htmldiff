@@ -15,10 +15,10 @@
                                 </table>
                                 Here is a number 2 <sup>32</sup>";
 	$diff = new HtmlDiff( $html1, $html2 );
-	$comp = $diff->build();
+	$diff->build();
 	echo "<h2>Old html</h2>";
-	echo $html1;
+	echo $diff->getOldHtml();
 	echo "<h2>New html</h2>";
-	echo $html2;
+	echo $diff->getNewHtml();
 	echo "<h2>Compared html</h2>";
-	echo $comp;
+	echo $diff->getDifference();
