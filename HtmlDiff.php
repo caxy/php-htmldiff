@@ -9,7 +9,7 @@
 		private $newWords = array();
 		private $wordIndices;
 		private $encoding;
-		private $specialCaseOpeningTags = array( "/<strong[^>]+>/i", "/<b[^>]+>/i", "/<i[^>]+>/i", "/<big[^>]+>/i", "/<small[^>]+>/i", "/<u[^>]+>/i", "/<sub[^>]+>/i", "/<sup[^>]+>/i", "/<strike[^>]+>/i", "/<s[^>]+>/i", '/<p[^>]+>/i' );
+		private $specialCaseOpeningTags = array( "/<strong[^>]*/i", "/<b[^>]*/i", "/<i[^>]*/i", "/<big[^>]*/i", "/<small[^>]*/i", "/<u[^>]*/i", "/<sub[^>]*/i", "/<sup[^>]*/i", "/<strike[^>]*/i", "/<s[^>]*/i", '/<p[^>]*/i' );
 		private $specialCaseClosingTags = array( "</strong>", "</b>", "</i>", "</big>", "</small>", "</u>", "</sub>", "</sup>", "</strike>", "</s>", '</p>' );
 
 		public function __construct( $oldText, $newText, $encoding = 'UTF-8' ) {
@@ -31,18 +31,27 @@
 			return $this->content;
 		}
 
-		private function purifyHtml( $html, $tags = null ) {
-			if( class_exists( 'DOMDocument' ) && false ) {
-				libxml_use_internal_errors( true );
-				$dom = new DOMDocument( '1.0', $this->encoding );
-				$dom->recover = true;
-				$dom->strictErrorChecking = false;
-				$dom->loadXML( $html );
-				$xml = trim( str_replace( '<?xml version="1.0"?>', '', $dom->saveXML() ) );
-				return $xml ? $xml : $html;
-			} else {
-				return $html;
+		private function getStringBetween( $str, $start, $end ) {
+			$expStr = explode( $start, $str, 2 );
+			if( count( $expStr ) > 1 ) {
+				$expStr = explode( $end, $expStr[ 1 ] );
+				if( count( $expStr ) > 1 ) {
+					array_pop( $expStr );
+					return implode( $end, $expStr );
+				}
 			}
+			return '';
+		}
+
+		private function purifyHtml( $html, $tags = null ) {
+			if( class_exists( 'Tidy' ) && false ) {
+				$config = array( 'output-xhtml'   => true, 'indent' => false );
+				$tidy = new tidy;
+				$tidy->parseString( $html, $config, 'utf8' );
+				$html = ( string )$tidy;
+				return $this->getStringBetween( $html, '<body>' );
+			}
+			return $html;
 		}
 
 		public function build() {
@@ -238,7 +247,7 @@
 						}
 					}
 					if( $firstOrDefault ) {
-						$specialCaseTagInjection = "<ins class='mod'>";
+						$specialCaseTagInjection = '<ins class="mod">';
 						if( $tag == "del" ) {
 							unset( $words[ 0 ] );
 						}
@@ -257,16 +266,15 @@
 					$this->content .= $specialCaseTagInjection . implode( "", $this->ExtractConsecutiveWords( $words, 'tag' ) );
 				} else {
 					$workTag = $this->ExtractConsecutiveWords( $words, 'tag' );
-
-			                if( $this->IsOpeningTag( $workTag[ 0 ] ) && !$this->IsClosingTag( $workTag[ 0 ] ) ) {
-			                    if( strpos( $workTag[ 0 ], 'class=' ) ) {
-			                        $workTag[ 0 ] = str_replace( 'class="', 'class="diffmod ', $workTag[ 0 ] );
-			                        $workTag[ 0 ] = str_replace( "class='", "class='diffmod ", $workTag[ 0 ] );
-			                    } else {
-			                        $workTag[ 0 ] = str_replace( ">", " class='diffmod'>", $workTag[ 0 ] );
-			                    }
-			                }
-			                $this->content .= implode( "", $workTag ) . $specialCaseTagInjection;
+	                if( $this->IsOpeningTag( $workTag[ 0 ] ) && !$this->IsClosingTag( $workTag[ 0 ] ) ) {
+	                    if( strpos( $workTag[ 0 ], 'class=' ) ) {
+	                        $workTag[ 0 ] = str_replace( 'class="', 'class="diffmod ', $workTag[ 0 ] );
+	                        $workTag[ 0 ] = str_replace( "class='", 'class="diffmod ', $workTag[ 0 ] );
+	                    } else {
+	                        $workTag[ 0 ] = str_replace( ">", ' class="diffmod">', $workTag[ 0 ] );
+	                    }
+	                }
+	                $this->content .= implode( "", $workTag ) . $specialCaseTagInjection;
 				}
 			}
 		}
