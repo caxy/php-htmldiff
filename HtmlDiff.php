@@ -8,13 +8,37 @@
 		private $oldWords = array();
 		private $newWords = array();
 		private $wordIndices;
-		private $specialCaseOpeningTags = array( "<strong[\\>\\s]+", "<b[\\>\\s]+", "<i[\\>\\s]+", "<big[\\>\\s]+", "<small[\\>\\s]+", "<u[\\>\\s]+", "<sub[\\>\\s]+", "<sup[\\>\\s]+", "<strike[\\>\\s]+", "<s[\\>\\s]+", '<p[\\>\\s]+' );
+		private $encoding;
+		private $specialCaseOpeningTags = array( "/<strong[^>]+>/i", "/<b[^>]+>/i", "/<i[^>]+>/i", "/<big[^>]+>/i", "/<small[^>]+>/i", "/<u[^>]+>/i", "/<sub[^>]+>/i", "/<sup[^>]+>/i", "/<strike[^>]+>/i", "/<s[^>]+>/i", '/<p[^>]+>/i' );
 		private $specialCaseClosingTags = array( "</strong>", "</b>", "</i>", "</big>", "</small>", "</u>", "</sub>", "</sup>", "</strike>", "</s>", '</p>' );
 
-		public function __construct( $oldText, $newText) {
-			$this->oldText = trim( $oldText );
-			$this->newText = trim( $newText );
+		public function __construct( $oldText, $newText, $encoding = 'UTF-8' ) {
+			$this->oldText = $this->purifyHtml( trim( $oldText ) );
+			$this->newText = $this->purifyHtml( trim( $newText ) );
+			$this->encoding = $encoding;
 			$this->content = '';
+		}
+
+		public function getOldText() {
+			return $this->oldText;
+		}
+
+		public function getNewText() {
+			return $this->newText;
+		}
+
+		private function purifyHtml( $html, $tags = null ) {
+			if( class_exists( 'DOMDocument' ) ) {
+				libxml_use_internal_errors( true );
+				$dom = new DOMDocument( '1.0', $this->encoding );
+				$dom->recover = true;
+				$dom->strictErrorChecking = false;
+				$dom->loadXML( $html );
+				$xml = trim( str_replace( '<?xml version="1.0"?>', '', $dom->saveXML() ) );
+				return $xml ? $xml : $html;
+			} else {
+				return $html;
+			}
 		}
 
 		public function build() {
@@ -204,7 +228,7 @@
 				} else {
 					$firstOrDefault = false;
 					foreach( $this->specialCaseOpeningTags as $x ) {
-						if( preg_match( $words[ 0 ], $x ) ) {
+						if( preg_match( $x, $words[ 0 ] ) ) {
 							$firstOrDefault = $x;
 							break;
 						}
