@@ -19,16 +19,20 @@
 			$this->content = '';
 		}
 
-		public function getOldText() {
+		public function getOldHtml() {
 			return $this->oldText;
 		}
 
-		public function getNewText() {
+		public function getNewHtml() {
 			return $this->newText;
 		}
 
+		public function getDifference() {
+			return $this->content;
+		}
+
 		private function purifyHtml( $html, $tags = null ) {
-			if( class_exists( 'DOMDocument' ) ) {
+			if( class_exists( 'DOMDocument' ) && false ) {
 				libxml_use_internal_errors( true );
 				$dom = new DOMDocument( '1.0', $this->encoding );
 				$dom->recover = true;
