@@ -9,14 +9,62 @@
 		private $newWords = array();
 		private $wordIndices;
 		private $encoding;
-		private $specialCaseOpeningTags = array( "/<strong[^>]*/i", "/<b[^>]*/i", "/<i[^>]*/i", "/<big[^>]*/i", "/<small[^>]*/i", "/<u[^>]*/i", "/<sub[^>]*/i", "/<sup[^>]*/i", "/<strike[^>]*/i", "/<s[^>]*/i", '/<p[^>]*/i' );
-		private $specialCaseClosingTags = array( "</strong>", "</b>", "</i>", "</big>", "</small>", "</u>", "</sub>", "</sup>", "</strike>", "</s>", '</p>' );
+		private $specialCaseOpeningTags = array();
+		private $specialCaseClosingTags = array();
+		private $specialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
 
-		public function __construct( $oldText, $newText, $encoding = 'UTF-8' ) {
+		public function __construct( $oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = array() ) {
 			$this->oldText = $this->purifyHtml( trim( $oldText ) );
 			$this->newText = $this->purifyHtml( trim( $newText ) );
 			$this->encoding = $encoding;
 			$this->content = '';
+
+			if (!empty($specialCaseTags)) {
+				$this->specialCaseTags = $specialCaseTags;
+			}
+
+			foreach ($this->specialCaseTags as $tag) {
+				$this->addSpecialCaseTag($tag);
+			}
+		}
+
+		public function addSpecialCaseTag($tag)
+		{
+			if (!in_array($tag, $this->specialCaseTags)) {
+				$this->specialCaseTags[] = $tag;
+			}
+
+			$opening = $this->getOpeningTag($tag);
+			$closing = $this->getClosingTag($tag);
+
+			if (!in_array($opening, $this->specialCaseOpeningTags)) {
+				$this->specialCaseOpeningTags[] = $opening;
+			}
+			if (!in_array($closing, $this->specialCaseClosingTags)) {
+				$this->specialCaseClosingTags[] = $closing;
+			}
+		}
+
+		public function removeSpecialCaseTag($tag)
+		{
+			if (($key = array_search($tag, $this->specialCaseTags)) !== false) {
+				unset($this->specialCaseTags[$key]);
+
+				$opening = $this->getOpeningTag($tag);
+				$closing = $this->getClosingTag($tag);
+
+				if (($key = array_search($opening, $this->specialCaseOpeningTags)) !== false) {
+					unset($this->specialCaseOpeningTags[$key]);
+				}
+				if (($key = array_search($closing, $this->specialCaseClosingTags)) !== false) {
+					unset($this->specialCaseClosingTags[$key]);
+				}
+			}
+		}
+
+		public function getSpecialCaseTags()
+		{
+			return $this->specialCaseTags;
 		}
 
 		public function getOldHtml() {
@@ -29,6 +77,16 @@
 
 		public function getDifference() {
 			return $this->content;
+		}
+
+		private function getOpeningTag($tag)
+		{
+			return "/<".$tag."[^>]*/i";
+		}
+
+		private function getClosingTag($tag)
+		{
+			return "</".$tag.">";
 		}
 
 		private function getStringBetween( $str, $start, $end ) {
