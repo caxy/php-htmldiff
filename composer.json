@@ -7,24 +7,21 @@
         "html"
     ],
     "homepage": "https://github.com/caxy/php-htmldiff",
-    "license": "GNU General Public License V2",
+    "license": "GPL-2.0",
     "authors": [
         {
-            "name": "Rashid Mohamad",
-            "email": "rashid2538@gmail.com",
-            "homepage": "http://www.dexteratlab.com/",
-            "role": "Developer"
+            "name": "Josh Schroeder",
+            "email": "jschroeder@caxy.com",
+            "homepage": "http://www.caxy.com"
         }
     ],
     "support": {
         "issues": "https://github.com/caxy/php-htmldiff/issues"
     },
     "require": {
-        "php": ">=5.3.0"
+        "php": ">=5.3.3"
     },
     "autoload": {
-        "files": [
-            "HtmlDiff.php"
-        ]
+        "psr-0": { "Caxy\\HtmlDiff": "lib/" }
     }
 }
