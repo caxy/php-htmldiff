@@ -324,7 +324,7 @@
 					$this->content .= $specialCaseTagInjection . implode( "", $this->ExtractConsecutiveWords( $words, 'tag' ) );
 				} else {
 					$workTag = $this->ExtractConsecutiveWords( $words, 'tag' );
-	                if( $this->IsOpeningTag( $workTag[ 0 ] ) && !$this->IsClosingTag( $workTag[ 0 ] ) ) {
+	                if( isset( $workTag[ 0 ] ) && $this->IsOpeningTag( $workTag[ 0 ] ) && !$this->IsClosingTag( $workTag[ 0 ] ) ) {
 	                    if( strpos( $workTag[ 0 ], 'class=' ) ) {
 	                        $workTag[ 0 ] = str_replace( 'class="', 'class="diffmod ', $workTag[ 0 ] );
 	                        $workTag[ 0 ] = str_replace( "class='", 'class="diffmod ', $workTag[ 0 ] );
