@@ -30,36 +30,16 @@
 
 		public function addSpecialCaseTag($tag)
 		{
-			if (!in_array($tag, $this->specialCaseTags)) {
-				$this->specialCaseTags[] = $tag;
-			}
-
-			$opening = $this->getOpeningTag($tag);
-			$closing = $this->getClosingTag($tag);
-
-			if (!in_array($opening, $this->specialCaseOpeningTags)) {
-				$this->specialCaseOpeningTags[] = $opening;
-			}
-			if (!in_array($closing, $this->specialCaseClosingTags)) {
-				$this->specialCaseClosingTags[] = $closing;
-			}
+			$this->addToArray($tag, $this->specialCaseTags);
+			$this->addToArray($this->getOpeningTag($tag), $this->specialCaseOpeningTags);
+			$this->addToArray($this->getClosingTag($tag), $this->specialCaseClosingTags);
 		}
 
 		public function removeSpecialCaseTag($tag)
 		{
-			if (($key = array_search($tag, $this->specialCaseTags)) !== false) {
-				unset($this->specialCaseTags[$key]);
-
-				$opening = $this->getOpeningTag($tag);
-				$closing = $this->getClosingTag($tag);
-
-				if (($key = array_search($opening, $this->specialCaseOpeningTags)) !== false) {
-					unset($this->specialCaseOpeningTags[$key]);
-				}
-				if (($key = array_search($closing, $this->specialCaseClosingTags)) !== false) {
-					unset($this->specialCaseClosingTags[$key]);
-				}
-			}
+			$this->removeFromArray($tag, $this->specialCaseTags);
+			$this->removeFromArray($this->getOpeningTag($tag), $this->specialCaseOpeningTags);
+			$this->removeFromArray($this->getClosingTag($tag), $this->specialCaseClosingTags);
 		}
 
 		public function getSpecialCaseTags()
@@ -67,16 +47,39 @@
 			return $this->specialCaseTags;
 		}
 
-		public function getOldHtml() {
+		public function getOldHtml()
+		{
 			return $this->oldText;
 		}
 
-		public function getNewHtml() {
+		public function getNewHtml()
+		{
 			return $this->newText;
 		}
 
-		public function getDifference() {
+		public function getDifference()
+		{
 			return $this->content;
+		}
+
+		private function addToArray($item, &$array)
+		{
+			if (!in_array($item, $array)) {
+				$array[] = $item;
+				return true;
+			}
+
+			return false;
+		}
+
+		private function removeFromArray($item, &$array)
+		{
+			if (($key = array_search($item, $array)) !== false) {
+				unset($array[$key]);
+				return true;
+			}
+
+			return false;
 		}
 
 		private function getOpeningTag($tag)
@@ -324,15 +327,15 @@
 					$this->content .= $specialCaseTagInjection . implode( "", $this->ExtractConsecutiveWords( $words, 'tag' ) );
 				} else {
 					$workTag = $this->ExtractConsecutiveWords( $words, 'tag' );
-	                if( isset( $workTag[ 0 ] ) && $this->IsOpeningTag( $workTag[ 0 ] ) && !$this->IsClosingTag( $workTag[ 0 ] ) ) {
-	                    if( strpos( $workTag[ 0 ], 'class=' ) ) {
-	                        $workTag[ 0 ] = str_replace( 'class="', 'class="diffmod ', $workTag[ 0 ] );
-	                        $workTag[ 0 ] = str_replace( "class='", 'class="diffmod ', $workTag[ 0 ] );
-	                    } else {
-	                        $workTag[ 0 ] = str_replace( ">", ' class="diffmod">', $workTag[ 0 ] );
-	                    }
-	                }
-	                $this->content .= implode( "", $workTag ) . $specialCaseTagInjection;
+					if( isset( $workTag[ 0 ] ) && $this->IsOpeningTag( $workTag[ 0 ] ) && !$this->IsClosingTag( $workTag[ 0 ] ) ) {
+						if( strpos( $workTag[ 0 ], 'class=' ) ) {
+							$workTag[ 0 ] = str_replace( 'class="', 'class="diffmod ', $workTag[ 0 ] );
+							$workTag[ 0 ] = str_replace( "class='", 'class="diffmod ', $workTag[ 0 ] );
+						} else {
+							$workTag[ 0 ] = str_replace( ">", ' class="diffmod">', $workTag[ 0 ] );
+						}
+					}
+					$this->content .= implode( "", $workTag ) . $specialCaseTagInjection;
 				}
 			}
 		}
