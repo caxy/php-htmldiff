@@ -1,12 +1,12 @@
 {
-    "name": "rashid2538/php-htmldiff",
+    "name": "caxy/php-htmldiff",
     "type": "library",
     "description": "A library for comparing two HTML files/snippets and highlighting the differences using simple HTML.",
     "keywords": [
         "diff",
         "html"
     ],
-    "homepage": "https://github.com/rashid2538/php-htmldiff",
+    "homepage": "https://github.com/caxy/php-htmldiff",
     "license": "GNU General Public License V2",
     "authors": [
         {
@@ -17,7 +17,7 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/rashid2538/php-htmldiff/issues"
+        "issues": "https://github.com/caxy/php-htmldiff/issues"
     },
     "require": {
         "php": ">=5.3.0"
