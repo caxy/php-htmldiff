@@ -22,15 +22,20 @@ class HtmlDiff
         $this->encoding = $encoding;
         $this->content = '';
 
-        if (!empty($specialCaseTags)) {
-            $this->specialCaseTags = $specialCaseTags;
+        $this->setSpecialCaseTags($specialCaseTags);
+    }
+
+    public function setSpecialCaseTags(array $tags = array())
+    {
+        if (!empty($tags)) {
+            $this->specialCaseTags = $tags;
         }
 
         foreach ($this->specialCaseTags as $tag) {
             $this->addSpecialCaseTag($tag);
         }
-
     }
+
     public function addSpecialCaseTag($tag)
     {
         if (!in_array($tag, $this->specialCaseTags)) {
