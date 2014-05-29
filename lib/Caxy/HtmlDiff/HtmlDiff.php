@@ -14,13 +14,15 @@ class HtmlDiff
     private $specialCaseOpeningTags = array();
     private $specialCaseClosingTags = array();
     private $specialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
+    private $groupDiffs = true;
 
-    public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = array())
+    public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = array(), $groupDiffs = true)
     {
         $this->oldText = $this->purifyHtml(trim($oldText));
         $this->newText = $this->purifyHtml(trim($newText));
         $this->encoding = $encoding;
         $this->content = '';
+        $this->groupDiffs = $groupDiffs;
 
         $this->setSpecialCaseTags($specialCaseTags);
     }
@@ -88,6 +90,16 @@ class HtmlDiff
     public function getDifference()
     {
         return $this->content;
+    }
+    
+    public function setGroupDiffs($boolean)
+    {
+        $this->groupDiffs = $boolean;
+    }
+    
+    public function isGroupDiffs()
+    {
+        return $this->groupDiffs;
     }
 
     private function getOpeningTag($tag)
@@ -304,7 +316,7 @@ class HtmlDiff
     }
 
     private function processEqualOperation($operation)
-    {
+    {        
         $result = array();
         foreach ($this->newWords as $pos => $s) {
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
@@ -430,7 +442,7 @@ class HtmlDiff
     }
 
     private function operations()
-    {
+    {        
         $positionInOld = 0;
         $positionInNew = 0;
         $operations = array();
@@ -525,7 +537,17 @@ class HtmlDiff
             }
             $matchLengthAt = $newMatchLengthAt;
         }
-
-        return $bestMatchSize != 0 ? new Match( $bestMatchInOld, $bestMatchInNew, $bestMatchSize ) : null;
+        
+        // Skip match if none found or match consists only of whitespace
+        if ($bestMatchSize != 0 && 
+            (
+                !$this->isGroupDiffs() || 
+                !preg_match('/^\s+$/', implode('', array_slice($this->oldWords, $bestMatchInOld, $bestMatchSize)))
+            )
+        ) {
+            return new Match($bestMatchInOld, $bestMatchInNew, $bestMatchSize);
+        }
+        
+        return null;
     }
 }
