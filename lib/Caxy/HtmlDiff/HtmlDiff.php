@@ -316,7 +316,7 @@ class HtmlDiff
     }
 
     private function processEqualOperation($operation)
-    {        
+    {
         $result = array();
         foreach ($this->newWords as $pos => $s) {
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
@@ -442,7 +442,7 @@ class HtmlDiff
     }
 
     private function operations()
-    {        
+    {
         $positionInOld = 0;
         $positionInNew = 0;
         $operations = array();
