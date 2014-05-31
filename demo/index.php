@@ -6,24 +6,147 @@ require __DIR__.'/../lib/Caxy/HtmlDiff/HtmlDiff.php';
 require __DIR__.'/../lib/Caxy/HtmlDiff/Match.php';
 require __DIR__.'/../lib/Caxy/HtmlDiff/Operation.php';
 
-$html1 = "<p><i>This is</i> some sample text to <strong>demonstrate</strong> the capability of the <strong>HTML diff tool</strong>.</p>
-                            <p>It is based on the <b>Ruby</b> implementation found <a href='http://github.com/myobie/htmldiff'>here</a>. Note how the link has no tooltip</p>
-                            <table cellpadding='0' cellspacing='0'>
-                            <tr><td>Some sample text</td><td>Some sample value</td></tr>
-                            <tr><td>Data 1 (this row will be removed)</td><td>Data 2</td></tr>
-                            </table>
-                            Here is a number 2 32";
-$html2 = "<p>This is some sample <strong>text to</strong> demonstrate the awesome capabilities of the <strong>HTML <u>diff</u> tool</strong>.</p><br/><br/>Extra spacing here that was not here before.
-                            <p>It is <i>based</i> on the Ruby implementation found <a title='Cool tooltip' href='http://github.com/myobie/htmldiff'>here</a>. Note how the link has a tooltip now and the HTML diff algorithm has preserved formatting.</p>
-                            <table cellpadding='0' cellspacing='0'>
-                            <tr><td>Some sample <strong>bold text</strong></td><td>Some sample value</td></tr>
-                            </table>
-                            Here is a number 2 <sup>32</sup>";
-$diff = new HtmlDiff( $html1, $html2 );
-$diff->build();
-echo "<h2>Old html</h2>";
-echo $diff->getOldHtml();
-echo "<h2>New html</h2>";
-echo $diff->getNewHtml();
-echo "<h2>Compared html</h2>";
-echo $diff->getDifference();
+$input = file_get_contents('php://input');
+
+if ($input) {
+    $data = json_decode($input, true);
+    $diff = new HtmlDiff($data['oldText'], $data['newText']);
+    $diff->build();
+    
+    header('Content-Type: application/json');
+    echo json_encode(array('diff' => $diff->getDifference()));
+} else {
+    ?>
+    <html ng-app="demo">
+        <head>
+            <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
+            <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-sanitize.min.js"></script>
+            <style>
+                .row {
+                    width: 90%;
+                    clear: both;
+                    margin: 0 auto;
+                }
+                .html-edit {
+                    float: left;
+                    width: 45%;
+                    position: relative;
+                }
+                .html-preview {
+                    float: right;
+                    width: 45%;
+                    border: 1px solid #999;
+                    height: 200px;
+                    overflow: auto;
+                    padding: 5px;
+                }
+                textarea {
+                    width: 100%;
+                    height: 210px;
+                }
+            </style>
+        </head>
+        <body>
+            <div ng-controller="diffCtrl">
+                <div class="controls row">
+                    <button ng-click="reset()">RESET</button>
+                    <span ng-repeat="demo in demos">
+                        <button ng-click="diffDemo($index)">DEMO {{$index + 1}}</button>
+                    </span>
+                </div>
+                
+                <div class="row">
+                    <h2>Old HTML</h2>
+                    <div class="html-edit">
+                        <textarea ng-model="oldText" name="old_text" ng-change="update()"></textarea>
+                    </div>
+                    <div class="html-preview" ng-bind-html="trustHtml(oldText)"></div>
+                </div>
+                <div class="row">
+                    <h2>New HTML</h2>
+                    <div class="html-edit">
+                        <textarea ng-model="newText" name="new_text" ng-change="update()"></textarea>
+                    </div>
+                    <div class="html-preview" ng-bind-html="trustHtml(newText)"></div>
+                </div>
+                
+                <div class="row">
+                    <h2>Compared HTML <span ng-show="loading || waiting">- {{ loading ? 'Loading' : 'Waiting' }}...</span></h2>
+                    <div class="html-edit">
+                        <textarea ng-model="diff" name="diff" disabled ng-change="update()"></textarea>
+                    </div>
+                    <div class="html-preview" ng-bind-html="trustHtml(diff)"></div>
+                </div>
+            </div>
+
+            <script type="text/javascript">
+                var demo = angular.module('demo', ['ngSanitize']);
+
+                demo.controller('diffCtrl', ['$scope', '$http', '$sce', '$timeout', function ($scope, $http, $sce, $timeout) {
+                    $scope.demos = [];
+                    $scope.updateDelay = 800;
+                    $scope.currentTimeout = null;
+                    $scope.loading = false;
+                    $scope.waiting = false;
+                    
+                    $scope.trustHtml = function (text) {
+                        return typeof text !== 'undefined' ? $sce.trustAsHtml(text) : '';
+                    };
+                    
+                    $scope.reset = function () {
+                        $scope.oldText = '';
+                        $scope.newText = '';
+                        $scope.diff = '';
+                        $scope.loading = false;
+                        $scope.waiting = false;
+                        if ($scope.currentTimeout) {
+                            $timeout.cancel($scope.currentTimeout);
+                        }
+                    }
+                        
+                    $scope.update = function () {
+                        if ($scope.currentTimeout) {
+                            $timeout.cancel($scope.currentTimeout);
+                        }
+                        $scope.currentTimeout = $timeout(function () {
+                            $scope.getDiff();
+                        }, $scope.updateDelay);
+                        
+                        $scope.waiting = true;
+                    };
+                    
+                    $scope.getDiff = function () {
+                        $scope.waiting = false;
+                        $scope.loading = true;
+                        $http.post('index.php', { oldText: $scope.oldText, newText: $scope.newText })
+                            .success(function (data) {
+                                $scope.diff = data.diff;
+                                $scope.loading = false;
+                            });
+                    };
+                    
+                    $scope.loadDemos = function () {                        
+                        $http.get('demo_text.php')
+                            .success(function (data) {
+                                $scope.demos = data;
+                            });
+                    };
+                    
+                    $scope.diffDemo = function (index) {
+                        if (typeof index === 'undefined') {
+                            index = 0;
+                        }
+                        
+                        $scope.oldText = $scope.demos[index]['old'];
+                        $scope.newText = $scope.demos[index]['new'];
+                        $scope.getDiff();
+                    };
+                    
+                    $scope.loadDemos();
+                }]);
+            </script>
+        </body>
+    </html>
+
+    <?php
+}
