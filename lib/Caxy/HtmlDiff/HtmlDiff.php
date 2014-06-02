@@ -14,7 +14,7 @@ class HtmlDiff
     private $specialCaseOpeningTags = array();
     private $specialCaseClosingTags = array();
     private $specialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
-    private $specialCaseChars = array('.', ',');
+    private $specialCaseChars = array('.', ',', '(', ')', '\'');
     private $groupDiffs = true;
 
     public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = array(), $groupDiffs = true)
@@ -26,6 +26,31 @@ class HtmlDiff
         $this->groupDiffs = $groupDiffs;
 
         $this->setSpecialCaseTags($specialCaseTags);
+    }
+    
+    public function setSpecialCaseChars(array $chars)
+    {
+        $this->specialCaseChars = $chars;
+    }
+    
+    public function getSpecialCaseChars()
+    {
+        return $this->specialCaseChars;
+    }
+    
+    public function addSpecialCaseChar($char)
+    {
+        if (!in_array($char, $this->specialCaseChars)) {
+            $this->specialCaseChars[] = $char;
+        }
+    }
+    
+    public function removeSpecialCaseChar($char)
+    {
+        $key = array_search($char, $this->specialCaseChars);
+        if ($key !== false) {
+            unset($this->specialCaseChars[$key]);
+        }
     }
 
     public function setSpecialCaseTags(array $tags = array())
@@ -175,7 +200,7 @@ class HtmlDiff
         $this->newWords = $this->convertHtmlToListOfWords( $this->explode( $this->newText ) );
     }
     
-    private function isSingleWord($text)
+    private function isPartOfWord($text)
     {
         return ctype_alnum(str_replace($this->specialCaseChars, '', $text));
     }
@@ -202,8 +227,8 @@ class HtmlDiff
                     $mode = 'whitespace';
                 } else {
                     if (
-                        (ctype_alnum($character) && (strlen($current_word) == 0 || $this->isSingleWord($current_word))) ||
-                        (in_array($character, $this->specialCaseChars) && isset($characterString[$i+1]) && $this->isSingleWord($characterString[$i+1]))
+                        (ctype_alnum($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
+                        (in_array($character, $this->specialCaseChars) && isset($characterString[$i+1]) && $this->isPartOfWord($characterString[$i+1]))
                     ) {
                         $current_word .= $character;
                     } else {
