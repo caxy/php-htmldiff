@@ -4,6 +4,10 @@ namespace Caxy\HtmlDiff;
 
 class HtmlDiff
 {
+    public static $defaultSpecialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
+    public static $defaultSpecialCaseChars = array('.', ',', '(', ')', '\'');
+    public static $defaultGroupDiffs = true;
+    
     private $content;
     private $oldText;
     private $newText;
@@ -13,19 +17,27 @@ class HtmlDiff
     private $encoding;
     private $specialCaseOpeningTags = array();
     private $specialCaseClosingTags = array();
-    private $specialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
-    private $specialCaseChars = array('.', ',', '(', ')', '\'');
-    private $groupDiffs = true;
+    private $specialCaseTags;
+    private $specialCaseChars;
+    private $groupDiffs;
 
-    public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = array(), $groupDiffs = true)
-    {
+    public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
+    {        
+        if ($specialCaseTags === null) {
+            $specialCaseTags = static::$defaultSpecialCaseTags;
+        }
+        
+        if ($groupDiffs === null) {
+            $groupDiffs = static::$defaultGroupDiffs;
+        }
+        
         $this->oldText = $this->purifyHtml(trim($oldText));
         $this->newText = $this->purifyHtml(trim($newText));
         $this->encoding = $encoding;
         $this->content = '';
         $this->groupDiffs = $groupDiffs;
-
         $this->setSpecialCaseTags($specialCaseTags);
+        $this->setSpecialCaseChars(static::$defaultSpecialCaseChars);
     }
     
     public function setSpecialCaseChars(array $chars)
