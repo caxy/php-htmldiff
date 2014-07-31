@@ -1,0 +1,41 @@
+<html ng-app="demo">
+    <head>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-sanitize.min.js"></script>
+        <script type="text/javascript" src="demo.js"></script>
+        <link type="text/css" href="demo.css" rel="stylesheet">
+    </head>
+    <body>
+        <div ng-controller="diffCtrl">
+            <div class="controls row">
+                <button ng-click="reset()">RESET</button>
+                <span ng-repeat="demo in demos">
+                    <button ng-click="diffDemo($index)">DEMO {{$index + 1}}</button>
+                </span>
+            </div>
+
+            <div class="row">
+                <h2>Old HTML</h2>
+                <div class="html-edit">
+                    <textarea ng-model="oldText" name="old_text" ng-change="update()"></textarea>
+                </div>
+                <div class="html-preview" ng-bind-html="trustHtml(oldText)"></div>
+            </div>
+            <div class="row">
+                <h2>New HTML</h2>
+                <div class="html-edit">
+                    <textarea ng-model="newText" name="new_text" ng-change="update()"></textarea>
+                </div>
+                <div class="html-preview" ng-bind-html="trustHtml(newText)"></div>
+            </div>
+
+            <div class="row">
+                <h2>Compared HTML <span ng-show="loading || waiting">- {{ loading ? 'Loading' : 'Waiting' }}...</span></h2>
+                <div class="html-edit">
+                    <textarea ng-model="diff" name="diff" disabled ng-change="update()"></textarea>
+                </div>
+                <div class="html-preview" ng-bind-html="trustHtml(diff)"></div>
+            </div>
+        </div>
+    </body>
+</html>
