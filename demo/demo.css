@@ -1,0 +1,22 @@
+.row {
+    width: 90%;
+    clear: both;
+    margin: 0 auto;
+}
+.html-edit {
+    float: left;
+    width: 45%;
+    position: relative;
+}
+.html-preview {
+    float: right;
+    width: 45%;
+    border: 1px solid #999;
+    height: 200px;
+    overflow: auto;
+    padding: 5px;
+}
+textarea {
+    width: 100%;
+    height: 210px;
+}
