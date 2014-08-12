@@ -67,9 +67,7 @@ class HtmlDiff
 
     public function setSpecialCaseTags(array $tags = array())
     {
-        if (!empty($tags)) {
-            $this->specialCaseTags = $tags;
-        }
+        $this->specialCaseTags = $tags;
 
         foreach ($this->specialCaseTags as $tag) {
             $this->addSpecialCaseTag($tag);
