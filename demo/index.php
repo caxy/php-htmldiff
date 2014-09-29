@@ -2,6 +2,7 @@
 
 use Caxy\HtmlDiff\HtmlDiff;
 
+require __DIR__.'/../lib/Caxy/HtmlDiff/AbstractDiff.php';
 require __DIR__.'/../lib/Caxy/HtmlDiff/HtmlDiff.php';
 require __DIR__.'/../lib/Caxy/HtmlDiff/Match.php';
 require __DIR__.'/../lib/Caxy/HtmlDiff/Operation.php';
