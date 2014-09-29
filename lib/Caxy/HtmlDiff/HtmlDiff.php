@@ -2,44 +2,14 @@
 
 namespace Caxy\HtmlDiff;
 
-class HtmlDiff
-{
-    public static $defaultSpecialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
-    public static $defaultSpecialCaseChars = array('.', ',', '(', ')', '\'');
-    public static $defaultGroupDiffs = true;
-    
-    protected $content;
-    protected $oldText;
-    protected $newText;
+class HtmlDiff extends AbstractDiff
+{    
     protected $oldWords = array();
     protected $newWords = array();
     protected $wordIndices;
-    protected $encoding;
-    protected $specialCaseOpeningTags = array();
-    protected $specialCaseClosingTags = array();
-    protected $specialCaseTags;
-    protected $specialCaseChars;
-    protected $groupDiffs;
+    protected $oldTables;
+    protected $newTables;
     protected $insertSpaceInReplace = false;
-
-    public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
-    {        
-        if ($specialCaseTags === null) {
-            $specialCaseTags = static::$defaultSpecialCaseTags;
-        }
-        
-        if ($groupDiffs === null) {
-            $groupDiffs = static::$defaultGroupDiffs;
-        }
-        
-        $this->oldText = $this->purifyHtml(trim($oldText));
-        $this->newText = $this->purifyHtml(trim($newText));
-        $this->encoding = $encoding;
-        $this->content = '';
-        $this->groupDiffs = $groupDiffs;
-        $this->setSpecialCaseTags($specialCaseTags);
-        $this->setSpecialCaseChars(static::$defaultSpecialCaseChars);
-    }
 
     /**
      * @param boolean $boolean
@@ -58,143 +28,6 @@ class HtmlDiff
     public function getInsertSpaceInReplace()
     {
         return $this->insertSpaceInReplace;
-    }
-    
-    public function setSpecialCaseChars(array $chars)
-    {
-        $this->specialCaseChars = $chars;
-    }
-    
-    public function getSpecialCaseChars()
-    {
-        return $this->specialCaseChars;
-    }
-    
-    public function addSpecialCaseChar($char)
-    {
-        if (!in_array($char, $this->specialCaseChars)) {
-            $this->specialCaseChars[] = $char;
-        }
-    }
-    
-    public function removeSpecialCaseChar($char)
-    {
-        $key = array_search($char, $this->specialCaseChars);
-        if ($key !== false) {
-            unset($this->specialCaseChars[$key]);
-        }
-    }
-
-    public function setSpecialCaseTags(array $tags = array())
-    {
-        $this->specialCaseTags = $tags;
-
-        foreach ($this->specialCaseTags as $tag) {
-            $this->addSpecialCaseTag($tag);
-        }
-    }
-
-    public function addSpecialCaseTag($tag)
-    {
-        if (!in_array($tag, $this->specialCaseTags)) {
-            $this->specialCaseTags[] = $tag;
-        }
-
-        $opening = $this->getOpeningTag($tag);
-        $closing = $this->getClosingTag($tag);
-
-        if (!in_array($opening, $this->specialCaseOpeningTags)) {
-            $this->specialCaseOpeningTags[] = $opening;
-        }
-        if (!in_array($closing, $this->specialCaseClosingTags)) {
-            $this->specialCaseClosingTags[] = $closing;
-        }
-    }
-
-    public function removeSpecialCaseTag($tag)
-    {
-        if (($key = array_search($tag, $this->specialCaseTags)) !== false) {
-            unset($this->specialCaseTags[$key]);
-
-            $opening = $this->getOpeningTag($tag);
-            $closing = $this->getClosingTag($tag);
-
-            if (($key = array_search($opening, $this->specialCaseOpeningTags)) !== false) {
-                unset($this->specialCaseOpeningTags[$key]);
-            }
-            if (($key = array_search($closing, $this->specialCaseClosingTags)) !== false) {
-                unset($this->specialCaseClosingTags[$key]);
-            }
-        }
-    }
-
-    public function getSpecialCaseTags()
-    {
-        return $this->specialCaseTags;
-    }
-
-    public function getOldHtml()
-    {
-        return $this->oldText;
-    }
-
-    public function getNewHtml()
-    {
-        return $this->newText;
-    }
-
-    public function getDifference()
-    {
-        return $this->content;
-    }
-    
-    public function setGroupDiffs($boolean)
-    {
-        $this->groupDiffs = $boolean;
-    }
-    
-    public function isGroupDiffs()
-    {
-        return $this->groupDiffs;
-    }
-
-    protected function getOpeningTag($tag)
-    {
-        return "/<".$tag."[^>]*/i";
-    }
-
-    protected function getClosingTag($tag)
-    {
-        return "</".$tag.">";
-    }
-
-    protected function getStringBetween($str, $start, $end)
-    {
-        $expStr = explode( $start, $str, 2 );
-        if ( count( $expStr ) > 1 ) {
-            $expStr = explode( $end, $expStr[ 1 ] );
-            if ( count( $expStr ) > 1 ) {
-                array_pop( $expStr );
-
-                return implode( $end, $expStr );
-            }
-        }
-
-        return '';
-    }
-
-    protected function purifyHtml($html, $tags = null)
-    {
-        if ( class_exists( 'Tidy' ) && false ) {
-            $config = array( 'output-xhtml'   => true, 'indent' => false );
-            $tidy = new tidy;
-            $tidy->parseString( $html, $config, 'utf8' );
-            $html = (string) $tidy;
-
-            return $this->getStringBetween( $html, '<body>' );
-        }
-
-        return $html;
     }
 
     public function build()
