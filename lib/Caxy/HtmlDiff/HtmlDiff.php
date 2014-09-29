@@ -5,6 +5,8 @@ namespace Caxy\HtmlDiff;
 class HtmlDiff extends AbstractDiff
 {
     protected $wordIndices;
+    protected $oldTables;
+    protected $newTables;
     protected $insertSpaceInReplace = false;
     protected $newIsolatedDiffTags;
     protected $oldIsolatedDiffTags;
