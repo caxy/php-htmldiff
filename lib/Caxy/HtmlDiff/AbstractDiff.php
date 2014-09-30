@@ -11,6 +11,8 @@ abstract class AbstractDiff
     protected $content;
     protected $oldText;
     protected $newText;
+    protected $oldWords = array();
+    protected $newWords = array();
     protected $encoding;
     protected $specialCaseOpeningTags = array();
     protected $specialCaseClosingTags = array();
@@ -172,5 +174,112 @@ abstract class AbstractDiff
         }
 
         return $html;
+    }
+
+    protected function splitInputsToWords()
+    {
+        $this->oldWords = $this->convertHtmlToListOfWords( $this->explode( $this->oldText ) );
+        $this->newWords = $this->convertHtmlToListOfWords( $this->explode( $this->newText ) );
+    }
+
+    protected function isPartOfWord($text)
+    {
+        return ctype_alnum(str_replace($this->specialCaseChars, '', $text));
+    }
+
+    protected function convertHtmlToListOfWords($characterString)
+    {
+        $mode = 'character';
+        $current_word = '';
+        $words = array();
+        foreach ($characterString as $i => $character) {
+            switch ($mode) {
+                case 'character':
+                if ( $this->isStartOfTag( $character ) ) {
+                    if ($current_word != '') {
+                        $words[] = $current_word;
+                    }
+                    $current_word = "<";
+                    $mode = 'tag';
+                } elseif ( preg_match( "[^\s]", $character ) > 0 ) {
+                    if ($current_word != '') {
+                        $words[] = $current_word;
+                    }
+                    $current_word = $character;
+                    $mode = 'whitespace';
+                } else {
+                    if (
+                        (ctype_alnum($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
+                        (in_array($character, $this->specialCaseChars) && isset($characterString[$i+1]) && $this->isPartOfWord($characterString[$i+1]))
+                    ) {
+                        $current_word .= $character;
+                    } else {
+                        $words[] = $current_word;
+                        $current_word = $character;
+                    }
+                }
+                break;
+                case 'tag' :
+                if ( $this->isEndOfTag( $character ) ) {
+                    $current_word .= ">";
+                    $words[] = $current_word;
+                    $current_word = "";
+
+                    if ( !preg_match('[^\s]', $character ) ) {
+                        $mode = 'whitespace';
+                    } else {
+                        $mode = 'character';
+                    }
+                } else {
+                    $current_word .= $character;
+                }
+                break;
+                case 'whitespace':
+                if ( $this->isStartOfTag( $character ) ) {
+                    if ($current_word != '') {
+                        $words[] = $current_word;
+                    }
+                    $current_word = "<";
+                    $mode = 'tag';
+                } elseif ( preg_match( "[^\s]", $character ) ) {
+                    $current_word .= $character;
+                } else {
+                    if ($current_word != '') {
+                        $words[] = $current_word;
+                    }
+                    $current_word = $character;
+                    $mode = 'character';
+                }
+                break;
+                default:
+                break;
+            }
+        }
+        if ($current_word != '') {
+            $words[] = $current_word;
+        }
+
+        return $words;
+    }
+
+    protected function isStartOfTag($val)
+    {
+        return $val == "<";
+    }
+
+    protected function isEndOfTag($val)
+    {
+        return $val == ">";
+    }
+
+    protected function isWhiteSpace($value)
+    {
+        return !preg_match( '[^\s]', $value );
+    }
+
+    protected function explode($value)
+    {
+        // as suggested by @onassar
+        return preg_split( '//u', $value );
     }
 }
