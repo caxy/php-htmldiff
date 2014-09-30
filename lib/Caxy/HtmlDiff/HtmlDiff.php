@@ -109,6 +109,52 @@ class HtmlDiff extends AbstractDiff
 
     }
 
+    private function replaceTables()
+    {
+        $this->oldTables = $this->createTablePlaceholders($this->oldWords);
+        $this->newTables = $this->createTablePlaceholders($this->newWords);
+    }
+
+    private function createTablePlaceholders(&$words)
+    {
+        $openTables = 0;
+        $tableIndices = array();
+        $tableStart = 0;
+        foreach ($words as $index => $word) {
+            if ($this->isOpeningTable($word)) {
+                if ($openTables === 0) {
+                    $tableStart = $index;
+                }
+                $openTables++;
+            } elseif ($openTables > 0 && $this->isClosingTable($word)) {
+                $openTables--;
+                if ($openTables === 0) {
+                    $tableIndices[] = array('start' => $tableStart, 'length' => $index - $tableStart + 1);
+                }
+            }
+        }
+
+        $tables = array();
+        $offset = 0;
+        foreach ($tableIndices as $tableIndex) {
+            $start = $tableIndex['start'] - $offset;
+            $tables[$start] = array_splice($words, $start, $tableIndex['length'], '[[REPLACE_TABLE]]');
+            $offset += $tableIndex['length'] - 1;
+        }
+
+        return $tables;
+    }
+
+    private function isOpeningTable($item)
+    {
+        return preg_match("#<table[^>]+>\\s*#iU", $item);
+    }
+
+    private function isClosingTable($item)
+    {
+        return preg_match("#</table[^>]*>\\s*#iU", $item);
+    }
+
     protected function isOpeningIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
         $tagsToMatch = $currentIsolatedDiffTag !== null ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag]) : $this->isolatedDiffTags;
@@ -242,6 +288,12 @@ class HtmlDiff extends AbstractDiff
         $diff = new ListDiffNew($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
         $diff->setMatchThreshold($this->matchThreshold);
 
+        return $diff->build();
+    }
+
+    private function diffTables($oldText, $newText)
+    {
+        $diff = new TableDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
         return $diff->build();
     }
 
