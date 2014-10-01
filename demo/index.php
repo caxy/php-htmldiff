@@ -10,9 +10,12 @@ require __DIR__.'/../lib/Caxy/HtmlDiff/Operation.php';
 
 $input = file_get_contents('php://input');
 
+ini_set('display_errors', 1);
+error_reporting(E_ERROR);
+
 if ($input) {
     $data = json_decode($input, true);
-    $diff = new HtmlDiff($data['oldText'], $data['newText']);
+    $diff = new HtmlDiff($data['oldText'], $data['newText'], 'UTF-8', array());
     $diff->build();
     
     header('Content-Type: application/json');

@@ -154,7 +154,7 @@ class HtmlDiff extends AbstractDiff
         foreach ($this->newWords as $pos => $s) {
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
                 if ($s === '[[REPLACE_TABLE]]' && isset($this->newTables[$pos])) {
-                    $oldText = implode("", $this->oldTables[$operation->startInOld]);
+                    $oldText = implode("", $this->findMatchingTableInOld($operation, $pos));
                     $newText = implode("", $this->newTables[$pos]);
                     $result[] = $this->diffTables($oldText, $newText);
                 } else {
@@ -163,6 +163,13 @@ class HtmlDiff extends AbstractDiff
             }
         }
         $this->content .= implode( "", $result );
+    }
+
+    private function findMatchingTableInOld($operation, $posInNew)
+    {
+        $offset = $posInNew - $operation->startInNew;
+
+        return $this->oldTables[$operation->startInOld + $offset];
     }
 
     private function insertTag($tag, $cssClass, &$words)
