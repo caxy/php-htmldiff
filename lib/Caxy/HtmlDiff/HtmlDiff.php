@@ -3,9 +3,7 @@
 namespace Caxy\HtmlDiff;
 
 class HtmlDiff extends AbstractDiff
-{    
-    protected $oldWords = array();
-    protected $newWords = array();
+{
     protected $wordIndices;
     protected $oldTables;
     protected $newTables;
@@ -203,6 +201,13 @@ class HtmlDiff extends AbstractDiff
             }
         }
         $this->content .= implode( "", $result );
+    }
+
+    protected function findMatchingTableInOld($operation, $posInNew)
+    {
+        $offset = $posInNew - $operation->startInNew;
+
+        return $this->oldTables[$operation->startInOld + $offset];
     }
 
     protected function insertTag($tag, $cssClass, &$words)
