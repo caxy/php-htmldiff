@@ -20,6 +20,7 @@ class HtmlDiff
     private $specialCaseTags;
     private $specialCaseChars;
     private $groupDiffs;
+    private $insertSpaceInReplace = false;
 
     public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
     {        
@@ -38,6 +39,25 @@ class HtmlDiff
         $this->groupDiffs = $groupDiffs;
         $this->setSpecialCaseTags($specialCaseTags);
         $this->setSpecialCaseChars(static::$defaultSpecialCaseChars);
+    }
+
+    /**
+     * @param boolean $boolean
+     * @return HtmlDiff
+     */
+    public function setInsertSpaceInReplace($boolean)
+    {
+        $this->insertSpaceInReplace = $boolean;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getInsertSpaceInReplace()
+    {
+        return $this->insertSpaceInReplace;
     }
     
     public function setSpecialCaseChars(array $chars)
@@ -334,6 +354,9 @@ class HtmlDiff
     private function processReplaceOperation($operation)
     {
         $this->processDeleteOperation( $operation, "diffmod" );
+        if ($this->insertSpaceInReplace) {
+            $this->content .= ' ';
+        }
         $this->processInsertOperation( $operation, "diffmod" );
     }
 
