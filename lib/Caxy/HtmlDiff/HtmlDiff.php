@@ -353,11 +353,20 @@ class HtmlDiff
 
     private function processReplaceOperation($operation)
     {
-        $this->processDeleteOperation( $operation, "diffmod" );
-        if ($this->insertSpaceInReplace) {
+        $processDelete = strlen($this->oldText) > 0;
+        $processInsert = strlen($this->newText) > 0;
+
+        if ($processDelete) {
+            $this->processDeleteOperation( $operation, "diffmod" );
+        }
+
+        if ($this->insertSpaceInReplace && $processDelete && $processInsert) {
             $this->content .= ' ';
         }
-        $this->processInsertOperation( $operation, "diffmod" );
+
+        if ($processInsert) {
+            $this->processInsertOperation( $operation, "diffmod" );
+        }
     }
 
     private function processInsertOperation($operation, $cssClass)
