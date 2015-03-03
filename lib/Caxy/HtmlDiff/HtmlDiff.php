@@ -8,19 +8,19 @@ class HtmlDiff
     public static $defaultSpecialCaseChars = array('.', ',', '(', ')', '\'');
     public static $defaultGroupDiffs = true;
     
-    private $content;
-    private $oldText;
-    private $newText;
-    private $oldWords = array();
-    private $newWords = array();
-    private $wordIndices;
-    private $encoding;
-    private $specialCaseOpeningTags = array();
-    private $specialCaseClosingTags = array();
-    private $specialCaseTags;
-    private $specialCaseChars;
-    private $groupDiffs;
-    private $insertSpaceInReplace = false;
+    protected $content;
+    protected $oldText;
+    protected $newText;
+    protected $oldWords = array();
+    protected $newWords = array();
+    protected $wordIndices;
+    protected $encoding;
+    protected $specialCaseOpeningTags = array();
+    protected $specialCaseClosingTags = array();
+    protected $specialCaseTags;
+    protected $specialCaseChars;
+    protected $groupDiffs;
+    protected $insertSpaceInReplace = false;
 
     public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
     {        
@@ -158,17 +158,17 @@ class HtmlDiff
         return $this->groupDiffs;
     }
 
-    private function getOpeningTag($tag)
+    protected function getOpeningTag($tag)
     {
         return "/<".$tag."[^>]*/i";
     }
 
-    private function getClosingTag($tag)
+    protected function getClosingTag($tag)
     {
         return "</".$tag.">";
     }
 
-    private function getStringBetween($str, $start, $end)
+    protected function getStringBetween($str, $start, $end)
     {
         $expStr = explode( $start, $str, 2 );
         if ( count( $expStr ) > 1 ) {
@@ -183,7 +183,7 @@ class HtmlDiff
         return '';
     }
 
-    private function purifyHtml($html, $tags = null)
+    protected function purifyHtml($html, $tags = null)
     {
         if ( class_exists( 'Tidy' ) && false ) {
             $config = array( 'output-xhtml'   => true, 'indent' => false );
@@ -209,7 +209,7 @@ class HtmlDiff
         return $this->content;
     }
 
-    private function indexNewWords()
+    protected function indexNewWords()
     {
         $this->wordIndices = array();
         foreach ($this->newWords as $i => $word) {
@@ -224,18 +224,18 @@ class HtmlDiff
         }
     }
 
-    private function splitInputsToWords()
+    protected function splitInputsToWords()
     {
         $this->oldWords = $this->convertHtmlToListOfWords( $this->explode( $this->oldText ) );
         $this->newWords = $this->convertHtmlToListOfWords( $this->explode( $this->newText ) );
     }
     
-    private function isPartOfWord($text)
+    protected function isPartOfWord($text)
     {
         return ctype_alnum(str_replace($this->specialCaseChars, '', $text));
     }
 
-    private function convertHtmlToListOfWords($characterString)
+    protected function convertHtmlToListOfWords($characterString)
     {
         $mode = 'character';
         $current_word = '';
@@ -310,28 +310,28 @@ class HtmlDiff
         return $words;
     }
 
-    private function isStartOfTag($val)
+    protected function isStartOfTag($val)
     {
         return $val == "<";
     }
 
-    private function isEndOfTag($val)
+    protected function isEndOfTag($val)
     {
         return $val == ">";
     }
 
-    private function isWhiteSpace($value)
+    protected function isWhiteSpace($value)
     {
         return !preg_match( '[^\s]', $value );
     }
 
-    private function explode($value)
+    protected function explode($value)
     {
         // as suggested by @onassar
         return preg_split( '//u', $value );
     }
 
-    private function performOperation($operation)
+    protected function performOperation($operation)
     {
         switch ($operation->action) {
             case 'equal' :
@@ -351,7 +351,7 @@ class HtmlDiff
         }
     }
 
-    private function processReplaceOperation($operation)
+    protected function processReplaceOperation($operation)
     {
         $processDelete = strlen($this->oldText) > 0;
         $processInsert = strlen($this->newText) > 0;
@@ -369,7 +369,7 @@ class HtmlDiff
         }
     }
 
-    private function processInsertOperation($operation, $cssClass)
+    protected function processInsertOperation($operation, $cssClass)
     {
         $text = array();
         foreach ($this->newWords as $pos => $s) {
@@ -380,7 +380,7 @@ class HtmlDiff
         $this->insertTag( "ins", $cssClass, $text );
     }
 
-    private function processDeleteOperation($operation, $cssClass)
+    protected function processDeleteOperation($operation, $cssClass)
     {
         $text = array();
         foreach ($this->oldWords as $pos => $s) {
@@ -391,7 +391,7 @@ class HtmlDiff
         $this->insertTag( "del", $cssClass, $text );
     }
 
-    private function processEqualOperation($operation)
+    protected function processEqualOperation($operation)
     {
         $result = array();
         foreach ($this->newWords as $pos => $s) {
@@ -402,7 +402,7 @@ class HtmlDiff
         $this->content .= implode( "", $result );
     }
 
-    private function insertTag($tag, $cssClass, &$words)
+    protected function insertTag($tag, $cssClass, &$words)
     {
         while (true) {
             if ( count( $words ) == 0 ) {
@@ -458,17 +458,17 @@ class HtmlDiff
         }
     }
 
-    private function checkCondition($word, $condition)
+    protected function checkCondition($word, $condition)
     {
         return $condition == 'tag' ? $this->isTag( $word ) : !$this->isTag( $word );
     }
 
-    private function wrapText($text, $tagName, $cssClass)
+    protected function wrapText($text, $tagName, $cssClass)
     {
         return sprintf( '<%1$s class="%2$s">%3$s</%1$s>', $tagName, $cssClass, $text );
     }
 
-    private function extractConsecutiveWords(&$words, $condition)
+    protected function extractConsecutiveWords(&$words, $condition)
     {
         $indexOfFirstTag = null;
         foreach ($words as $i => $word) {
@@ -502,22 +502,22 @@ class HtmlDiff
         }
     }
 
-    private function isTag($item)
+    protected function isTag($item)
     {
         return $this->isOpeningTag( $item ) || $this->isClosingTag( $item );
     }
 
-    private function isOpeningTag($item)
+    protected function isOpeningTag($item)
     {
         return preg_match( "#<[^>]+>\\s*#iU", $item );
     }
 
-    private function isClosingTag($item)
+    protected function isClosingTag($item)
     {
         return preg_match( "#</[^>]+>\\s*#iU", $item );
     }
 
-    private function operations()
+    protected function operations()
     {
         $positionInOld = 0;
         $positionInNew = 0;
@@ -551,7 +551,7 @@ class HtmlDiff
         return $operations;
     }
 
-    private function matchingBlocks()
+    protected function matchingBlocks()
     {
         $matchingBlocks = array();
         $this->findMatchingBlocks( 0, count( $this->oldWords ), 0, count( $this->newWords ), $matchingBlocks );
@@ -559,7 +559,7 @@ class HtmlDiff
         return $matchingBlocks;
     }
 
-    private function findMatchingBlocks($startInOld, $endInOld, $startInNew, $endInNew, &$matchingBlocks)
+    protected function findMatchingBlocks($startInOld, $endInOld, $startInNew, $endInNew, &$matchingBlocks)
     {
         $match = $this->findMatch( $startInOld, $endInOld, $startInNew, $endInNew );
         if ($match !== null) {
@@ -573,14 +573,14 @@ class HtmlDiff
         }
     }
 
-    private function stripTagAttributes($word)
+    protected function stripTagAttributes($word)
     {
         $word = explode( ' ', trim( $word, '<>' ) );
 
         return '<' . $word[ 0 ] . '>';
     }
 
-    private function findMatch($startInOld, $endInOld, $startInNew, $endInNew)
+    protected function findMatch($startInOld, $endInOld, $startInNew, $endInNew)
     {
         $bestMatchInOld = $startInOld;
         $bestMatchInNew = $startInNew;
