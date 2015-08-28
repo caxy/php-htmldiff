@@ -9,12 +9,15 @@ class HtmlDiff extends AbstractDiff
     protected $wordIndices;
     protected $oldTables;
     protected $newTables;
+    protected $newSuperScript;
+    protected $oldSuperScript;
 
     public function build()
     {
         $this->splitInputsToWords();
         $this->replaceTables();
         $this->indexNewWords();
+        $this->replaceSuperScripts();
         $operations = $this->operations();
         foreach ($operations as $item) {
             $this->performOperation( $item );
@@ -40,8 +43,56 @@ class HtmlDiff extends AbstractDiff
 
     private function replaceTables()
     {
+
         $this->oldTables = $this->createTablePlaceholders($this->oldWords);
         $this->newTables = $this->createTablePlaceholders($this->newWords);
+    }
+
+    private function replaceSuperScripts()
+    {
+        $this->oldSuperScript = $this->createSuperPlaceholders($this->oldWords);
+        $this->newSuperScript = $this->createSuperPlaceholders($this->newWords);
+    }
+
+
+    private function createSuperPlaceholders(&$words)
+    {
+        $openSuperScripts = 0;
+        $superScriptIndicies = array();
+        $superScriptStart = 0;
+        foreach ($words as $index => $word) {
+            if ($this->isOpeningSuperScript($word)) {
+                if ($openSuperScripts === 0) {
+                    $superScriptStart = $index;
+                }
+                $openSuperScripts++;
+            } elseif($openSuperScripts > 0 && $this->isClosingSuperScript($word)) {
+                $openSuperScripts--;
+                if($openSuperScripts == 0){
+                    $superScriptIndicies[] = array ('start' => $superScriptStart, 'length' => $index - $superScriptStart + 1);
+                }
+            }
+        }
+        $superScripts = array();
+        $offset = 0;
+        foreach ($superScriptIndicies as $superScriptIndex) {
+            $start = $superScriptIndex['start'] - $offset;
+            $superScripts[$start] = array_splice($words, $start, $superScriptIndex['length'], '[[REPLACE_SUPER_SCRIPT]]');
+            $offset += $superScriptIndex['length'] - 1;
+        }
+
+        return $superScripts;
+
+    }
+
+    private function isOpeningSuperScript($item)
+    {
+        return preg_match("#<sup[^>]*>\\s*#iU", $item);
+    }
+
+    private function isClosingSuperScript($item)
+    {
+        return preg_match("#</sup[^>]*>\\s*#iU", $item);
     }
 
     private function createTablePlaceholders(&$words)
@@ -76,7 +127,7 @@ class HtmlDiff extends AbstractDiff
 
     private function isOpeningTable($item)
     {
-        return preg_match("#<table[^>]+>\\s*#iU", $item);
+        return preg_match("#<table[^>]*>\\s*#iU", $item);
     }
 
     private function isClosingTable($item)
