@@ -10,6 +10,8 @@ class HtmlDiff extends AbstractDiff
     protected $oldTables;
     protected $newTables;
     protected $insertSpaceInReplace = false;
+    protected $newSuperScript;
+    protected $oldSuperScript;
 
     /**
      * @param boolean $boolean
@@ -35,6 +37,7 @@ class HtmlDiff extends AbstractDiff
         $this->splitInputsToWords();
         $this->replaceTables();
         $this->indexNewWords();
+        $this->replaceSuperScripts();
         $operations = $this->operations();
         foreach ($operations as $item) {
             $this->performOperation( $item );
@@ -64,7 +67,54 @@ class HtmlDiff extends AbstractDiff
         $this->newTables = $this->createTablePlaceholders($this->newWords);
     }
 
-    protected function createTablePlaceholders(&$words)
+    protected function replaceSuperScripts()
+    {
+        $this->oldSuperScript = $this->createSuperPlaceholders($this->oldWords);
+        $this->newSuperScript = $this->createSuperPlaceholders($this->newWords);
+    }
+
+
+    protected function createSuperPlaceholders(&$words)
+    {
+        $openSuperScripts = 0;
+        $superScriptIndicies = array();
+        $superScriptStart = 0;
+        foreach ($words as $index => $word) {
+            if ($this->isOpeningSuperScript($word)) {
+                if ($openSuperScripts === 0) {
+                    $superScriptStart = $index;
+                }
+                $openSuperScripts++;
+            } elseif($openSuperScripts > 0 && $this->isClosingSuperScript($word)) {
+                $openSuperScripts--;
+                if($openSuperScripts == 0){
+                    $superScriptIndicies[] = array ('start' => $superScriptStart, 'length' => $index - $superScriptStart + 1);
+                }
+            }
+        }
+        $superScripts = array();
+        $offset = 0;
+        foreach ($superScriptIndicies as $superScriptIndex) {
+            $start = $superScriptIndex['start'] - $offset;
+            $superScripts[$start] = array_splice($words, $start, $superScriptIndex['length'], '[[REPLACE_SUPER_SCRIPT]]');
+            $offset += $superScriptIndex['length'] - 1;
+        }
+
+        return $superScripts;
+
+    }
+
+    private function isOpeningSuperScript($item)
+    {
+        return preg_match("#<sup[^>]*>\\s*#iU", $item);
+    }
+
+    private function isClosingSuperScript($item)
+    {
+        return preg_match("#</sup[^>]*>\\s*#iU", $item);
+    }
+
+    private function createTablePlaceholders(&$words)
     {
         $openTables = 0;
         $tableIndices = array();
@@ -96,18 +146,12 @@ class HtmlDiff extends AbstractDiff
 
     protected function isOpeningTable($item)
     {
-        return preg_match("#<table[^>]+>\\s*#iU", $item);
+        return preg_match("#<table[^>]*>\\s*#iU", $item);
     }
 
     protected function isClosingTable($item)
     {
         return preg_match("#</table[^>]*>\\s*#iU", $item);
-    }
-
-    protected function splitInputsToWords()
-    {
-        $this->oldWords = $this->convertHtmlToListOfWords( $this->explode( $this->oldText ) );
-        $this->newWords = $this->convertHtmlToListOfWords( $this->explode( $this->newText ) );
     }
 
     protected function performOperation($operation)
@@ -130,22 +174,10 @@ class HtmlDiff extends AbstractDiff
         }
     }
 
-    protected function processReplaceOperation($operation)
+    private function processReplaceOperation($operation)
     {
-        $processDelete = strlen($this->oldText) > 0;
-        $processInsert = strlen($this->newText) > 0;
-
-        if ($processDelete) {
-            $this->processDeleteOperation( $operation, "diffmod" );
-        }
-
-        if ($this->insertSpaceInReplace && $processDelete && $processInsert) {
-            $this->content .= ' ';
-        }
-
-        if ($processInsert) {
-            $this->processInsertOperation( $operation, "diffmod" );
-        }
+        $this->processDeleteOperation( $operation, "diffmod" );
+        $this->processInsertOperation( $operation, "diffmod" );
     }
 
     protected function processInsertOperation($operation, $cssClass)
@@ -194,7 +226,7 @@ class HtmlDiff extends AbstractDiff
         foreach ($this->newWords as $pos => $s) {
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
                 if ($s === '[[REPLACE_TABLE]]' && isset($this->newTables[$pos])) {
-                    $oldText = implode("", $this->oldTables[$operation->startInOld]);
+                    $oldText = implode("", $this->findMatchingTableInOld($operation, $pos));
                     $newText = implode("", $this->newTables[$pos]);
                     $result[] = $this->diffTables($oldText, $newText);
                 } else {
