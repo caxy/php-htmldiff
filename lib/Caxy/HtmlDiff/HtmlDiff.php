@@ -147,7 +147,7 @@ class HtmlDiff extends AbstractDiff
 
     private function isOpeningTable($item)
     {
-        return preg_match("#<table[^>]+>\\s*#iU", $item);
+        return preg_match("#<table[^>]*>\\s*#iU", $item);
     }
 
     private function isClosingTable($item)
