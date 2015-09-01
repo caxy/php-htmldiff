@@ -17,14 +17,14 @@
             <div class="row">
                 <h2>Old HTML</h2>
                 <div class="html-edit">
-                    <textarea ng-model="oldText" name="old_text"></textarea>
+                    <textarea ng-model="oldText" name="old_text" ng-change="update()"></textarea>
                 </div>
                 <div class="html-preview" ng-bind-html="trustHtml(oldText)"></div>
             </div>
             <div class="row">
                 <h2>New HTML</h2>
                 <div class="html-edit">
-                    <textarea ng-model="newText" name="new_text"></textarea>
+                    <textarea ng-model="newText" name="new_text" ng-change="update()"></textarea>
                 </div>
                 <div class="html-preview" ng-bind-html="trustHtml(newText)"></div>
             </div>
@@ -32,11 +32,10 @@
             <div class="row">
                 <h2>Compared HTML <span ng-show="loading || waiting">- {{ loading ? 'Loading' : 'Waiting' }}...</span></h2>
                 <div class="html-edit">
-                    <textarea ng-model="diff" name="diff" disabled></textarea>
+                    <textarea ng-model="diff" name="diff" disabled ng-change="update()"></textarea>
                 </div>
                 <div class="html-preview" ng-bind-html="trustHtml(diff)"></div>
             </div>
-            <button ng-click="update()">ACTION</button>
         </div>
     </body>
 </html>
