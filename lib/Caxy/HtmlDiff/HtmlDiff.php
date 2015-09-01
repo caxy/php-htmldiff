@@ -10,8 +10,9 @@ class HtmlDiff extends AbstractDiff
     protected $oldTables;
     protected $newTables;
     protected $insertSpaceInReplace = false;
-    protected $newSuperScript;
-    protected $oldSuperScript;
+    protected $newSpecialScript;
+    protected $oldSpecialScript;
+    protected $specialElements = array ('ol' => '[[REPLACE_ORDERED_LIST]]', 'ul' => '[[REPLACE_UNORDERED_LIST]]', 'sub' => '[[REPLACE_SUB_SCRIPT]]' , 'sup' => '[[REPLACE_SUPER_SCRIPT]]', 'dl' => '[[REPLACE_DEFINITION_LIST]]');
 
     /**
      * @param boolean $boolean
@@ -36,8 +37,9 @@ class HtmlDiff extends AbstractDiff
     {
         $this->splitInputsToWords();
         $this->replaceTables();
+        $this->replaceSpecialScripts();
         $this->indexNewWords();
-        $this->replaceSuperScripts();
+        
         $operations = $this->operations();
         foreach ($operations as $item) {
             $this->performOperation( $item );
@@ -69,49 +71,66 @@ class HtmlDiff extends AbstractDiff
 
     protected function replaceSuperScripts()
     {
-        $this->oldSuperScript = $this->createSuperPlaceholders($this->oldWords);
-        $this->newSuperScript = $this->createSuperPlaceholders($this->newWords);
+        $this->oldSpecialScript = $this->createSpecialPlaceholders($this->oldWords);
+        $this->newSpecialScript = $this->createSpecialPlaceholders($this->newWords);
     }
 
 
-    protected function createSuperPlaceholders(&$words)
+    protected function createSpecialPlaceholders(&$words)
     {
-        $openSuperScripts = 0;
-        $superScriptIndicies = array();
-        $superScriptStart = 0;
+        $openSpecialScripts = 0;
+        $specialScriptIndicies = array();
+        $specialScriptStart = 0;
+        $currentSpecialTag = null;
         foreach ($words as $index => $word) {
-            if ($this->isOpeningSuperScript($word)) {
-                if ($openSuperScripts === 0) {
-                    $superScriptStart = $index;
+            $openSpecialTag = $this->isOpeningSpecialScript($word, $currentSpecialTag);
+            if ($openSpecialTag) {
+                if ($openSpecialScripts === 0) {
+                    $specialScriptStart = $index;
                 }
-                $openSuperScripts++;
-            } elseif($openSuperScripts > 0 && $this->isClosingSuperScript($word)) {
-                $openSuperScripts--;
-                if($openSuperScripts == 0){
-                    $superScriptIndicies[] = array ('start' => $superScriptStart, 'length' => $index - $superScriptStart + 1);
+                $openSpecialScripts++;
+                $currentSpecialTag = $openSpecialTag;
+            } elseif($openSpecialScripts > 0 && $this->isClosingSpecialScript($word, $currentSpecialTag)) {
+                $openSpecialScripts--;
+                if($openSpecialScripts == 0){
+                    $specialScriptIndicies[] = array ('start' => $specialScriptStart, 'length' => $index - $specialScriptStart + 1, 'tagType' => $currentSpecialTag);
+                    $currentSpecialTag = null;
                 }
             }
         }
-        $superScripts = array();
+        $specialScripts = array();
         $offset = 0;
-        foreach ($superScriptIndicies as $superScriptIndex) {
-            $start = $superScriptIndex['start'] - $offset;
-            $superScripts[$start] = array_splice($words, $start, $superScriptIndex['length'], '[[REPLACE_SUPER_SCRIPT]]');
-            $offset += $superScriptIndex['length'] - 1;
+        foreach ($specialScriptIndicies as $specialScriptIndex) {
+            $start = $specialScriptIndex['start'] - $offset;
+            $placeholderString = $this->specialElements[$specialScriptIndex['tagType']];
+            $specialScripts[$start] = array_splice($words, $start, $specialScriptIndex['length'], $placeholderString);
+            $offset += $specialScriptIndex['length'] - 1;
         }
 
-        return $superScripts;
+        return $specialScripts;
 
     }
 
-    private function isOpeningSuperScript($item)
+    private function isOpeningSpecialScript($item, $currentSpecialTag = null)
     {
-        return preg_match("#<sup[^>]*>\\s*#iU", $item);
+        $tagsToMatch = $currentSpecialTag !== null ? array($currentSpecialTag => $this->specialElements[$currentSpecialTag]) : $this->specialElements;
+        foreach ($tagsToMatch as $key => $value) {
+            if (preg_match("#<".$key."[^>]*>\\s*#iU", $item)) {
+                return $key;
+            }
+        }
+        return false;
     }
 
-    private function isClosingSuperScript($item)
+    private function isClosingSpecialScript($item, $currentSpecialTag = null)
     {
-        return preg_match("#</sup[^>]*>\\s*#iU", $item);
+        $tagsToMatch = $currentSpecialTag !== null ? array($currentSpecialTag => $this->specialElements[$currentSpecialTag]) : $this->specialElements;
+        foreach ($tagsToMatch as $key => $value) {
+            if (preg_match("#</".$key."[^>]*>\\s*#iU", $item))  {
+                return $key;
+            }
+        }
+        return false;
     }
 
     private function createTablePlaceholders(&$words)
