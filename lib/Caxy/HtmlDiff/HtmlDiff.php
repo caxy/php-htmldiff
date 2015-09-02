@@ -184,12 +184,23 @@ class HtmlDiff extends AbstractDiff
     {
         $text = array();
         foreach ($this->newWords as $pos => $s) {
+            $matchFound = false;
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
-                if ($s === '[[REPLACE_TABLE]]' && isset($this->newTables[$pos])) {
+    
+                foreach ($this->specialElements as $specialElement) {
+                    if($s === $specialElement && isset($this->newSpecialScript[$pos]) && $matchFound === false) {
+                        foreach ($this->newSpecialScript[$pos] as $word) {
+                            $text[] = $word;
+                        }
+                        $matchFound = true;
+                    }
+                }
+                if ($s === '[[REPLACE_TABLE]]' && isset($this->newTables[$pos]) && $matchFound === false) {
                     foreach ($this->newTables[$pos] as $word) {
                         $text[] = $word;
-                    }
-                } else {
+                    } 
+                    $matchFound = true;                
+                } else if($matchFound === false){
                     $text[] = $s;
                 }
             }
