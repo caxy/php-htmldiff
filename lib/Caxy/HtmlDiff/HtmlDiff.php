@@ -208,9 +208,6 @@ class HtmlDiff extends AbstractDiff
 
         $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
         return $wrapStart . $diff->build() . $wrapEnd;
-        //$diff = new ElementDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
-        //return $diff->build();
-        return 'todo'; // This to be build yet. 
     }
 
     protected function processEqualOperation($operation)
