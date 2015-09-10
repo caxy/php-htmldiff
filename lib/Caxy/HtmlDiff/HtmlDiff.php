@@ -204,17 +204,12 @@ class HtmlDiff extends AbstractDiff
     {
         $result = array();
         foreach ($this->newWords as $pos => $s) {
-            $matchFound = false;
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
-                foreach ($this->isolatedDiffTags as $isolatedDiffTag) {
-                    if ($s === $isolatedDiffTag && isset($this->newIsolatedDiffTags[$pos]) && $matchFound === false) {
-                        $oldText = implode("", $this->findMatchingScriptsInOld($operation, $pos));
-                        $newText = implode("", $this->newIsolatedDiffTags[$pos]);
-                        $result[] = $this->diffElements($oldText, $newText);
-                        $matchFound = true;
-                    } 
-                }
-                if($matchFound === false){
+                if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                    $oldText = implode("", $this->findIsolatedDiffTagsInOld($operation, $pos));
+                    $newText = implode("", $this->newIsolatedDiffTags[$pos]);
+                    $result[] = $this->diffElements($oldText, $newText);
+                } else {
                     $result[] = $s;
                 }
             }
@@ -222,7 +217,7 @@ class HtmlDiff extends AbstractDiff
         $this->content .= implode( "", $result );
     }
 
-    private function findMatchingScriptsInOld($operation, $posInNew)
+    private function findIsolatedDiffTagsInOld($operation, $posInNew)
     {
         $offset = $posInNew - $operation->startInNew;
 
