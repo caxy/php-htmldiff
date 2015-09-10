@@ -38,7 +38,7 @@ abstract class AbstractDiff
         $this->setSpecialCaseTags($specialCaseTags);
         $this->setSpecialCaseChars(static::$defaultSpecialCaseChars);
     }
-    
+
     public function setSpecialCaseChars(array $chars)
     {
         $this->specialCaseChars = $chars;
@@ -166,7 +166,7 @@ abstract class AbstractDiff
     {
         if ( class_exists( 'Tidy' ) && false ) {
             $config = array( 'output-xhtml'   => true, 'indent' => false );
-            $tidy = new tidy;
+            $tidy = new tidy();
             $tidy->parseString( $html, $config, 'utf8' );
             $html = (string) $tidy;
 

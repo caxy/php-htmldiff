@@ -11,7 +11,7 @@ class HtmlDiff extends AbstractDiff
     protected $isolatedDiffTags = array ('ol' => '[[REPLACE_ORDERED_LIST]]', 'ul' => '[[REPLACE_UNORDERED_LIST]]', 'sub' => '[[REPLACE_SUB_SCRIPT]]' , 'sup' => '[[REPLACE_SUPER_SCRIPT]]', 'dl' => '[[REPLACE_DEFINITION_LIST]]', 'table' => '[[REPLACE_TABLE]]');
 
     /**
-     * @param boolean $boolean
+     * @param  boolean  $boolean
      * @return HtmlDiff
      */
     public function setInsertSpaceInReplace($boolean)
@@ -34,7 +34,7 @@ class HtmlDiff extends AbstractDiff
         $this->splitInputsToWords();
         $this->replaceIsolatedDiffTags();
         $this->indexNewWords();
-        
+
         $operations = $this->operations();
         foreach ($operations as $item) {
             $this->performOperation( $item );
@@ -78,9 +78,9 @@ class HtmlDiff extends AbstractDiff
                 }
                 $openIsolatedDiffTags++;
                 $currentIsolatedDiffTag = $openIsolatedDiffTag;
-            } elseif($openIsolatedDiffTags > 0 && $this->isClosingIsolatedDiffTag($word, $currentIsolatedDiffTag)) {
+            } elseif ($openIsolatedDiffTags > 0 && $this->isClosingIsolatedDiffTag($word, $currentIsolatedDiffTag)) {
                 $openIsolatedDiffTags--;
-                if($openIsolatedDiffTags == 0){
+                if ($openIsolatedDiffTags == 0) {
                     $isolatedDiffTagIndicies[] = array ('start' => $isolatedDiffTagStart, 'length' => $index - $isolatedDiffTagStart + 1, 'tagType' => $currentIsolatedDiffTag);
                     $currentIsolatedDiffTag = null;
                 }
@@ -107,6 +107,7 @@ class HtmlDiff extends AbstractDiff
                 return $key;
             }
         }
+
         return false;
     }
 
@@ -114,10 +115,11 @@ class HtmlDiff extends AbstractDiff
     {
         $tagsToMatch = $currentIsolatedDiffTag !== null ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag]) : $this->isolatedDiffTags;
         foreach ($tagsToMatch as $key => $value) {
-            if (preg_match("#</".$key."[^>]*>\\s*#iU", $item))  {
+            if (preg_match("#</".$key."[^>]*>\\s*#iU", $item)) {
                 return $key;
             }
         }
+
         return false;
     }
 
@@ -152,7 +154,7 @@ class HtmlDiff extends AbstractDiff
         $text = array();
         foreach ($this->newWords as $pos => $s) {
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
-                if(in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
                     foreach ($this->newIsolatedDiffTags[$pos] as $word) {
                         $text[] = $word;
                     }
@@ -195,6 +197,7 @@ class HtmlDiff extends AbstractDiff
         $newText = preg_replace($pattern, '', $newText);
 
         $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->isolatedDiffTags, $this->groupDiffs);
+
         return $wrapStart . $diff->build() . $wrapEnd;
     }
 
