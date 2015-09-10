@@ -8,9 +8,9 @@ class HtmlDiff extends AbstractDiff
 {
     protected $wordIndices;
     protected $insertSpaceInReplace = false;
-    protected $newSpecialScript;
-    protected $oldSpecialScript;
-    protected $specialElements = array ('ol' => '[[REPLACE_ORDERED_LIST]]', 'ul' => '[[REPLACE_UNORDERED_LIST]]', 'sub' => '[[REPLACE_SUB_SCRIPT]]' , 'sup' => '[[REPLACE_SUPER_SCRIPT]]', 'dl' => '[[REPLACE_DEFINITION_LIST]]', 'table' => '[[REPLACE_TABLE]]');
+    protected $newIsolatedDiffTags;
+    protected $oldIsolatedDiffTags;
+    protected $isolatedDiffTags = array ('ol' => '[[REPLACE_ORDERED_LIST]]', 'ul' => '[[REPLACE_UNORDERED_LIST]]', 'sub' => '[[REPLACE_SUB_SCRIPT]]' , 'sup' => '[[REPLACE_SUPER_SCRIPT]]', 'dl' => '[[REPLACE_DEFINITION_LIST]]', 'table' => '[[REPLACE_TABLE]]');
 
     /**
      * @param boolean $boolean
@@ -34,7 +34,7 @@ class HtmlDiff extends AbstractDiff
     public function build()
     {
         $this->splitInputsToWords();
-        $this->replaceSpecialScripts();
+        $this->replaceIsolatedDiffTags();
         $this->indexNewWords();
         
         $operations = $this->operations();
@@ -60,51 +60,50 @@ class HtmlDiff extends AbstractDiff
         }
     }
 
-    private function replaceSpecialScripts()
+    private function replaceIsolatedDiffTags()
     {
-        $this->oldSpecialScript = $this->createSpecialPlaceholders($this->oldWords);
-        $this->newSpecialScript = $this->createSpecialPlaceholders($this->newWords);
+        $this->oldIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->oldWords);
+        $this->newIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->newWords);
     }
 
-
-    protected function createSpecialPlaceholders(&$words)
+    private function createIsolatedDiffTagPlaceholders(&$words)
     {
-        $openSpecialScripts = 0;
-        $specialScriptIndicies = array();
-        $specialScriptStart = 0;
-        $currentSpecialTag = null;
+        $openIsolatedDiffTags = 0;
+        $isolatedDiffTagIndicies = array();
+        $isolatedDiffTagStart = 0;
+        $currentIsolatedDiffTag = null;
         foreach ($words as $index => $word) {
-            $openSpecialTag = $this->isOpeningSpecialScript($word, $currentSpecialTag);
-            if ($openSpecialTag) {
-                if ($openSpecialScripts === 0) {
-                    $specialScriptStart = $index;
+            $openIsolatedDiffTag = $this->isOpeningIsolatedDiffTag($word, $currentIsolatedDiffTag);
+            if ($openIsolatedDiffTag) {
+                if ($openIsolatedDiffTags === 0) {
+                    $isolatedDiffTagStart = $index;
                 }
-                $openSpecialScripts++;
-                $currentSpecialTag = $openSpecialTag;
-            } elseif($openSpecialScripts > 0 && $this->isClosingSpecialScript($word, $currentSpecialTag)) {
-                $openSpecialScripts--;
-                if($openSpecialScripts == 0){
-                    $specialScriptIndicies[] = array ('start' => $specialScriptStart, 'length' => $index - $specialScriptStart + 1, 'tagType' => $currentSpecialTag);
-                    $currentSpecialTag = null;
+                $openIsolatedDiffTags++;
+                $currentIsolatedDiffTag = $openIsolatedDiffTag;
+            } elseif($openIsolatedDiffTags > 0 && $this->isClosingIsolatedDiffTag($word, $currentIsolatedDiffTag)) {
+                $openIsolatedDiffTags--;
+                if($openIsolatedDiffTags == 0){
+                    $isolatedDiffTagIndicies[] = array ('start' => $isolatedDiffTagStart, 'length' => $index - $isolatedDiffTagStart + 1, 'tagType' => $currentIsolatedDiffTag);
+                    $currentIsolatedDiffTag = null;
                 }
             }
         }
-        $specialScripts = array();
+        $isolatedDiffTagScript = array();
         $offset = 0;
-        foreach ($specialScriptIndicies as $specialScriptIndex) {
-            $start = $specialScriptIndex['start'] - $offset;
-            $placeholderString = $this->specialElements[$specialScriptIndex['tagType']];
-            $specialScripts[$start] = array_splice($words, $start, $specialScriptIndex['length'], $placeholderString);
-            $offset += $specialScriptIndex['length'] - 1;
+        foreach ($isolatedDiffTagIndicies as $isolatedDiffTagIndex) {
+            $start = $isolatedDiffTagIndex['start'] - $offset;
+            $placeholderString = $this->isolatedDiffTags[$isolatedDiffTagIndex['tagType']];
+            $isolatedDiffTagScript[$start] = array_splice($words, $start, $isolatedDiffTagIndex['length'], $placeholderString);
+            $offset += $isolatedDiffTagIndex['length'] - 1;
         }
 
-        return $specialScripts;
+        return $isolatedDiffTagScript;
 
     }
 
-    private function isOpeningSpecialScript($item, $currentSpecialTag = null)
+    private function isOpeningIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
-        $tagsToMatch = $currentSpecialTag !== null ? array($currentSpecialTag => $this->specialElements[$currentSpecialTag]) : $this->specialElements;
+        $tagsToMatch = $currentIsolatedDiffTag !== null ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag]) : $this->isolatedDiffTags;
         foreach ($tagsToMatch as $key => $value) {
             if (preg_match("#<".$key."[^>]*>\\s*#iU", $item)) {
                 return $key;
@@ -113,9 +112,9 @@ class HtmlDiff extends AbstractDiff
         return false;
     }
 
-    private function isClosingSpecialScript($item, $currentSpecialTag = null)
+    private function isClosingIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
-        $tagsToMatch = $currentSpecialTag !== null ? array($currentSpecialTag => $this->specialElements[$currentSpecialTag]) : $this->specialElements;
+        $tagsToMatch = $currentIsolatedDiffTag !== null ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag]) : $this->isolatedDiffTags;
         foreach ($tagsToMatch as $key => $value) {
             if (preg_match("#</".$key."[^>]*>\\s*#iU", $item))  {
                 return $key;
@@ -154,17 +153,12 @@ class HtmlDiff extends AbstractDiff
     {
         $text = array();
         foreach ($this->newWords as $pos => $s) {
-            $matchFound = false;
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
-                foreach ($this->specialElements as $specialElement) {
-                    if($s === $specialElement && isset($this->newSpecialScript[$pos]) && $matchFound === false) {
-                        foreach ($this->newSpecialScript[$pos] as $word) {
-                            $text[] = $word;
-                        }
-                        $matchFound = true;
+                if(in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                    foreach ($this->newIsolatedDiffTags[$pos] as $word) {
+                        $text[] = $word;
                     }
-                }
-                if($matchFound === false){
+                } else {
                     $text[] = $s;
                 }
             }
@@ -176,16 +170,12 @@ class HtmlDiff extends AbstractDiff
     {
         $text = array();
         foreach ($this->oldWords as $pos => $s) {
-            $matchFound = false;
             if ($pos >= $operation->startInOld && $pos < $operation->endInOld) {
-                foreach ($this->specialElements as $specialElement) 
-                if ($s === $specialElement && isset($this->oldSpecialScript[$pos]) && $matchFound === false) {
-                    foreach ($this->oldSpecialScript[$pos] as $word) {
+                if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                    foreach ($this->oldIsolatedDiffTags[$pos] as $word) {
                         $text[] = $word;
                     }
-                    $matchFound = true;
-                } 
-                if($matchFound === false){             
+                } else {
                     $text[] = $s;
                 }
             }
@@ -206,7 +196,7 @@ class HtmlDiff extends AbstractDiff
         $oldText = preg_replace($pattern, '', $oldText);
         $newText = preg_replace($pattern, '', $newText);
 
-        $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
+        $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->isolatedDiffTags, $this->groupDiffs);
         return $wrapStart . $diff->build() . $wrapEnd;
     }
 
@@ -216,10 +206,10 @@ class HtmlDiff extends AbstractDiff
         foreach ($this->newWords as $pos => $s) {
             $matchFound = false;
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
-                foreach ($this->specialElements as $specialElement) {
-                    if ($s === $specialElement && isset($this->newSpecialScript[$pos]) && $matchFound === false) {
+                foreach ($this->isolatedDiffTags as $isolatedDiffTag) {
+                    if ($s === $isolatedDiffTag && isset($this->newIsolatedDiffTags[$pos]) && $matchFound === false) {
                         $oldText = implode("", $this->findMatchingScriptsInOld($operation, $pos));
-                        $newText = implode("", $this->newSpecialScript[$pos]);
+                        $newText = implode("", $this->newIsolatedDiffTags[$pos]);
                         $result[] = $this->diffElements($oldText, $newText);
                         $matchFound = true;
                     } 
@@ -236,7 +226,7 @@ class HtmlDiff extends AbstractDiff
     {
         $offset = $posInNew - $operation->startInNew;
 
-        return $this->oldSpecialScript[$operation->startInOld + $offset];
+        return $this->oldIsolatedDiffTags[$operation->startInOld + $offset];
     }
 
     protected function insertTag($tag, $cssClass, &$words)
