@@ -8,13 +8,6 @@ error_reporting(E_ERROR);
 $classes = array(
     'Caxy/HtmlDiff/AbstractDiff',
     'Caxy/HtmlDiff/HtmlDiff',
-    'Caxy/HtmlDiff/Table/TableDiff',
-    'Caxy/HtmlDiff/Table/AbstractTableElement',
-    'Caxy/HtmlDiff/Table/Table',
-    'Caxy/HtmlDiff/Table/TableRow',
-    'Caxy/HtmlDiff/Table/TableCell',
-    'Caxy/HtmlDiff/Table/TablePosition',
-    'Caxy/HtmlDiff/Table/TableMatch',
     'Caxy/HtmlDiff/Match',
     'Caxy/HtmlDiff/Operation',
 );

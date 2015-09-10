@@ -2,8 +2,6 @@
 
 namespace Caxy\HtmlDiff;
 
-use Caxy\HtmlDiff\Table\TableDiff;
-
 class HtmlDiff extends AbstractDiff
 {
     protected $wordIndices;
@@ -60,13 +58,13 @@ class HtmlDiff extends AbstractDiff
         }
     }
 
-    private function replaceIsolatedDiffTags()
+    protected function replaceIsolatedDiffTags()
     {
         $this->oldIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->oldWords);
         $this->newIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->newWords);
     }
 
-    private function createIsolatedDiffTagPlaceholders(&$words)
+    protected function createIsolatedDiffTagPlaceholders(&$words)
     {
         $openIsolatedDiffTags = 0;
         $isolatedDiffTagIndicies = array();
@@ -101,7 +99,7 @@ class HtmlDiff extends AbstractDiff
 
     }
 
-    private function isOpeningIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
+    protected function isOpeningIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
         $tagsToMatch = $currentIsolatedDiffTag !== null ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag]) : $this->isolatedDiffTags;
         foreach ($tagsToMatch as $key => $value) {
@@ -112,7 +110,7 @@ class HtmlDiff extends AbstractDiff
         return false;
     }
 
-    private function isClosingIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
+    protected function isClosingIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
         $tagsToMatch = $currentIsolatedDiffTag !== null ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag]) : $this->isolatedDiffTags;
         foreach ($tagsToMatch as $key => $value) {
@@ -143,7 +141,7 @@ class HtmlDiff extends AbstractDiff
         }
     }
 
-    private function processReplaceOperation($operation)
+    protected function processReplaceOperation($operation)
     {
         $this->processDeleteOperation( $operation, "diffmod" );
         $this->processInsertOperation( $operation, "diffmod" );
@@ -183,7 +181,7 @@ class HtmlDiff extends AbstractDiff
         $this->insertTag( "del", $cssClass, $text );
     }
 
-    private function diffElements($oldText, $newText)
+    protected function diffElements($oldText, $newText)
     {
         $pattern = '/(^<[^>]+>)|(<\/[^>]+>$)/i';
         $matches = array();
@@ -217,7 +215,7 @@ class HtmlDiff extends AbstractDiff
         $this->content .= implode( "", $result );
     }
 
-    private function findIsolatedDiffTagsInOld($operation, $posInNew)
+    protected function findIsolatedDiffTagsInOld($operation, $posInNew)
     {
         $offset = $posInNew - $operation->startInNew;
 
