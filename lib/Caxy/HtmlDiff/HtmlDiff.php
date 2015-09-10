@@ -2,44 +2,13 @@
 
 namespace Caxy\HtmlDiff;
 
-class HtmlDiff
+class HtmlDiff extends AbstractDiff
 {
-    public static $defaultSpecialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
-    public static $defaultSpecialCaseChars = array('.', ',', '(', ')', '\'');
-    public static $defaultGroupDiffs = true;
-    
-    protected $content;
-    protected $oldText;
-    protected $newText;
-    protected $oldWords = array();
-    protected $newWords = array();
     protected $wordIndices;
-    protected $encoding;
-    protected $specialCaseOpeningTags = array();
-    protected $specialCaseClosingTags = array();
-    protected $specialCaseTags;
-    protected $specialCaseChars;
-    protected $groupDiffs;
     protected $insertSpaceInReplace = false;
-
-    public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
-    {        
-        if ($specialCaseTags === null) {
-            $specialCaseTags = static::$defaultSpecialCaseTags;
-        }
-        
-        if ($groupDiffs === null) {
-            $groupDiffs = static::$defaultGroupDiffs;
-        }
-        
-        $this->oldText = $this->purifyHtml(trim($oldText));
-        $this->newText = $this->purifyHtml(trim($newText));
-        $this->encoding = $encoding;
-        $this->content = '';
-        $this->groupDiffs = $groupDiffs;
-        $this->setSpecialCaseTags($specialCaseTags);
-        $this->setSpecialCaseChars(static::$defaultSpecialCaseChars);
-    }
+    protected $newIsolatedDiffTags;
+    protected $oldIsolatedDiffTags;
+    protected $isolatedDiffTags = array ('ol' => '[[REPLACE_ORDERED_LIST]]', 'ul' => '[[REPLACE_UNORDERED_LIST]]', 'sub' => '[[REPLACE_SUB_SCRIPT]]' , 'sup' => '[[REPLACE_SUPER_SCRIPT]]', 'dl' => '[[REPLACE_DEFINITION_LIST]]', 'table' => '[[REPLACE_TABLE]]');
 
     /**
      * @param boolean $boolean
@@ -59,148 +28,13 @@ class HtmlDiff
     {
         return $this->insertSpaceInReplace;
     }
-    
-    public function setSpecialCaseChars(array $chars)
-    {
-        $this->specialCaseChars = $chars;
-    }
-    
-    public function getSpecialCaseChars()
-    {
-        return $this->specialCaseChars;
-    }
-    
-    public function addSpecialCaseChar($char)
-    {
-        if (!in_array($char, $this->specialCaseChars)) {
-            $this->specialCaseChars[] = $char;
-        }
-    }
-    
-    public function removeSpecialCaseChar($char)
-    {
-        $key = array_search($char, $this->specialCaseChars);
-        if ($key !== false) {
-            unset($this->specialCaseChars[$key]);
-        }
-    }
-
-    public function setSpecialCaseTags(array $tags = array())
-    {
-        $this->specialCaseTags = $tags;
-
-        foreach ($this->specialCaseTags as $tag) {
-            $this->addSpecialCaseTag($tag);
-        }
-    }
-
-    public function addSpecialCaseTag($tag)
-    {
-        if (!in_array($tag, $this->specialCaseTags)) {
-            $this->specialCaseTags[] = $tag;
-        }
-
-        $opening = $this->getOpeningTag($tag);
-        $closing = $this->getClosingTag($tag);
-
-        if (!in_array($opening, $this->specialCaseOpeningTags)) {
-            $this->specialCaseOpeningTags[] = $opening;
-        }
-        if (!in_array($closing, $this->specialCaseClosingTags)) {
-            $this->specialCaseClosingTags[] = $closing;
-        }
-    }
-
-    public function removeSpecialCaseTag($tag)
-    {
-        if (($key = array_search($tag, $this->specialCaseTags)) !== false) {
-            unset($this->specialCaseTags[$key]);
-
-            $opening = $this->getOpeningTag($tag);
-            $closing = $this->getClosingTag($tag);
-
-            if (($key = array_search($opening, $this->specialCaseOpeningTags)) !== false) {
-                unset($this->specialCaseOpeningTags[$key]);
-            }
-            if (($key = array_search($closing, $this->specialCaseClosingTags)) !== false) {
-                unset($this->specialCaseClosingTags[$key]);
-            }
-        }
-    }
-
-    public function getSpecialCaseTags()
-    {
-        return $this->specialCaseTags;
-    }
-
-    public function getOldHtml()
-    {
-        return $this->oldText;
-    }
-
-    public function getNewHtml()
-    {
-        return $this->newText;
-    }
-
-    public function getDifference()
-    {
-        return $this->content;
-    }
-    
-    public function setGroupDiffs($boolean)
-    {
-        $this->groupDiffs = $boolean;
-    }
-    
-    public function isGroupDiffs()
-    {
-        return $this->groupDiffs;
-    }
-
-    protected function getOpeningTag($tag)
-    {
-        return "/<".$tag."[^>]*/i";
-    }
-
-    protected function getClosingTag($tag)
-    {
-        return "</".$tag.">";
-    }
-
-    protected function getStringBetween($str, $start, $end)
-    {
-        $expStr = explode( $start, $str, 2 );
-        if ( count( $expStr ) > 1 ) {
-            $expStr = explode( $end, $expStr[ 1 ] );
-            if ( count( $expStr ) > 1 ) {
-                array_pop( $expStr );
-
-                return implode( $end, $expStr );
-            }
-        }
-
-        return '';
-    }
-
-    protected function purifyHtml($html, $tags = null)
-    {
-        if ( class_exists( 'Tidy' ) && false ) {
-            $config = array( 'output-xhtml'   => true, 'indent' => false );
-            $tidy = new tidy;
-            $tidy->parseString( $html, $config, 'utf8' );
-            $html = (string) $tidy;
-
-            return $this->getStringBetween( $html, '<body>' );
-        }
-
-        return $html;
-    }
 
     public function build()
     {
         $this->splitInputsToWords();
+        $this->replaceIsolatedDiffTags();
         $this->indexNewWords();
+        
         $operations = $this->operations();
         foreach ($operations as $item) {
             $this->performOperation( $item );
@@ -224,111 +58,67 @@ class HtmlDiff
         }
     }
 
-    protected function splitInputsToWords()
+    protected function replaceIsolatedDiffTags()
     {
-        $this->oldWords = $this->convertHtmlToListOfWords( $this->explode( $this->oldText ) );
-        $this->newWords = $this->convertHtmlToListOfWords( $this->explode( $this->newText ) );
-    }
-    
-    protected function isPartOfWord($text)
-    {
-        return ctype_alnum(str_replace($this->specialCaseChars, '', $text));
+        $this->oldIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->oldWords);
+        $this->newIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->newWords);
     }
 
-    protected function convertHtmlToListOfWords($characterString)
+    protected function createIsolatedDiffTagPlaceholders(&$words)
     {
-        $mode = 'character';
-        $current_word = '';
-        $words = array();
-        foreach ($characterString as $i => $character) {
-            switch ($mode) {
-                case 'character':
-                if ( $this->isStartOfTag( $character ) ) {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = "<";
-                    $mode = 'tag';
-                } elseif ( preg_match( "[^\s]", $character ) > 0 ) {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = $character;
-                    $mode = 'whitespace';
-                } else {
-                    if (
-                        (ctype_alnum($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
-                        (in_array($character, $this->specialCaseChars) && isset($characterString[$i+1]) && $this->isPartOfWord($characterString[$i+1]))
-                    ) {
-                        $current_word .= $character;
-                    } else {
-                        $words[] = $current_word;
-                        $current_word = $character;
-                    }
+        $openIsolatedDiffTags = 0;
+        $isolatedDiffTagIndicies = array();
+        $isolatedDiffTagStart = 0;
+        $currentIsolatedDiffTag = null;
+        foreach ($words as $index => $word) {
+            $openIsolatedDiffTag = $this->isOpeningIsolatedDiffTag($word, $currentIsolatedDiffTag);
+            if ($openIsolatedDiffTag) {
+                if ($openIsolatedDiffTags === 0) {
+                    $isolatedDiffTagStart = $index;
                 }
-                break;
-                case 'tag' :
-                if ( $this->isEndOfTag( $character ) ) {
-                    $current_word .= ">";
-                    $words[] = $current_word;
-                    $current_word = "";
-
-                    if ( !preg_match('[^\s]', $character ) ) {
-                        $mode = 'whitespace';
-                    } else {
-                        $mode = 'character';
-                    }
-                } else {
-                    $current_word .= $character;
+                $openIsolatedDiffTags++;
+                $currentIsolatedDiffTag = $openIsolatedDiffTag;
+            } elseif($openIsolatedDiffTags > 0 && $this->isClosingIsolatedDiffTag($word, $currentIsolatedDiffTag)) {
+                $openIsolatedDiffTags--;
+                if($openIsolatedDiffTags == 0){
+                    $isolatedDiffTagIndicies[] = array ('start' => $isolatedDiffTagStart, 'length' => $index - $isolatedDiffTagStart + 1, 'tagType' => $currentIsolatedDiffTag);
+                    $currentIsolatedDiffTag = null;
                 }
-                break;
-                case 'whitespace':
-                if ( $this->isStartOfTag( $character ) ) {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = "<";
-                    $mode = 'tag';
-                } elseif ( preg_match( "[^\s]", $character ) ) {
-                    $current_word .= $character;
-                } else {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = $character;
-                    $mode = 'character';
-                }
-                break;
-                default:
-                break;
             }
         }
-        if ($current_word != '') {
-            $words[] = $current_word;
+        $isolatedDiffTagScript = array();
+        $offset = 0;
+        foreach ($isolatedDiffTagIndicies as $isolatedDiffTagIndex) {
+            $start = $isolatedDiffTagIndex['start'] - $offset;
+            $placeholderString = $this->isolatedDiffTags[$isolatedDiffTagIndex['tagType']];
+            $isolatedDiffTagScript[$start] = array_splice($words, $start, $isolatedDiffTagIndex['length'], $placeholderString);
+            $offset += $isolatedDiffTagIndex['length'] - 1;
         }
 
-        return $words;
+        return $isolatedDiffTagScript;
+
     }
 
-    protected function isStartOfTag($val)
+    protected function isOpeningIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
-        return $val == "<";
+        $tagsToMatch = $currentIsolatedDiffTag !== null ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag]) : $this->isolatedDiffTags;
+        foreach ($tagsToMatch as $key => $value) {
+            if (preg_match("#<".$key."[^>]*>\\s*#iU", $item)) {
+                return $key;
+            }
+        }
+        return false;
     }
 
-    protected function isEndOfTag($val)
+    protected function isClosingIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
-        return $val == ">";
-    }
-
-    protected function isWhiteSpace($value)
-    {
-        return !preg_match( '[^\s]', $value );
-    }
-
-    protected function explode($value)
-    {
-        // as suggested by @onassar
-        return preg_split( '//u', $value );
+        $tagsToMatch = $currentIsolatedDiffTag !== null ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag]) : $this->isolatedDiffTags;
+        foreach ($tagsToMatch as $key => $value) {
+            if (preg_match("#</".$key."[^>]*>\\s*#iU", $item))  {
+                return $key;
+            }
+        }
+        return false;
     }
 
     protected function performOperation($operation)
@@ -353,20 +143,8 @@ class HtmlDiff
 
     protected function processReplaceOperation($operation)
     {
-        $processDelete = strlen($this->oldText) > 0;
-        $processInsert = strlen($this->newText) > 0;
-
-        if ($processDelete) {
-            $this->processDeleteOperation( $operation, "diffmod" );
-        }
-
-        if ($this->insertSpaceInReplace && $processDelete && $processInsert) {
-            $this->content .= ' ';
-        }
-
-        if ($processInsert) {
-            $this->processInsertOperation( $operation, "diffmod" );
-        }
+        $this->processDeleteOperation( $operation, "diffmod" );
+        $this->processInsertOperation( $operation, "diffmod" );
     }
 
     protected function processInsertOperation($operation, $cssClass)
@@ -374,7 +152,13 @@ class HtmlDiff
         $text = array();
         foreach ($this->newWords as $pos => $s) {
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
-                $text[] = $s;
+                if(in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                    foreach ($this->newIsolatedDiffTags[$pos] as $word) {
+                        $text[] = $word;
+                    }
+                } else {
+                    $text[] = $s;
+                }
             }
         }
         $this->insertTag( "ins", $cssClass, $text );
@@ -385,10 +169,33 @@ class HtmlDiff
         $text = array();
         foreach ($this->oldWords as $pos => $s) {
             if ($pos >= $operation->startInOld && $pos < $operation->endInOld) {
-                $text[] = $s;
+                if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                    foreach ($this->oldIsolatedDiffTags[$pos] as $word) {
+                        $text[] = $word;
+                    }
+                } else {
+                    $text[] = $s;
+                }
             }
         }
         $this->insertTag( "del", $cssClass, $text );
+    }
+
+    protected function diffElements($oldText, $newText)
+    {
+        $pattern = '/(^<[^>]+>)|(<\/[^>]+>$)/i';
+        $matches = array();
+        $wrapStart = '';
+        $wrapEnd = '';
+        if (preg_match_all($pattern, $newText, $matches)) {
+            $wrapStart = $matches[0][0];
+            $wrapEnd = $matches[0][1];
+        }
+        $oldText = preg_replace($pattern, '', $oldText);
+        $newText = preg_replace($pattern, '', $newText);
+
+        $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->isolatedDiffTags, $this->groupDiffs);
+        return $wrapStart . $diff->build() . $wrapEnd;
     }
 
     protected function processEqualOperation($operation)
@@ -396,10 +203,23 @@ class HtmlDiff
         $result = array();
         foreach ($this->newWords as $pos => $s) {
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
-                $result[] = $s;
+                if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                    $oldText = implode("", $this->findIsolatedDiffTagsInOld($operation, $pos));
+                    $newText = implode("", $this->newIsolatedDiffTags[$pos]);
+                    $result[] = $this->diffElements($oldText, $newText);
+                } else {
+                    $result[] = $s;
+                }
             }
         }
         $this->content .= implode( "", $result );
+    }
+
+    protected function findIsolatedDiffTagsInOld($operation, $posInNew)
+    {
+        $offset = $posInNew - $operation->startInNew;
+
+        return $this->oldIsolatedDiffTags[$operation->startInOld + $offset];
     }
 
     protected function insertTag($tag, $cssClass, &$words)
@@ -613,17 +433,17 @@ class HtmlDiff
             }
             $matchLengthAt = $newMatchLengthAt;
         }
-        
+
         // Skip match if none found or match consists only of whitespace
-        if ($bestMatchSize != 0 && 
+        if ($bestMatchSize != 0 &&
             (
-                !$this->isGroupDiffs() || 
+                !$this->isGroupDiffs() ||
                 !preg_match('/^\s+$/', implode('', array_slice($this->oldWords, $bestMatchInOld, $bestMatchSize)))
             )
         ) {
             return new Match($bestMatchInOld, $bestMatchInNew, $bestMatchSize);
         }
-        
+
         return null;
     }
 }

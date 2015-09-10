@@ -2,15 +2,25 @@
 
 use Caxy\HtmlDiff\HtmlDiff;
 
-require __DIR__.'/../lib/Caxy/HtmlDiff/HtmlDiff.php';
-require __DIR__.'/../lib/Caxy/HtmlDiff/Match.php';
-require __DIR__.'/../lib/Caxy/HtmlDiff/Operation.php';
+ini_set('display_errors', 1);
+error_reporting(E_ERROR);
+
+$classes = array(
+    'Caxy/HtmlDiff/AbstractDiff',
+    'Caxy/HtmlDiff/HtmlDiff',
+    'Caxy/HtmlDiff/Match',
+    'Caxy/HtmlDiff/Operation',
+);
+
+foreach ($classes as $class) {
+    require __DIR__.'/../lib/'.$class.'.php';
+}
 
 $input = file_get_contents('php://input');
 
 if ($input) {
     $data = json_decode($input, true);
-    $diff = new HtmlDiff($data['oldText'], $data['newText']);
+    $diff = new HtmlDiff($data['oldText'], $data['newText'], 'UTF-8', array());
     $diff->build();
     
     header('Content-Type: application/json');
