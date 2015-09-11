@@ -171,7 +171,7 @@ class HtmlDiff extends AbstractDiff
         $text = array();
         foreach ($this->oldWords as $pos => $s) {
             if ($pos >= $operation->startInOld && $pos < $operation->endInOld) {
-                if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                if (in_array($s, $this->isolatedDiffTags) && isset($this->oldIsolatedDiffTags[$pos])) {
                     foreach ($this->oldIsolatedDiffTags[$pos] as $word) {
                         $text[] = $word;
                     }
