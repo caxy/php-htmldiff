@@ -8,8 +8,15 @@ class HtmlDiff extends AbstractDiff
     protected $insertSpaceInReplace = false;
     protected $newIsolatedDiffTags;
     protected $oldIsolatedDiffTags;
-    protected $isolatedDiffTags = array ('ol' => '[[REPLACE_ORDERED_LIST]]', 'ul' => '[[REPLACE_UNORDERED_LIST]]', 'sub' => '[[REPLACE_SUB_SCRIPT]]' , 'sup' => '[[REPLACE_SUPER_SCRIPT]]', 'dl' => '[[REPLACE_DEFINITION_LIST]]', 'table' => '[[REPLACE_TABLE]]');
-
+    protected $isolatedDiffTags = array (
+        'ol' => '[[REPLACE_ORDERED_LIST]]',
+        'ul' => '[[REPLACE_UNORDERED_LIST]]',
+        'sub' => '[[REPLACE_SUB_SCRIPT]]',
+        'sup' => '[[REPLACE_SUPER_SCRIPT]]',
+        'dl' => '[[REPLACE_DEFINITION_LIST]]',
+        'table' => '[[REPLACE_TABLE]]'
+    );
+    
     /**
      * @param  boolean  $boolean
      * @return HtmlDiff
@@ -39,7 +46,7 @@ class HtmlDiff extends AbstractDiff
         foreach ($operations as $item) {
             $this->performOperation( $item );
         }
-
+        
         return $this->content;
     }
 
@@ -200,6 +207,12 @@ class HtmlDiff extends AbstractDiff
 
         return $wrapStart . $diff->build() . $wrapEnd;
     }
+    
+    protected function diffList($oldText, $newText)
+    {
+        $diff = new ListDiff($oldText, $newText, $this->encoding, $this->isolatedDiffTags, $this->groupDiffs);
+        return $diff->build();
+    }
 
     protected function processEqualOperation($operation)
     {
@@ -209,7 +222,10 @@ class HtmlDiff extends AbstractDiff
                 if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
                     $oldText = implode("", $this->findIsolatedDiffTagsInOld($operation, $pos));
                     $newText = implode("", $this->newIsolatedDiffTags[$pos]);
-                    $result[] = $this->diffElements($oldText, $newText);
+                    $type = in_array($s, array($this->isolatedDiffTags['ol'], $this->isolatedDiffTags['dl'], $this->isolatedDiffTags['ul']))
+                        ? "List"
+                        : "Elements";
+                    $result[] = $this->{'diff' . $type}($oldText, $newText);
                 } else {
                     $result[] = $s;
                 }

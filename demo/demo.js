@@ -38,6 +38,7 @@ demo.controller('diffCtrl', ['$scope', '$http', '$sce', '$timeout', function ($s
         $scope.loading = true;
         $http.post('index.php', { oldText: $scope.oldText, newText: $scope.newText })
             .success(function (data) {
+                //alert(JSON.stringify(data));
                 $scope.diff = data.diff;
                 $scope.loading = false;
             });
