@@ -23,6 +23,7 @@ if ($input) {
     $data = json_decode($input, true);
     $diff = new HtmlDiff($_POST['oldText'], $_POST['newText'], 'UTF-8', array());
     $diff->build();
+    echo $diff->getDifference();die;
 
     header('Content-Type: application/json');
     echo json_encode(array('diff' => $diff->getDifference()));

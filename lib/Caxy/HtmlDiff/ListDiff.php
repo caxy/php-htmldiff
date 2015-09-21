@@ -18,7 +18,8 @@ class ListDiff extends HtmlDiff
     protected $list; // hold the old/new content of the content of the list
     protected $childLists; // contains the old/new child lists content within this list
     protected $textMatches; // contains the old/new text strings that match
-    protected $childListObjects;
+    //protected $childListObjects;
+    protected $listsIndex;
     
     public function build()
     {
@@ -30,7 +31,8 @@ class ListDiff extends HtmlDiff
         $this->replaceIsolatedDiffTags();
         $this->indexNewWords();
         $this->diffListContent();
-        die;
+        
+        return $this->content;
     }
     
     protected function diffListContent()
@@ -76,6 +78,8 @@ class ListDiff extends HtmlDiff
     {
         // Build childLists array of old/new content of lists.
         $this->buildChildLists();
+        
+        $this->indexLists();
         // Compare the lists, saving total matches to textMatches array.
         $this->compareChildLists();
         // Create the child list objects from textMatches array
@@ -86,68 +90,70 @@ class ListDiff extends HtmlDiff
     {
         // Always compare the new against the old.
         // Compare each new string against each old string.
-        $matchPercentages = array();
+        $bestMatchPercentages = array();
         foreach ($this->childLists['new'] as $thisKey => $thisList) {
-            $matchPercentages[$thisKey] = array();
+            $bestMatchPercentages[$thisKey] = array();
             foreach ($this->childLists['old'] as $thatKey => $thatList) {
                 similar_text($thisList, $thatList, $percentage);
-                $matchPercentages[$thisKey][] = $percentage;
+                $bestMatchPercentages[$thisKey][] = $percentage;
             }
         }
-        //var_dump($matchPercentages);
         
-        $bestMatchPercentages = $matchPercentages;
         foreach ($bestMatchPercentages as &$thisMatch) {
             arsort($thisMatch);
         }
-        var_dump($bestMatchPercentages);
+        //var_dump($bestMatchPercentages);
         
         // Build matches.
         $matches = array();
         $taken = array();
-        $takenItems = array(2,3);
-        $absolute = 100;
+        $absoluteMatch = 100;
         foreach ($bestMatchPercentages as $item => $percentages) {
             $highestMatch = -1;
             $highestMatchKey = -1;
             
             foreach ($percentages as $key => $percent) {
-                $str = "key: ".$key." / percent: ".$percent;
-                //var_dump($str);
+                // Check that the key for the percentage is not already taken and the new percentage is higher.
                 if (!in_array($key, $taken) && $percent > $highestMatch) {
-                    // If matches 100%, set and move on.
-                    /*
-                     * if ($percent == $absolute) {
+                    // If an absolute match, choose this one.
+                    if ($percent == $absoluteMatch) {
                         $highestMatch = $percent;
                         $highestMatchKey = $key;
                         break;
                     } else {
-                        // If not an absolute match, loop through the other high results, checking if any are higher
-                        foreach ($bestMatchPercentages as $otherItem => $otherPercentages) {
-                            if ($otherPercentages[$key] > $percent) {
-                                array_column($taken, $otherPercentages)
-                            }
-                        }
-                    }
-                    */
-                    $str = "Key: ".$key." / percent: ".$percent; var_dump($str);
-                    $columns = array_column($bestMatchPercentages, $key);
-                    var_dump(
-                        // Start to filter: GOAL is to get values higher than $percent and keys not included in $takenItems
-                        array_filter(
-                            // Build array we want the filter to use
+                        // Get all the other matces for the same $key
+                        $columns = array_column($bestMatchPercentages, $key);
+                        //$str = "All the other matches for this key:".$key; var_dump($str);
+                        //var_dump($columns);
+                        $thisBestMatches = array_filter(
                             $columns,
-                            // return if value is higher than percent
-                            function ($v) use ($percent, $columns) {
-                                return $v > $percent && ();
+                            function ($v) use ($percent) {
+                                return $v > $percent;
                             }
-                        )
-                    );
-                    /*var_dump(
-                        (array_column($bestMatchPercentages, $key))
-                    );*/
+                        );
+                        
+                        //$str = "Best Matches Sorted, with lower matches filtered out: ".$percent; var_dump($str);
+                        arsort($thisBestMatches);
+                        //var_dump($thisBestMatches);
+                        
+                        // If no greater amounts, use this one.
+                        if (!count($thisBestMatches)) {
+                            $highestMatch = $percent;
+                            $highestMatchKey = $key;
+                            break;
+                        }
+                        
+                        // Loop through, comparing only the items that have not already been added.
+                        /*foreach ($thisBestMatches as $k => $v) {
+                            if (!in_array($k, $takenItems)) {
+                                $highestMatch = $percent;
+                                $highestMatchKey = $key;
+                                $takenItemKey = $item;
+                                break(2);
+                            }
+                        }*/
+                    }
                 }
-                die;
             }
             
             $matches[] = array('new' => $item, 'old' => $highestMatchKey > -1 ? $highestMatchKey : null);
@@ -158,7 +164,7 @@ class ListDiff extends HtmlDiff
         
         // Save the matches.
         $this->textMatches = $matches;
-        //var_dump($matches);
+        $this->dump($matches);
     }
     
     protected function buildChildLists()
@@ -178,7 +184,89 @@ class ListDiff extends HtmlDiff
     
     protected function diff()
     {
+        $this->content = $this->addListTypeWrapper();
         
+        foreach ($this->textMatches as $key => $matches) {
+            $oldText = $matches['old'] !== null ? $this->childLists['old'][$matches['old']] : '';
+            $newText = $matches['new'] !== null ? $this->childLists['new'][$matches['new']] : '';
+            $this->dump("OLD TEXT: ". $oldText);
+            $this->dump("NEW TEXT: ".$newText);
+            
+            $this->content .= "<li>";
+            if ($newText && !$oldText) {
+                $this->content .= $newText;
+            } elseif ($oldText && !$newText) {
+                $this->content .= "THIS RIGHT HERE";
+            } else {
+                $thisDiff = $this->processPlaceholders($this->diffElements($oldText, $newText), $matches);
+                $this->content .= $thisDiff;
+            }
+            $this->content .= "</li>";
+        }
+        
+        $this->content .= $this->addListTypeWrapper(false);
+    }
+    
+    protected function processPlaceholders($text, array $matches)
+    {
+        $returnText = array();
+        $contentVault = array(
+            'old' => $this->getListContent('old', $matches),
+            'new' => $this->getListContent('new', $matches)
+        );
+        
+        $count = 0;
+        foreach (explode(' ', $text) as $word) {
+            $content = $word;
+            if (in_array($word, $this->isolatedDiffTags)) {
+                $oldText = implode('', $contentVault['old'][$count]);
+                $newText = implode('', $contentVault['new'][$count]);
+                $content = $this->diffList($oldText, $newText);
+                $count++;
+            }
+            
+            $returnText[] = $content;
+        }
+        return implode(' ', $returnText);
+    }
+    
+    protected function getListContent($indexKey = 'new', array $matches)
+    {
+        $bucket = array();
+        $start = $this->listsIndex[$indexKey][$matches[$indexKey]];
+        $stop = $this->listsIndex[$indexKey][$matches[$indexKey] + 1];
+        for ($x = $start; $x < $stop; $x++) {
+            if (in_array($this->list[$indexKey][$x], $this->isolatedDiffTags)) {
+                $bucket[] = $this->listIsolatedDiffTags[$indexKey][$x]; 
+            }
+        }
+        return $bucket;
+    }
+    
+    protected function indexLists()
+    {
+        $this->listsIndex = array();
+        $lookingFor = "<li>";
+        
+        foreach ($this->list as $type => $list) {
+            $this->listsIndex[$type] = array();
+            
+            foreach ($list as $key => $listItem) {
+                if ($listItem == $lookingFor) {
+                    $this->listsIndex[$type][] = $key;
+                }
+            }
+        }
+    }
+    
+    protected function addListTypeWrapper($opening = true)
+    {
+        return "<" . (!$opening ? "/" : '') . $this->listType . ">";
+    }
+    
+    protected function dump($content)
+    {
+        var_dump($content);
     }
     
     public function replaceListIsolatedDiffTags()
