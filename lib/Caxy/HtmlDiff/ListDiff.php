@@ -141,7 +141,6 @@ class ListDiff extends HtmlDiff
                 if (!in_array($key, $taken) && $percent > $highestMatch) {
                     // If an absolute match, choose this one.
                     if ($percent == $absoluteMatch) {
-                        //$this->dump("Absolute found");
                         $highestMatch = $percent;
                         $highestMatchKey = $key;
                         $takenItemKey = $item;
@@ -253,18 +252,52 @@ class ListDiff extends HtmlDiff
         $count = 0;
         // Loop through the text checking for placeholders. If a nested list is found, create a new ListDiff object for it.
         foreach (explode(' ', $text) as $word) {
-            $content = $word;
-            if (in_array($word, $this->isolatedDiffTags)) {
+            $preContent = $this->checkWordForDiffTag($this->stripNewLine($word));
+            
+            if (in_array(
+                    is_array($preContent) ? $preContent[1] : $preContent, 
+                    $this->isolatedDiffTags
+                )
+            ) {
                 $oldText = implode('', $contentVault['old'][$count]);
                 $newText = implode('', $contentVault['new'][$count]);
-                $content = $this->diffList($oldText, $newText, true);
+                $content = $this->diffList($oldText, $newText);
                 $count++;
+            } else {
+                $content = $preContent;
             }
             
-            $returnText[] = $content;
+            $returnText[] = is_array($preContent) ? $preContent[0] . $content . $preContent[2] : $content;
         }
         // Return the result.
         return implode(' ', $returnText);
+    }
+    
+    protected function checkWordForDiffTag($word)
+    {
+        foreach ($this->isolatedDiffTags as $diffTag) {
+            if (strpos($word, $diffTag) > -1) {
+                $position = strpos($word, $diffTag);
+                $length = strlen($diffTag);
+                $result = array(
+                    substr($word, 0, $position),
+                    $diffTag,
+                    substr($word, ($position + $length))
+                );
+                
+                return $result;
+            }
+        }
+        
+        return $word;
+    }
+    
+    /**
+     * Used to remove new lines.
+     */
+    protected function stripNewLine($text)
+    {
+        return trim(preg_replace('/\s\s+/', ' ', $text));
     }
     
     /**
