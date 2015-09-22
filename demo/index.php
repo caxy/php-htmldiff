@@ -10,7 +10,7 @@ $classes = array(
     'Caxy/HtmlDiff/HtmlDiff',
     'Caxy/HtmlDiff/Match',
     'Caxy/HtmlDiff/Operation',
-    'Caxy/HtmlDiff/ListDiff',
+    'Caxy/HtmlDiff/ListDiff'
 );
 
 foreach ($classes as $class) {
@@ -21,9 +21,8 @@ $input = file_get_contents('php://input');
 
 if ($input) {
     $data = json_decode($input, true);
-    $diff = new HtmlDiff($_POST['oldText'], $_POST['newText'], 'UTF-8', array());
+    $diff = new HtmlDiff($data['oldText'], $data['newText'], 'UTF-8', array());
     $diff->build();
-    echo $diff->getDifference();die;
 
     header('Content-Type: application/json');
     echo json_encode(array('diff' => $diff->getDifference()));

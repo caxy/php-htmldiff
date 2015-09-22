@@ -211,8 +211,7 @@ class HtmlDiff extends AbstractDiff
     protected function diffList($oldText, $newText)
     {
         $diff = new ListDiff($oldText, $newText, $this->encoding, $this->isolatedDiffTags, $this->groupDiffs);
-        $diff->build();
-        return $diff->getDifference();
+        return $diff->build();
     }
 
     protected function processEqualOperation($operation)
