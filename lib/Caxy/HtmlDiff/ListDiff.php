@@ -67,6 +67,7 @@ class ListDiff extends HtmlDiff
      */
     protected function formatThisListContent()
     {
+        //var_dump($this->oldIsolatedDiffTags);
         foreach ($this->oldIsolatedDiffTags as $key => $diffTagArray) {
             $openingTag = preg_replace("/[^A-Za-z0-9 ]/", '', $diffTagArray[0]);
             $closingTag = preg_replace("/[^A-Za-z0-9 ]/", '', $diffTagArray[count($diffTagArray) - 1]);
@@ -83,6 +84,7 @@ class ListDiff extends HtmlDiff
                 $this->list['new'] = $this->newIsolatedDiffTags[$key];
             }
         }
+        //var_dump($this->list);
     }
     
     protected function matchAndCompareLists()
@@ -208,6 +210,7 @@ class ListDiff extends HtmlDiff
     {
         $this->childLists['old'] = $this->getListsContent($this->list['old']);
         $this->childLists['new'] = $this->getListsContent($this->list['new']);
+        die;
     }
     
     /**
@@ -351,6 +354,7 @@ class ListDiff extends HtmlDiff
      */
     public function replaceListIsolatedDiffTags()
     {
+        //var_dump($this->list);die;
         $this->listIsolatedDiffTags['old'] = $this->createIsolatedDiffTagPlaceholders($this->list['old']);
         $this->listIsolatedDiffTags['new'] = $this->createIsolatedDiffTagPlaceholders($this->list['new']);
     }
@@ -360,7 +364,98 @@ class ListDiff extends HtmlDiff
      */
     protected function getListsContent(array $contentArray, $stripTags = true)
     {
+        $lematches = array();
+        $arrayDepth = 0;
+        $previousDepth = 0;
+        $count = 0;
+        $status = "//////////////////// STATUS \\\\\\\\\\\\\\\\\\\\\\";
+        foreach ($contentArray as $index => $word) {
+            $previousDepth = $arrayDepth;
+            if ($this->isOpeningListTag($word)) {
+                $arrayDepth++;
+                $changed = true;
+                $this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '++', 'word' => $word, 'changed' => $changed), $status);
+                continue;
+            }
+            
+            if ($this->isClosingListTag($word)) {
+                $arrayDepth--;
+                $changed = true;
+                $this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '--', 'word' => $word, 'changed' => $changed), $status);
+                continue;
+            } 
+            
+            if ($arrayDepth > 0) {
+                $this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '==', 'word' => $word, 'changed' => $changed), $status);
+                $this->addStringToArrayByDepth($word, $lematches, $arrayDepth, $changed);
+                $this->dump($lematches);
+            }
+            $count++;
+            $changed = false;
+        }
+        
+        var_dump($lematches);
+        
+        //var_dump($contentArray);
+        //var_dump(implode('', $contentArray));
         preg_match_all('/<li>(.*?)<\/li>/s', implode('', $contentArray), $matches);
+        //var_dump($matches[intval($stripTags)]);
         return $matches[intval($stripTags)];
+    }
+    
+    protected function addStringToArrayByDepth($word, &$array, $depth = 1, $changed = false, $addedContent = false)
+    {
+        /* Structure
+         * $matches = array(
+         *      0 = array(
+         *          content => string,
+         *          kids => array(
+         *              content => string,
+         *              kids => array(...)
+         *          )
+         *      )
+         * )
+         * 
+         */
+        //$this->dump(func_get_args(), "======func args========");
+        
+        if ($depth === 1) {
+            if ($changed) {
+                $array[] = array('content' => '', 'kids' => array());
+            }
+                $array[count($array) - 1]['content'] .= $word;
+            
+        } else {
+            $depth--;
+            $this->dump($array, "---------------DOWN");
+            $this->addStringToArrayByDepth($word, $array, $depth, $changed, true);
+        }
+    }
+    
+    protected function dump($content, $text = null)
+    {
+        if ($text) {
+            var_dump($text);
+        }
+        
+        var_dump($content);
+    }
+    
+    protected function isOpeningListTag($item)
+    {
+        if (preg_match("#<li[^>]*>\\s*#iU", $item)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function isClosingListTag($item)
+    {
+        if (preg_match("#</li[^>]*>\\s*#iU", $item)) {
+            return true;
+        }
+
+        return false;
     }
 }
