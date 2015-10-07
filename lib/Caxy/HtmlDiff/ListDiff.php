@@ -99,7 +99,7 @@ class ListDiff extends HtmlDiff
          * Index the list, starting positions, so that we can refer back to it later.
          * This is used to see where one list node starts and another ends.
          */
-        $this->indexLists();
+        //$this->indexLists();
         
         /**
          * Compare the lists and build $textMatches array with the matches.
@@ -114,6 +114,8 @@ class ListDiff extends HtmlDiff
         // Always compare the new against the old.
         // Compare each new string against each old string.
         $bestMatchPercentages = array();
+        $this->dump($this->childLists['new'], '=========comparechildlists');
+        $this->dump($this->childLists['old'], '=========comparechildlists');
         foreach ($this->childLists['new'] as $thisKey => $thisList) {
             $bestMatchPercentages[$thisKey] = array();
             foreach ($this->childLists['old'] as $thatKey => $thatList) {
@@ -201,6 +203,8 @@ class ListDiff extends HtmlDiff
         
         // Save the matches.
         $this->textMatches = $matches;
+        $this->dump($this->textMatches);
+        die;
     }
     
     /**
@@ -210,7 +214,7 @@ class ListDiff extends HtmlDiff
     {
         $this->childLists['old'] = $this->getListsContent($this->list['old']);
         $this->childLists['new'] = $this->getListsContent($this->list['new']);
-        die;
+        $this->dump($this->childLists);
     }
     
     /**
@@ -364,47 +368,81 @@ class ListDiff extends HtmlDiff
      */
     protected function getListsContent(array $contentArray, $stripTags = true)
     {
-        $lematches = array();
+        $lematches = array('content' => '', 'kids' => array());
         $arrayDepth = 0;
-        $previousDepth = 0;
-        $count = 0;
         $status = "//////////////////// STATUS \\\\\\\\\\\\\\\\\\\\\\";
+        $nestedCount = array();
         foreach ($contentArray as $index => $word) {
-            $previousDepth = $arrayDepth;
+            
             if ($this->isOpeningListTag($word)) {
                 $arrayDepth++;
-                $changed = true;
-                $this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '++', 'word' => $word, 'changed' => $changed), $status);
+                if (!array_key_exists($arrayDepth, $nestedCount)) {
+                    $nestedCount[$arrayDepth] = 1;
+                } else {
+                    $nestedCount[$arrayDepth]++;
+                }
+                //$this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '++', 'word' => $word, 'changed' => $changed), $status);
                 continue;
             }
             
             if ($this->isClosingListTag($word)) {
                 $arrayDepth--;
-                $changed = true;
-                $this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '--', 'word' => $word, 'changed' => $changed), $status);
+                //$this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '--', 'word' => $word, 'changed' => $changed), $status);
                 continue;
             } 
             
             if ($arrayDepth > 0) {
-                $this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '==', 'word' => $word, 'changed' => $changed), $status);
-                $this->addStringToArrayByDepth($word, $lematches, $arrayDepth, $changed);
-                $this->dump($lematches);
+                //$this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '==', 'word' => $word, 'changed' => $changed), $status);
+                $this->addStringToArrayByDepth($word, $lematches, $arrayDepth, 1, $nestedCount);
+                //$this->dump($lematches, '---------- total array at end of this loop ---------');
             }
-            $count++;
-            $changed = false;
         }
         
-        var_dump($lematches);
-        
+        $this->dump($lematches);
+        die;
         //var_dump($contentArray);
         //var_dump(implode('', $contentArray));
         preg_match_all('/<li>(.*?)<\/li>/s', implode('', $contentArray), $matches);
-        //var_dump($matches[intval($stripTags)]);
-        return $matches[intval($stripTags)];
+        $this->dump($matches[intval($stripTags)], 'XXXXXXXXXXXXXXXXx - matches dump');
+        return $lematches;
     }
     
-    protected function addStringToArrayByDepth($word, &$array, $depth = 1, $changed = false, $addedContent = false)
+    protected function addStringToArrayByDepth($word, &$array, $targetDepth, $thisDepth, $nestedCount)
     {
+        //$this->dump(func_get_args(), '============ addstringfunction vars');
+        //$this->dump($array); 
+        
+        // determine what depth we're at
+        if ($targetDepth == $thisDepth) {
+            // decide on what to do at this level
+            
+            // if we're on depth 1, add content
+            $array['content'] .= $word;
+            
+            //$this->dump($array, '========= ADDED CONTENT TO THIS ARRAY ==========');
+        } else {
+            
+            // create first kid if not exist
+            /*if (count($array['kids']) < 1) {
+                $this->dump('', "!!! count of kid less than one");
+                $newArray = array('content' => '', 'kids' => array());
+                $array['kids'][] = $newArray;
+            }*/
+            
+            //$this->dump(($depth > $previousDepth), "!!! depth greater than prev");
+            //$this->dump(($previousDepth > $depth), "!!! depth less than prev");
+            if ($nestedCount[$targetDepth] > count($array['kids'])) {
+                $newArray = array('content' => '', 'kids' => array());
+                $array['kids'][] = $newArray;
+                $array['content'] .= "[[REPLACE_LIST_ITEM]]";
+            }
+            // continue to the next depth
+            $thisDepth++;
+            
+            // get last kid and send to next depth
+            
+            $this->addStringToArrayByDepth($word, $array['kids'][count($array['kids']) - 1], $targetDepth, $thisDepth, $nestedCount);
+        }
         /* Structure
          * $matches = array(
          *      0 = array(
@@ -416,11 +454,13 @@ class ListDiff extends HtmlDiff
          *      )
          * )
          * 
-         */
+         
         //$this->dump(func_get_args(), "======func args========");
         
         if ($depth === 1) {
-            if ($changed) {
+            if ($changed && $previousDepth > $depth) {
+                
+            } else {
                 $array[] = array('content' => '', 'kids' => array());
             }
                 $array[count($array) - 1]['content'] .= $word;
@@ -429,11 +469,12 @@ class ListDiff extends HtmlDiff
             $depth--;
             $this->dump($array, "---------------DOWN");
             $this->addStringToArrayByDepth($word, $array, $depth, $changed, true);
-        }
+        }*/
     }
     
     protected function dump($content, $text = null)
     {
+        ini_set('xdebug.var_display_max_depth', '10');
         if ($text) {
             var_dump($text);
         }
