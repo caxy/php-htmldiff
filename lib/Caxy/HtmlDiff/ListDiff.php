@@ -368,7 +368,7 @@ class ListDiff extends HtmlDiff
      */
     protected function getListsContent(array $contentArray, $stripTags = true)
     {
-        $lematches = array('content' => '', 'kids' => array());
+        $lematches = array();
         $arrayDepth = 0;
         $status = "//////////////////// STATUS \\\\\\\\\\\\\\\\\\\\\\";
         $nestedCount = array();
@@ -394,7 +394,7 @@ class ListDiff extends HtmlDiff
             if ($arrayDepth > 0) {
                 //$this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '==', 'word' => $word, 'changed' => $changed), $status);
                 $this->addStringToArrayByDepth($word, $lematches, $arrayDepth, 1, $nestedCount);
-                //$this->dump($lematches, '---------- total array at end of this loop ---------');
+                $this->dump($lematches, '---------- total array at end of this loop ---------');
             }
         }
         
@@ -409,15 +409,23 @@ class ListDiff extends HtmlDiff
     
     protected function addStringToArrayByDepth($word, &$array, $targetDepth, $thisDepth, $nestedCount)
     {
-        //$this->dump(func_get_args(), '============ addstringfunction vars');
+        $this->dump(func_get_args(), '============ addstringfunction vars');
         //$this->dump($array); 
         
         // determine what depth we're at
         if ($targetDepth == $thisDepth) {
             // decide on what to do at this level
             
-            // if we're on depth 1, add content
-            $array['content'] .= $word;
+            if (array_key_exists('content', $array)) {
+                $array['content'] .= $word;
+            } else {
+                // if we're on depth 1, add content
+                if ($nestedCount[$targetDepth] > count($array)) {
+                    $array[] = array('content' => '', 'kids' => array());
+                }
+
+                $array[count($array) - 1]['content'] .= $word;
+            }
             
             //$this->dump($array, '========= ADDED CONTENT TO THIS ARRAY ==========');
         } else {
@@ -428,20 +436,47 @@ class ListDiff extends HtmlDiff
                 $newArray = array('content' => '', 'kids' => array());
                 $array['kids'][] = $newArray;
             }*/
+            $newArray = array('content' => '', 'kids' => array());
             
-            //$this->dump(($depth > $previousDepth), "!!! depth greater than prev");
-            //$this->dump(($previousDepth > $depth), "!!! depth less than prev");
-            if ($nestedCount[$targetDepth] > count($array['kids'])) {
-                $newArray = array('content' => '', 'kids' => array());
-                $array['kids'][] = $newArray;
-                $array['content'] .= "[[REPLACE_LIST_ITEM]]";
+            if (array_key_exists('kids', $array)) {
+                if ($nestedCount[$targetDepth] > count($array['kids'])) {
+                    $array['kids'][] = $newArray;
+                    $array['content'] .= "[[REPLACE_LIST_ITEM]]";
+                }
+                
+                // continue to the next depth
+                $thisDepth++;
+
+                // get last kid and send to next depth
+
+                $this->addStringToArrayByDepth(
+                    $word,
+                    $array['kids'][count($array['kids']) - 1],
+                    $targetDepth,
+                    $thisDepth,
+                    $nestedCount
+                );
+                
+            } else {
+                $this->dump($array, "================PREP");
+                if ($nestedCount[$targetDepth] > count($array[count($array) - 1]['kids'])) {
+                    $array[count($array) - 1]['kids'][] = $newArray;
+                    $array[count($array) - 1]['content'] .= "[[REPLACE_LIST_ITEM]]";
+                }
+                $this->dump($array, "================POSTPREP");
+                // continue to the next depth
+                $thisDepth++;
+
+                // get last kid and send to next depth
+
+                $this->addStringToArrayByDepth(
+                    $word,
+                    $array[count($array) - 1]['kids'][count($array[count($array) - 1]['kids']) - 1],
+                    $targetDepth,
+                    $thisDepth,
+                    $nestedCount
+                );
             }
-            // continue to the next depth
-            $thisDepth++;
-            
-            // get last kid and send to next depth
-            
-            $this->addStringToArrayByDepth($word, $array['kids'][count($array['kids']) - 1], $targetDepth, $thisDepth, $nestedCount);
         }
         /* Structure
          * $matches = array(
