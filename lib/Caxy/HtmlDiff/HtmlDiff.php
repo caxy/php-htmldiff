@@ -196,21 +196,22 @@ class HtmlDiff extends AbstractDiff
         $matches = array();
         $wrapStart = '';
         $wrapEnd = '';
+        //preg_match_all($pattern, $newText, $testmatches); var_dump($testmatches);
         if (preg_match_all($pattern, $newText, $matches)) {
-            $wrapStart = $matches[0][0];
-            $wrapEnd = $matches[0][1];
+            $wrapStart = count($matches[0]) ? $matches[0][0] : '';
+            $wrapEnd = count($matches[0]) > 1 ? $matches[0][1] : '';
         }
         $oldText = preg_replace($pattern, '', $oldText);
         $newText = preg_replace($pattern, '', $newText);
 
-        $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->isolatedDiffTags, $this->groupDiffs);
+        $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
 
         return $wrapStart . $diff->build() . $wrapEnd;
     }
     
     protected function diffList($oldText, $newText)
     {
-        $diff = new ListDiff($oldText, $newText, $this->encoding, $this->isolatedDiffTags, $this->groupDiffs);
+        $diff = new ListDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
         return $diff->build();
     }
 
@@ -218,20 +219,38 @@ class HtmlDiff extends AbstractDiff
     {
         $result = array();
         foreach ($this->newWords as $pos => $s) {
+            
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
+                
                 if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                    
                     $oldText = implode("", $this->findIsolatedDiffTagsInOld($operation, $pos));
                     $newText = implode("", $this->newIsolatedDiffTags[$pos]);
-                    $type = in_array($s, array($this->isolatedDiffTags['ol'], $this->isolatedDiffTags['dl'], $this->isolatedDiffTags['ul']))
-                        ? "List"
-                        : "Elements";
-                    $result[] = $this->{'diff' . $type}($oldText, $newText);
+                    
+                    if ($this->isListPlaceholder($s)) {
+                        $result[] = $this->diffList($oldText, $newText);
+                    } else {
+                        $result[] = $this->diffElements($oldText, $newText);
+                    }
                 } else {
                     $result[] = $s;
                 }
             }
         }
         $this->content .= implode( "", $result );
+    }
+    
+    protected function isListPlaceholder($text)
+    {
+        if (in_array($text, array(
+            $this->isolatedDiffTags['ol'],
+            $this->isolatedDiffTags['dl'],
+            $this->isolatedDiffTags['ul']
+        ))) {
+            return true;
+        }
+        
+        return false;
     }
 
     protected function findIsolatedDiffTagsInOld($operation, $posInNew)

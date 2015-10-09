@@ -22,6 +22,8 @@ class ListDiff extends HtmlDiff
     /**
      * We're using the same functions as the parent in build() to get us to the point of 
      * manipulating the data within this class.
+     * 
+     * @return string
      */
     public function build()
     {
@@ -67,10 +69,9 @@ class ListDiff extends HtmlDiff
      */
     protected function formatThisListContent()
     {
-        //var_dump($this->oldIsolatedDiffTags);
         foreach ($this->oldIsolatedDiffTags as $key => $diffTagArray) {
-            $openingTag = preg_replace("/[^A-Za-z0-9 ]/", '', $diffTagArray[0]);
-            $closingTag = preg_replace("/[^A-Za-z0-9 ]/", '', $diffTagArray[count($diffTagArray) - 1]);
+            $openingTag = $this->getAndStripTag($diffTagArray[0]);
+            $closingTag = $this->getAndStripTag($diffTagArray[count($diffTagArray) - 1]);
             
             if (array_key_exists($openingTag, $this->isolatedDiffTags) && 
                 array_key_exists($closingTag, $this->isolatedDiffTags)
@@ -84,7 +85,12 @@ class ListDiff extends HtmlDiff
                 $this->list['new'] = $this->newIsolatedDiffTags[$key];
             }
         }
-        //var_dump($this->list);
+    }
+    
+    protected function getAndStripTag($tag)
+    {
+        $content = explode(' ', preg_replace("/[^A-Za-z0-9 ]/", '', $tag));
+        return $content[0];
     }
     
     protected function matchAndCompareLists()
@@ -114,8 +120,7 @@ class ListDiff extends HtmlDiff
         // Always compare the new against the old.
         // Compare each new string against each old string.
         $bestMatchPercentages = array();
-        //$this->dump($this->childLists['new'], '=========NEW comparechildlists');
-        //$this->dump($this->childLists['old'], '=========OLD comparechildlists');
+        
         foreach ($this->childLists['new'] as $thisKey => $thisList) {
             $bestMatchPercentages[$thisKey] = array();
             foreach ($this->childLists['old'] as $thatKey => $thatList) {
@@ -203,7 +208,6 @@ class ListDiff extends HtmlDiff
         
         // Save the matches.
         $this->textMatches = $matches;
-        //$this->dump($this->textMatches);
     }
     
     /**
@@ -223,20 +227,10 @@ class ListDiff extends HtmlDiff
     {
         // Add the opening parent node from listType. So if ol, <ol>, etc.
         $this->content = $this->addListTypeWrapper();
-        //$this->dump($this->textMatches, "============ THE TEXT MATCHES");
-        //$this->dump($this->childLists, " XXX CHILD LISTS XXX");
         foreach ($this->textMatches as $key => $matches) {
-            //$this->dump($matches, " ////////// matches prep");
+            
             $oldText = $matches['old'] !== null ? $this->childLists['old'][$matches['old']] : '';
             $newText = $matches['new'] !== null ? $this->childLists['new'][$matches['new']] : '';
-            //$this->dump($oldText, " Old Text");
-            //$this->dump($newText, " New Text");
-            //$this->dump($this->convertListContentArrayToString($oldText), " +++++++++++ CONTENT TO STRING OLD");
-            //$this->dump($this->convertListContentArrayToString($newText), " +++++++++++ CONTENT TO STRING NEW");
-            /*$this->dump($this->diffElements(
-                $this->convertListContentArrayToString($oldText),
-                $this->convertListContentArrayToString($newText)
-            ), " ====== DIFF ELEMENTS");*/
             
             // Add the opened and closed the list
             $this->content .= "<li>";
@@ -264,7 +258,7 @@ class ListDiff extends HtmlDiff
         
         $content = array();
         $listString = '[[REPLACE_LIST_ITEM]]';
-        ////$this->dump($listContentArray, "=================++++++WHAT IS IT");
+        
         $words = explode(" ", $listContentArray['content']);
         $nestedListCount = 0;
         foreach ($words as $word) {
@@ -288,7 +282,7 @@ class ListDiff extends HtmlDiff
      */
     protected function processPlaceholders($text, array $matches)
     {
-        //$this->dump(func_get_args(), "================= processPlaceholders function");
+        $this->dump("============================= PROCESS PLACEHOLDERS");
         // Prepare return
         $returnText = array();
         // Save the contents of all list nodes, new and old.
@@ -297,11 +291,11 @@ class ListDiff extends HtmlDiff
             'new' => $this->getListContent('new', $matches)
         );
         
-        //$this->dump($contentVault, "==============CONTENT VAULT"); //die;
+        $this->dump($contentVault, '================= content vault');
+        $this->dump($matches, '================== matches');
         
         $count = 0;
         // Loop through the text checking for placeholders. If a nested list is found, create a new ListDiff object for it.
-        //$this->dump($text, " ----------- PRECONTENT PLACEHOLDER TEXT ");
         foreach (explode(' ', $text) as $word) {
             $preContent = $this->checkWordForDiffTag($this->stripNewLine($word));
             
@@ -310,8 +304,6 @@ class ListDiff extends HtmlDiff
                     $this->isolatedDiffTags
                 )
             ) {
-                //$this->dump($word, " ----------- WORD ");
-                //$this->dump($preContent, " ----------- PRECONTENT PLACEHOLDER ");
                 $oldText = implode('', $contentVault['old'][$count]);
                 $newText = implode('', $contentVault['new'][$count]);
                 $content = $this->diffList($oldText, $newText);
@@ -358,38 +350,29 @@ class ListDiff extends HtmlDiff
      */
     protected function getListContent($indexKey = 'new', array $matches)
     {
-        //$this->dump(func_get_args(), " ------------  GET LIST CONTENT FUNCTION -------------- ");
-        /*if ($matches == array('new' => 3, 'old' => 3)) {
-            //$this->dump($this->listsIndex, '---------- FULL LIST INDEX --------');
-            //$this->dump($this->list, "---------------------- FULL LIST");
-            //$this->dump($this->listsIndex[$indexKey][$matches[$indexKey]], '---------- START --------');
-            //$this->dump(array_key_exists(($matches[$indexKey] + 1), $this->listsIndex[$indexKey])
-            ? $this->listsIndex[$indexKey][$matches[$indexKey] + 1]
-            : $this->findEndForIndex($this->list[$indexKey], $this->listsIndex[$indexKey][$matches[$indexKey]], true), '---------- STOP --------');
-            //$this->dump($this->isolatedDiffTags, "==== ISOLATED DIFF TAGS ==== ");
-        }*/
+        $this->dump("============================= GET LIST CONTENT FUNCTION");
+        $this->dump($indexKey, "=========== indexKey");
+        $this->dump($matches, "======== MATCHES");
+        $this->dump($matches[$indexKey], "============= \$matches[\$indexKey] value");
+        $this->dump($this->listsIndex[$indexKey], "================ listsIndex[indexKey]");
         $bucket = array();
         $start = $this->listsIndex[$indexKey][$matches[$indexKey]];
         $stop = array_key_exists(($matches[$indexKey] + 1), $this->listsIndex[$indexKey])
             ? $this->listsIndex[$indexKey][$matches[$indexKey] + 1]
             : $this->findEndForIndex($this->list[$indexKey], $start);
         
-        //$this->dump(array('type' => $indexKey, 'start' => $start, 'stop' => $stop), " AHHHHHHHHHHHHHHHHHHHHHHHHH");
-        //$this->dump($this->list[$indexKey]);
         for ($x = $start; $x < $stop; $x++) {
             if (in_array($this->list[$indexKey][$x], $this->isolatedDiffTags)) {
                 $bucket[] = $this->listIsolatedDiffTags[$indexKey][$x]; 
             }
         }
         
-         //$this->dump($bucket, " ------------  GET LIST BUCKET -------------- ");
         return $bucket;
     }
     
-    protected function findEndForIndex($index, $start, $debug = false)
+    protected function findEndForIndex($index, $start)
     {
         $array = array_splice($index, $start);
-        //if ($debug) {//$this->dump($array, "SPLICE ------------");}
         $count = 0;
         foreach ($array as $key => $item) {
             if ($this->isOpeningListTag($item)) {
@@ -398,10 +381,6 @@ class ListDiff extends HtmlDiff
             
             if ($this->isClosingListTag($item)) {
                 $count--;
-                if ($debug) {
-                    //$this->dump($start ." + ". $key, "FOUND FOR END OF INDEX");
-                    //$this->dump($item, "ITEM");
-                }
                 if ($count === 0) {
                     return $start + $key;
                 }
@@ -419,7 +398,6 @@ class ListDiff extends HtmlDiff
      */
     protected function indexLists()
     {
-        //$this->dump($this->list, " INDEX LISTS ACTUAL LIST HELPER");
         $this->listsIndex = array();
         $count = 0;
         foreach ($this->list as $type => $list) {
@@ -436,12 +414,8 @@ class ListDiff extends HtmlDiff
                 if ($this->isClosingListTag($listItem)) {
                     $count--;
                 }
-                
-                ////$this->dump(array('c' => $count, 'i' => $listItem), "RESULT");
             }
         }
-        
-        ////$this->dump($this->listsIndex, " = ================ END OF INDEX LISTS FUNCTION"); die;
     }
     
     /**
@@ -479,39 +453,24 @@ class ListDiff extends HtmlDiff
                 } else {
                     $nestedCount[$arrayDepth]++;
                 }
-                ////$this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '++', 'word' => $word, 'changed' => $changed), $status);
                 continue;
             }
             
             if ($this->isClosingListTag($word)) {
                 $arrayDepth--;
-                ////$this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '--', 'word' => $word, 'changed' => $changed), $status);
                 continue;
             } 
             
             if ($arrayDepth > 0) {
-                ////$this->dump(array('arrayDepth' => $arrayDepth, 'prev' => $previousDepth, 'action' => '==', 'word' => $word, 'changed' => $changed), $status);
                 $this->addStringToArrayByDepth($word, $lematches, $arrayDepth, 1, $nestedCount);
-                ////$this->dump($lematches, '---------- total array at end of this loop ---------');
             }
         }
         
-        ////$this->dump($lematches);
-        //die;
-        //var_dump($contentArray);
-        //var_dump(implode('', $contentArray));
-        preg_match_all('/<li>(.*?)<\/li>/s', implode('', $contentArray), $matches);
-        //$this->dump($matches, "================== OLD LIST CONTENT");
-        //$this->dump($lematches, "================== NEW LIST CONTENT");
-        ////$this->dump($matches[intval($stripTags)], 'XXXXXXXXXXXXXXXXx - matches dump');
         return $lematches;
     }
     
     protected function addStringToArrayByDepth($word, &$array, $targetDepth, $thisDepth, $nestedCount)
     {
-        ////$this->dump(func_get_args(), '============ addstringfunction vars');
-        ////$this->dump($array); 
-        
         // determine what depth we're at
         if ($targetDepth == $thisDepth) {
             // decide on what to do at this level
@@ -527,7 +486,6 @@ class ListDiff extends HtmlDiff
                 $array[count($array) - 1]['content'] .= $word;
             }
             
-            ////$this->dump($array, '========= ADDED CONTENT TO THIS ARRAY ==========');
         } else {
             
             // create first kid if not exist
@@ -553,12 +511,10 @@ class ListDiff extends HtmlDiff
                 );
                 
             } else {
-                ////$this->dump($array, "================PREP");
                 if ($nestedCount[$targetDepth] > count($array[count($array) - 1]['kids'])) {
                     $array[count($array) - 1]['kids'][] = $newArray;
                     $array[count($array) - 1]['content'] .= "[[REPLACE_LIST_ITEM]]";
                 }
-                ////$this->dump($array, "================POSTPREP");
                 // continue to the next depth
                 $thisDepth++;
 
@@ -573,33 +529,6 @@ class ListDiff extends HtmlDiff
                 );
             }
         }
-        /* Structure
-         * $matches = array(
-         *      0 = array(
-         *          content => string,
-         *          kids => array(
-         *              content => string,
-         *              kids => array(...)
-         *          )
-         *      )
-         * )
-         * 
-         
-        ////$this->dump(func_get_args(), "======func args========");
-        
-        if ($depth === 1) {
-            if ($changed && $previousDepth > $depth) {
-                
-            } else {
-                $array[] = array('content' => '', 'kids' => array());
-            }
-                $array[count($array) - 1]['content'] .= $word;
-            
-        } else {
-            $depth--;
-            //$this->dump($array, "---------------DOWN");
-            $this->addStringToArrayByDepth($word, $array, $depth, $changed, true);
-        }*/
     }
     
     protected function dump($content, $text = null)
