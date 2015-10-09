@@ -12,7 +12,7 @@ class ListDiff extends HtmlDiff
         'ul' => '[[REPLACE_UNORDERED_LIST]]',
         'dl' => '[[REPLACE_DEFINITION_LIST]]',
     );
-    
+    protected static $listPlaceHolder = "[[REPLACE_LIST_ITEM]]";
     protected $listType; // holds the type of list this is ol, ul, dl
     protected $list; // hold the old/new content of the content of the list
     protected $childLists; // contains the old/new child lists content within this list
@@ -257,12 +257,11 @@ class ListDiff extends HtmlDiff
         }
         
         $content = array();
-        $listString = '[[REPLACE_LIST_ITEM]]';
         
         $words = explode(" ", $listContentArray['content']);
         $nestedListCount = 0;
         foreach ($words as $word) {
-            $match = $word == $listString;
+            $match = $word == self::$listPlaceHolder;
             
             $content[] = $match 
                 ? "<li>" . $this->convertListContentArrayToString($listContentArray['kids'][$nestedListCount]) . "</li>"
@@ -282,7 +281,6 @@ class ListDiff extends HtmlDiff
      */
     protected function processPlaceholders($text, array $matches)
     {
-        $this->dump("============================= PROCESS PLACEHOLDERS");
         // Prepare return
         $returnText = array();
         // Save the contents of all list nodes, new and old.
@@ -290,9 +288,6 @@ class ListDiff extends HtmlDiff
             'old' => $this->getListContent('old', $matches),
             'new' => $this->getListContent('new', $matches)
         );
-        
-        $this->dump($contentVault, '================= content vault');
-        $this->dump($matches, '================== matches');
         
         $count = 0;
         // Loop through the text checking for placeholders. If a nested list is found, create a new ListDiff object for it.
@@ -350,11 +345,6 @@ class ListDiff extends HtmlDiff
      */
     protected function getListContent($indexKey = 'new', array $matches)
     {
-        $this->dump("============================= GET LIST CONTENT FUNCTION");
-        $this->dump($indexKey, "=========== indexKey");
-        $this->dump($matches, "======== MATCHES");
-        $this->dump($matches[$indexKey], "============= \$matches[\$indexKey] value");
-        $this->dump($this->listsIndex[$indexKey], "================ listsIndex[indexKey]");
         $bucket = array();
         $start = $this->listsIndex[$indexKey][$matches[$indexKey]];
         $stop = array_key_exists(($matches[$indexKey] + 1), $this->listsIndex[$indexKey])
@@ -442,7 +432,6 @@ class ListDiff extends HtmlDiff
     {
         $lematches = array();
         $arrayDepth = 0;
-        $status = "//////////////////// STATUS \\\\\\\\\\\\\\\\\\\\\\";
         $nestedCount = array();
         foreach ($contentArray as $index => $word) {
             
@@ -494,7 +483,7 @@ class ListDiff extends HtmlDiff
             if (array_key_exists('kids', $array)) {
                 if ($nestedCount[$targetDepth] > count($array['kids'])) {
                     $array['kids'][] = $newArray;
-                    $array['content'] .= "[[REPLACE_LIST_ITEM]]";
+                    $array['content'] .= self::$listPlaceHolder;
                 }
                 
                 // continue to the next depth
@@ -513,7 +502,7 @@ class ListDiff extends HtmlDiff
             } else {
                 if ($nestedCount[$targetDepth] > count($array[count($array) - 1]['kids'])) {
                     $array[count($array) - 1]['kids'][] = $newArray;
-                    $array[count($array) - 1]['content'] .= "[[REPLACE_LIST_ITEM]]";
+                    $array[count($array) - 1]['content'] .= self::$listPlaceHolder;
                 }
                 // continue to the next depth
                 $thisDepth++;
@@ -529,19 +518,6 @@ class ListDiff extends HtmlDiff
                 );
             }
         }
-    }
-    
-    protected function dump($content, $text = null)
-    {
-        ini_set('xdebug.var_display_max_depth', '10');
-        ini_set('xdebug.var_display_max_data', '4096');
-        ini_set('xdebug.max_nesting_level', '200');
-        ini_set('xdebug.var_display_max_children', 256);
-        if ($text) {
-            var_dump($text);
-        }
-        
-        var_dump($content);
     }
     
     protected function isOpeningListTag($item)

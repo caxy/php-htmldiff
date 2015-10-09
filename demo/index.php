@@ -3,7 +3,7 @@
 use Caxy\HtmlDiff\HtmlDiff;
 
 ini_set('display_errors', 1);
-error_reporting(E_ALL);
+error_reporting(E_ERROR);
 
 $classes = array(
     'Caxy/HtmlDiff/AbstractDiff',
@@ -21,16 +21,11 @@ $input = file_get_contents('php://input');
 
 if ($input) {
     $data = json_decode($input, true);
-    $diff = new HtmlDiff($_POST['oldText'], $_POST['newText'], 'UTF-8', array());
+    $diff = new HtmlDiff($data['oldText'], $data['newText'], 'UTF-8', array());
     $diff->build();
-    try{
-        echo $diff->build();
-    } catch (Exception $e) {
-        echo $e->getMessage();
-    }
 
-    //header('Content-Type: application/json');
-    //echo json_encode(array('diff' => $diff->getDifference()));
+    header('Content-Type: application/json');
+    echo json_encode(array('diff' => $diff->getDifference()));
 } else {
     header('Content-Type: text/html');
     echo file_get_contents('demo.html');
