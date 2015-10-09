@@ -4,20 +4,57 @@ namespace Caxy\HtmlDiff;
 
 class ListDiff extends HtmlDiff
 {
+    /** @var array */
     protected $listWords = array();
+    
+    /** @var array */
     protected $listTags = array();
+    
+    /** @var array */
     protected $listIsolatedDiffTags = array();
+    
+    /** @var array */
     protected $isolatedDiffTags = array (
         'ol' => '[[REPLACE_ORDERED_LIST]]',
         'ul' => '[[REPLACE_UNORDERED_LIST]]',
         'dl' => '[[REPLACE_DEFINITION_LIST]]',
     );
+    
+    /**
+     * List (li) placeholder.
+     * @var string
+     */
     protected static $listPlaceHolder = "[[REPLACE_LIST_ITEM]]";
-    protected $listType; // holds the type of list this is ol, ul, dl
-    protected $list; // hold the old/new content of the content of the list
-    protected $childLists; // contains the old/new child lists content within this list
-    protected $textMatches; // contains the old/new text strings that match
-    protected $listsIndex; // contains the indexed start positions of each list within word string.
+    
+    /** 
+     * Holds the type of list this is ol, ul, dl.
+     * @var string
+     */
+    protected $listType;
+    
+    /**
+     * Hold the old/new content of the content of the list.
+     * @var array
+     */
+    protected $list;
+    
+    /** 
+     * Contains the old/new child lists content within this list.
+     * @var array
+     */
+    protected $childLists;
+    
+    /**
+     * Contains the old/new text strings that match
+     * @var array
+     */
+    protected $textMatches;
+    
+    /**
+     * Contains the indexed start positions of each list within word string.
+     * @var array
+     */
+    protected $listsIndex;
     
     /**
      * We're using the same functions as the parent in build() to get us to the point of 
@@ -87,6 +124,10 @@ class ListDiff extends HtmlDiff
         }
     }
     
+    /**
+     * @param string $tag
+     * @return string
+     */
     protected function getAndStripTag($tag)
     {
         $content = explode(' ', preg_replace("/[^A-Za-z0-9 ]/", '', $tag));
@@ -250,6 +291,12 @@ class ListDiff extends HtmlDiff
         $this->content .= $this->addListTypeWrapper(false);
     }
     
+    /**
+     * Converts the list (li) content arrays to string.
+     * 
+     * @param array $listContentArray
+     * @return string
+     */
     protected function convertListContentArrayToString($listContentArray)
     {
         if (!is_array($listContentArray)) {
@@ -278,6 +325,10 @@ class ListDiff extends HtmlDiff
     /**
      * Return the contents of each list node.
      * Process any placeholders for nested lists.
+     * 
+     * @param string $text
+     * @param array $matches
+     * @return string
      */
     protected function processPlaceholders($text, array $matches)
     {
@@ -313,6 +364,12 @@ class ListDiff extends HtmlDiff
         return implode(' ', $returnText);
     }
     
+    /**
+     * Checks to see if a diff tag is in string.
+     * 
+     * @param string $word
+     * @return string
+     */
     protected function checkWordForDiffTag($word)
     {
         foreach ($this->isolatedDiffTags as $diffTag) {
@@ -334,6 +391,9 @@ class ListDiff extends HtmlDiff
     
     /**
      * Used to remove new lines.
+     * 
+     * @param string $text
+     * @return string
      */
     protected function stripNewLine($text)
     {
@@ -342,6 +402,10 @@ class ListDiff extends HtmlDiff
     
     /**
      * Grab the list content using the listsIndex array.
+     * 
+     * @param string $indexKey
+     * @param array $matches
+     * @return array
      */
     protected function getListContent($indexKey = 'new', array $matches)
     {
@@ -360,7 +424,14 @@ class ListDiff extends HtmlDiff
         return $bucket;
     }
     
-    protected function findEndForIndex($index, $start)
+    /**
+     * Finds the end of list within its index.
+     * 
+     * @param array $index
+     * @param integer $start
+     * @return integer
+     */
+    protected function findEndForIndex(array $index, $start)
     {
         $array = array_splice($index, $start);
         $count = 0;
@@ -410,6 +481,9 @@ class ListDiff extends HtmlDiff
     
     /**
      * Adds the opening or closing list html element, based on listType.
+     *
+     * @param boolean $opening
+     * @return string
      */
     protected function addListTypeWrapper($opening = true)
     {
@@ -427,6 +501,10 @@ class ListDiff extends HtmlDiff
     
     /**
      * Grab the contents of a list node.
+     *
+     * @param array $contentArray
+     * @param boolean $stripTags
+     * @return array
      */
     protected function getListsContent(array $contentArray, $stripTags = true)
     {
@@ -458,7 +536,19 @@ class ListDiff extends HtmlDiff
         return $lematches;
     }
     
-    protected function addStringToArrayByDepth($word, &$array, $targetDepth, $thisDepth, $nestedCount)
+    /**
+     * This function helps build the list content array of a list.
+     * If a list has another list within it, the inner list is replaced with the list placeholder and the inner list
+     * content becomes a child of the parent list.
+     * This goes recursively down.
+     * 
+     * @param string $word
+     * @param array $array
+     * @param integer $targetDepth
+     * @param integer $thisDepth
+     * @param array $nestedCount
+     */
+    protected function addStringToArrayByDepth($word, array &$array, $targetDepth, $thisDepth, array $nestedCount)
     {
         // determine what depth we're at
         if ($targetDepth == $thisDepth) {
@@ -500,6 +590,7 @@ class ListDiff extends HtmlDiff
                 );
                 
             } else {
+                
                 if ($nestedCount[$targetDepth] > count($array[count($array) - 1]['kids'])) {
                     $array[count($array) - 1]['kids'][] = $newArray;
                     $array[count($array) - 1]['content'] .= self::$listPlaceHolder;
@@ -520,6 +611,12 @@ class ListDiff extends HtmlDiff
         }
     }
     
+    /**
+     * Checks if text is opening list tag.
+     * 
+     * @param string $item
+     * @return boolean
+     */
     protected function isOpeningListTag($item)
     {
         if (preg_match("#<li[^>]*>\\s*#iU", $item)) {
@@ -528,7 +625,13 @@ class ListDiff extends HtmlDiff
 
         return false;
     }
-
+    
+    /**
+     * Check if text is closing list tag.
+     * 
+     * @param string $item
+     * @return boolean
+     */
     protected function isClosingListTag($item)
     {
         if (preg_match("#</li[^>]*>\\s*#iU", $item)) {
