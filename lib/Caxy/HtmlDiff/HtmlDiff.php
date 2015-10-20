@@ -16,7 +16,7 @@ class HtmlDiff extends AbstractDiff
         'dl' => '[[REPLACE_DEFINITION_LIST]]',
         'table' => '[[REPLACE_TABLE]]'
     );
-    
+
     /**
      * @param  boolean  $boolean
      * @return HtmlDiff
@@ -46,7 +46,7 @@ class HtmlDiff extends AbstractDiff
         foreach ($operations as $item) {
             $this->performOperation( $item );
         }
-        
+
         return $this->content;
     }
 
@@ -69,7 +69,7 @@ class HtmlDiff extends AbstractDiff
     {
         $this->oldIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->oldWords);
         $this->newIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->newWords);
-        
+
     }
 
     protected function createIsolatedDiffTagPlaceholders(&$words)
@@ -191,25 +191,28 @@ class HtmlDiff extends AbstractDiff
         $this->insertTag( "del", $cssClass, $text );
     }
 
-    protected function diffElements($oldText, $newText)
+    protected function diffElements($oldText, $newText, $stripWrappingTags = true)
     {
-        $pattern = '/(^<[^>]+>)|(<\/[^>]+>$)/i';
-        $matches = array();
         $wrapStart = '';
         $wrapEnd = '';
-        
-        if (preg_match_all($pattern, $newText, $matches)) {
-            $wrapStart = $matches[0][0];
-            $wrapEnd = $matches[0][1];
+
+        if ($stripWrappingTags) {
+            $pattern = '/(^<[^>]+>)|(<\/[^>]+>$)/i';
+            $matches = array();
+
+            if (preg_match_all($pattern, $newText, $matches)) {
+                $wrapStart = isset($matches[0][0]) ? $matches[0][0] : '';
+                $wrapEnd = isset($matches[0][1]) ? $matches[0][1] : '';
+            }
+            $oldText = preg_replace($pattern, '', $oldText);
+            $newText = preg_replace($pattern, '', $newText);
         }
-        $oldText = preg_replace($pattern, '', $oldText);
-        $newText = preg_replace($pattern, '', $newText);
 
         $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
 
         return $wrapStart . $diff->build() . $wrapEnd;
     }
-    
+
     protected function diffList($oldText, $newText)
     {
         $diff = new ListDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
@@ -220,13 +223,13 @@ class HtmlDiff extends AbstractDiff
     {
         $result = array();
         foreach ($this->newWords as $pos => $s) {
-            
+
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
                 if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
-                    
+
                     $oldText = implode("", $this->findIsolatedDiffTagsInOld($operation, $pos));
                     $newText = implode("", $this->newIsolatedDiffTags[$pos]);
-                    
+
                     if ($this->isListPlaceholder($s)) {
                         $result[] = $this->diffList($oldText, $newText);
                     } else {
@@ -239,7 +242,7 @@ class HtmlDiff extends AbstractDiff
         }
         $this->content .= implode( "", $result );
     }
-    
+
     protected function isListPlaceholder($text)
     {
         if (in_array($text, array(
@@ -249,7 +252,7 @@ class HtmlDiff extends AbstractDiff
         ))) {
             return true;
         }
-        
+
         return false;
     }
 
