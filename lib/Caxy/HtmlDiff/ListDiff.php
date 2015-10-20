@@ -240,7 +240,7 @@ class ListDiff extends HtmlDiff
          * Loop through all the old lists, any that has not been added, will be added as:
          * array( new => null, old => oldItemId )
          */
-        $matchColumns = array_column($matches, 'old');
+        $matchColumns = $this->getArrayColumn($matches, 'old');
         foreach ($this->childLists['old'] as $thisKey => $thisList) {
             if (!in_array($thisKey, $matchColumns)) {
                 $matches[] = array('new' => null, 'old' => $thisKey);
