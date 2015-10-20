@@ -8,7 +8,14 @@ class HtmlDiff extends AbstractDiff
     protected $insertSpaceInReplace = false;
     protected $newIsolatedDiffTags;
     protected $oldIsolatedDiffTags;
-    protected $isolatedDiffTags = array ('ol' => '[[REPLACE_ORDERED_LIST]]', 'ul' => '[[REPLACE_UNORDERED_LIST]]', 'sub' => '[[REPLACE_SUB_SCRIPT]]' , 'sup' => '[[REPLACE_SUPER_SCRIPT]]', 'dl' => '[[REPLACE_DEFINITION_LIST]]', 'table' => '[[REPLACE_TABLE]]');
+    protected $isolatedDiffTags = array (
+        'ol' => '[[REPLACE_ORDERED_LIST]]',
+        'ul' => '[[REPLACE_UNORDERED_LIST]]',
+        'sub' => '[[REPLACE_SUB_SCRIPT]]',
+        'sup' => '[[REPLACE_SUPER_SCRIPT]]',
+        'dl' => '[[REPLACE_DEFINITION_LIST]]',
+        'table' => '[[REPLACE_TABLE]]'
+    );
 
     /**
      * @param  boolean  $boolean
@@ -62,6 +69,7 @@ class HtmlDiff extends AbstractDiff
     {
         $this->oldIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->oldWords);
         $this->newIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->newWords);
+
     }
 
     protected function createIsolatedDiffTagPlaceholders(&$words)
@@ -183,39 +191,69 @@ class HtmlDiff extends AbstractDiff
         $this->insertTag( "del", $cssClass, $text );
     }
 
-    protected function diffElements($oldText, $newText)
+    protected function diffElements($oldText, $newText, $stripWrappingTags = true)
     {
-        $pattern = '/(^<[^>]+>)|(<\/[^>]+>$)/i';
-        $matches = array();
         $wrapStart = '';
         $wrapEnd = '';
-        if (preg_match_all($pattern, $newText, $matches)) {
-            $wrapStart = $matches[0][0];
-            $wrapEnd = $matches[0][1];
-        }
-        $oldText = preg_replace($pattern, '', $oldText);
-        $newText = preg_replace($pattern, '', $newText);
 
-        $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->isolatedDiffTags, $this->groupDiffs);
+        if ($stripWrappingTags) {
+            $pattern = '/(^<[^>]+>)|(<\/[^>]+>$)/i';
+            $matches = array();
+
+            if (preg_match_all($pattern, $newText, $matches)) {
+                $wrapStart = isset($matches[0][0]) ? $matches[0][0] : '';
+                $wrapEnd = isset($matches[0][1]) ? $matches[0][1] : '';
+            }
+            $oldText = preg_replace($pattern, '', $oldText);
+            $newText = preg_replace($pattern, '', $newText);
+        }
+
+        $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
 
         return $wrapStart . $diff->build() . $wrapEnd;
+    }
+
+    protected function diffList($oldText, $newText)
+    {
+        $diff = new ListDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
+        return $diff->build();
     }
 
     protected function processEqualOperation($operation)
     {
         $result = array();
         foreach ($this->newWords as $pos => $s) {
+
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
                 if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+
                     $oldText = implode("", $this->findIsolatedDiffTagsInOld($operation, $pos));
                     $newText = implode("", $this->newIsolatedDiffTags[$pos]);
-                    $result[] = $this->diffElements($oldText, $newText);
+
+                    if ($this->isListPlaceholder($s)) {
+                        $result[] = $this->diffList($oldText, $newText);
+                    } else {
+                        $result[] = $this->diffElements($oldText, $newText);
+                    }
                 } else {
                     $result[] = $s;
                 }
             }
         }
         $this->content .= implode( "", $result );
+    }
+
+    protected function isListPlaceholder($text)
+    {
+        if (in_array($text, array(
+            $this->isolatedDiffTags['ol'],
+            $this->isolatedDiffTags['dl'],
+            $this->isolatedDiffTags['ul']
+        ))) {
+            return true;
+        }
+
+        return false;
     }
 
     protected function findIsolatedDiffTagsInOld($operation, $posInNew)

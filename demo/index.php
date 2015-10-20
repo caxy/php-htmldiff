@@ -10,6 +10,7 @@ $classes = array(
     'Caxy/HtmlDiff/HtmlDiff',
     'Caxy/HtmlDiff/Match',
     'Caxy/HtmlDiff/Operation',
+    'Caxy/HtmlDiff/ListDiff'
 );
 
 foreach ($classes as $class) {
