@@ -197,7 +197,7 @@ class ListDiff extends HtmlDiff
                         break;
                     } else {
                         // Get all the other matces for the same $key
-                        $columns = array_column($bestMatchPercentages, $key);
+                        $columns = $this->getArrayColumn($bestMatchPercentages, $key);
                         $thisBestMatches = array_filter(
                             $columns,
                             function ($v) use ($percent) {
@@ -249,6 +249,24 @@ class ListDiff extends HtmlDiff
 
         // Save the matches.
         $this->textMatches = $matches;
+    }
+    
+    /**
+     * This fuction is exactly like array_column. This is added for PHP versions that do not support array_column.
+     * @param array $targetArray
+     * @param mixed $key
+     * @return array
+     */
+    protected function getArrayColumn(array $targetArray, $key)
+    {
+        $data = array();
+        foreach ($targetArray as $item) {
+            if (array_key_exists($key, $item)) {
+                $data[] = $item[$key];
+            }
+        }
+        
+        return $data;
     }
 
     /**
