@@ -4,6 +4,12 @@ namespace Caxy\HtmlDiff;
 
 class ListDiff extends HtmlDiff
 {
+    /**
+     * This is the minimum percentage a list item can match its counterpart in order to be considered a match.
+     * @var integer
+     */
+    protected static $listMatchThreshold = 50;
+    
     /** @var array */
     protected $listWords = array();
 
@@ -106,22 +112,42 @@ class ListDiff extends HtmlDiff
      */
     protected function formatThisListContent()
     {
-        foreach ($this->oldIsolatedDiffTags as $key => $diffTagArray) {
-            $openingTag = $this->getAndStripTag($diffTagArray[0]);
-            $closingTag = $this->getAndStripTag($diffTagArray[count($diffTagArray) - 1]);
-
-            if (array_key_exists($openingTag, $this->isolatedDiffTags) &&
-                array_key_exists($closingTag, $this->isolatedDiffTags)
-            ) {
-                $this->listType = $openingTag;
-                array_shift($this->oldIsolatedDiffTags[$key]);
-                array_pop($this->oldIsolatedDiffTags[$key]);
-                array_shift($this->newIsolatedDiffTags[$key]);
-                array_pop($this->newIsolatedDiffTags[$key]);
-                $this->list['old'] = $this->oldIsolatedDiffTags[$key];
-                $this->list['new'] = $this->newIsolatedDiffTags[$key];
-            }
+        $formatArray = array(
+            array('type' => 'old', 'array' => $this->oldIsolatedDiffTags),
+            array('type' => 'new', 'array' => $this->newIsolatedDiffTags)
+        );
+        
+        foreach ($formatArray as $item) {
+            $values = array_values($item['array']);
+            $this->list[$item['type']] = count($values)
+                ? $this->formatList($values[0], $item['type'])
+                : array();
         }
+    }
+    
+    /**
+     * 
+     * @param array $arrayData
+     * @param string $index
+     * @return array
+     */
+    protected function formatList(array $arrayData, $index = 'old')
+    {
+        $openingTag = $this->getAndStripTag($arrayData[0]);
+        $closingTag = $this->getAndStripTag($arrayData[count($arrayData) - 1]);
+        
+        if (array_key_exists($openingTag, $this->isolatedDiffTags) &&
+            array_key_exists($closingTag, $this->isolatedDiffTags)
+        ) {
+            if ($index == 'old') {
+                $this->listType = $this->getAndStripTag($arrayData[0]);
+            }
+            
+            array_shift($arrayData);
+            array_pop($arrayData);
+        }
+        
+        return $arrayData;
     }
 
     /**
@@ -206,22 +232,27 @@ class ListDiff extends HtmlDiff
                         );
 
                         arsort($thisBestMatches);
-
-                        // If no greater amounts, use this one.
-                        if (!count($thisBestMatches)) {
-                            $highestMatch = $percent;
-                            $highestMatchKey = $key;
-                            $takenItemKey = $item;
-                            break;
-                        }
-
-                        // Loop through, comparing only the items that have not already been added.
-                        foreach ($thisBestMatches as $k => $v) {
-                            if (in_array($k, $takenItems)) {
+                        
+                        /**
+                         * If the list item does not meet the threshold, it will not be considered a match.
+                         */
+                        if ($percent >= self::$listMatchThreshold) {
+                            // If no greater amounts, use this one.
+                            if (!count($thisBestMatches)) {
                                 $highestMatch = $percent;
                                 $highestMatchKey = $key;
                                 $takenItemKey = $item;
-                                break(2);
+                                break;
+                            }
+
+                            // Loop through, comparing only the items that have not already been added.
+                            foreach ($thisBestMatches as $k => $v) {
+                                if (in_array($k, $takenItems)) {
+                                    $highestMatch = $percent;
+                                    $highestMatchKey = $key;
+                                    $takenItemKey = $item;
+                                    break(2);
+                                }
                             }
                         }
                     }
@@ -350,7 +381,7 @@ class ListDiff extends HtmlDiff
      * @return string
      */
     protected function processPlaceholders($text, array $matches)
-    {
+    {        
         // Prepare return
         $returnText = array();
         // Save the contents of all list nodes, new and old.
@@ -358,19 +389,19 @@ class ListDiff extends HtmlDiff
             'old' => $this->getListContent('old', $matches),
             'new' => $this->getListContent('new', $matches)
         );
-
+        
         $count = 0;
         // Loop through the text checking for placeholders. If a nested list is found, create a new ListDiff object for it.
         foreach (explode(' ', $text) as $word) {
             $preContent = $this->checkWordForDiffTag($this->stripNewLine($word));
-
+            
             if (in_array(
                     is_array($preContent) ? $preContent[1] : $preContent,
                     $this->isolatedDiffTags
                 )
             ) {
-                $oldText = implode('', $contentVault['old'][$count]);
-                $newText = implode('', $contentVault['new'][$count]);
+                $oldText = array_key_exists($count, $contentVault['old']) ? implode('', $contentVault['old'][$count]) : '';
+                $newText = array_key_exists($count, $contentVault['new']) ? implode('', $contentVault['new'][$count]) : '';
                 $content = $this->diffList($oldText, $newText);
                 $count++;
             } else {
@@ -427,22 +458,21 @@ class ListDiff extends HtmlDiff
      * @return array
      */
     protected function getListContent($indexKey = 'new', array $matches)
-    {
+    {        
         $bucket = array();
 
         if (isset($matches[$indexKey]) && $matches[$indexKey] !== null) {
             $start = $this->listsIndex[$indexKey][$matches[$indexKey]];
-            $stop = array_key_exists(($matches[$indexKey] + 1), $this->listsIndex[$indexKey])
-                ? $this->listsIndex[$indexKey][$matches[$indexKey] + 1]
-                : $this->findEndForIndex($this->list[$indexKey], $start);
-
-            for ($x = $start; $x < $stop; $x++) {
+            $stop = $this->findEndForIndex($this->list[$indexKey], $start);
+            
+            for ($x = $start; $x <= $stop; $x++) {
+                
                 if (in_array($this->list[$indexKey][$x], $this->isolatedDiffTags)) {
                     $bucket[] = $this->listIsolatedDiffTags[$indexKey][$x];
                 }
             }
         }
-
+        
         return $bucket;
     }
 
