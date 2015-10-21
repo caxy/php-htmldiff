@@ -4,6 +4,12 @@ namespace Caxy\HtmlDiff;
 
 class ListDiff extends HtmlDiff
 {
+    /**
+     * This is the minimum percentage a list item can match its counterpart in order to be considered a match.
+     * @var integer
+     */
+    protected static $listMatchThreshold = 50;
+    
     /** @var array */
     protected $listWords = array();
 
@@ -226,22 +232,27 @@ class ListDiff extends HtmlDiff
                         );
 
                         arsort($thisBestMatches);
-
-                        // If no greater amounts, use this one.
-                        if (!count($thisBestMatches)) {
-                            $highestMatch = $percent;
-                            $highestMatchKey = $key;
-                            $takenItemKey = $item;
-                            break;
-                        }
-
-                        // Loop through, comparing only the items that have not already been added.
-                        foreach ($thisBestMatches as $k => $v) {
-                            if (in_array($k, $takenItems)) {
+                        
+                        /**
+                         * If the list item does not meet the threshold, it will not be considered a match.
+                         */
+                        if ($percent >= self::$listMatchThreshold) {
+                            // If no greater amounts, use this one.
+                            if (!count($thisBestMatches)) {
                                 $highestMatch = $percent;
                                 $highestMatchKey = $key;
                                 $takenItemKey = $item;
-                                break(2);
+                                break;
+                            }
+
+                            // Loop through, comparing only the items that have not already been added.
+                            foreach ($thisBestMatches as $k => $v) {
+                                if (in_array($k, $takenItems)) {
+                                    $highestMatch = $percent;
+                                    $highestMatchKey = $key;
+                                    $takenItemKey = $item;
+                                    break(2);
+                                }
                             }
                         }
                     }
