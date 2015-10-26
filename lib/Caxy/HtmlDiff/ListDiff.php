@@ -37,6 +37,10 @@ class ListDiff extends HtmlDiff
      * @var string
      */
     protected $listType;
+    
+    protected $oldListType;
+    
+    protected $newListType;
 
     /**
      * Hold the old/new content of the content of the list.
@@ -104,6 +108,25 @@ class ListDiff extends HtmlDiff
          */
         $this->diff();
     }
+    
+    protected function dump($asset, $string = '')
+    {
+        ini_set('xdebug.var_display_max_depth', 5);
+        ini_set('xdebug.var_display_max_children', 2000);
+        ini_set('xdebug.var_display_max_data', 1024);
+        
+        if ($string) {
+            $trueString = "======================= " . $string;
+            var_dump(strtoupper($trueString));
+        }
+        
+        var_dump($asset);
+        
+        if (isset($trueString)) {
+            $trueString .= " ========= END END END";
+            var_dump(strtoupper($trueString));
+        }
+    }
 
     /*
      * This function is used to remove the wrapped ul, ol, or dl characters from this list
@@ -123,6 +146,11 @@ class ListDiff extends HtmlDiff
                 ? $this->formatList($values[0], $item['type'])
                 : array();
         }
+        
+        $this->listType = $this->newListType ?: $this->oldListType;
+        
+        //$this->dump($this->listType, "This list type");
+        //$this->dump($this->list, "FORMATTHISLISTCONTENT");
     }
     
     /**
@@ -139,8 +167,12 @@ class ListDiff extends HtmlDiff
         if (array_key_exists($openingTag, $this->isolatedDiffTags) &&
             array_key_exists($closingTag, $this->isolatedDiffTags)
         ) {
-            if ($index == 'old') {
-                $this->listType = $this->getAndStripTag($arrayData[0]);
+            if ($index == 'new' && $this->isOpeningTag($arrayData[0])) {
+                $this->newListType = $this->getAndStripTag($arrayData[0]);
+            }
+            
+            if ($index == 'old' && $this->isOpeningTag($arrayData[0])) {
+                $this->oldListType = $this->getAndStripTag($arrayData[0]);
             }
             
             array_shift($arrayData);
@@ -307,6 +339,7 @@ class ListDiff extends HtmlDiff
     {
         $this->childLists['old'] = $this->getListsContent($this->list['old']);
         $this->childLists['new'] = $this->getListsContent($this->list['new']);
+        //$this->dump($this->childLists, "BuildChildLists");
     }
 
     /**
@@ -317,24 +350,103 @@ class ListDiff extends HtmlDiff
     {
         // Add the opening parent node from listType. So if ol, <ol>, etc.
         $this->content = $this->addListTypeWrapper();
-        foreach ($this->textMatches as $key => $matches) {
-
-            $oldText = $matches['old'] !== null ? $this->childLists['old'][$matches['old']] : '';
-            $newText = $matches['new'] !== null ? $this->childLists['new'][$matches['new']] : '';
-
-            // Add the opened and closed the list
-            $this->content .= "<li>";
-            // Process any placeholders, if they exist.
-            // Placeholders would be nested lists (a nested ol, ul, dl for example).
-            $this->content .= $this->processPlaceholders(
-                $this->diffElements(
-                    $this->convertListContentArrayToString($oldText),
-                    $this->convertListContentArrayToString($newText),
-                    false
-                ),
-                $matches
-            );
-            $this->content .= "</li>";
+        
+        $listDepth = 0;
+        $nestedCount = 0;
+        $oldNestedKeys = array_keys($this->listIsolatedDiffTags['old']);
+        $this->dump($this->listIsolatedDiffTags, "listisolateddifftags");
+        $newNestedKeys = array_keys($this->listIsolatedDiffTags['new']);
+        $this->dump(array('old'=>$oldNestedKeys, 'new'=>$newNestedKeys), "Nested list keys");
+        //$this->dump($this->list['new']);
+        foreach ($this->list['new'] as $key => $word) {
+            
+            /*if (in_array($key, $oldNestedKeys) || in_array($key, $newNestedKeys)) {
+                $this->dump($key, "Nested List Key");
+                $which = in_array($key, $oldNestedKeys) ? 'old' : 'new';
+                $other = $which == 'new' ? 'old' : 'new';
+                $this->dump($which, "WHICH");
+                $this->dump($other, "Other");
+                
+                $nestedNewList = implode($this->listIsolatedDiffTags[$which][$key]);
+                $nestedNewListKeyPosition = array_search(
+                    $key,
+                    $which == 'new' ? $newNestedKeys : $oldNestedKeys
+                );
+                
+                $this->dump($nestedNewList, "NestedNewList");
+                $nestedOldList = in_array($nestedNewListKeyPosition, $nestedKeys)
+                    ? implode('', $this->listIsolatedDiffTags[$other][$nestedKeys[$nestedNewListKeyPosition]])
+                    : '';
+                
+                $this->dump($nestedOldList, "NestedOldList");
+                
+                if (($which == "old" && $nestedNewList == '') ||
+                    ($which == "new" && $nestedOldList == '')
+                ) {
+                    $this->dump($nestedNewList, "NestedNewList");
+                    $this->dump($nestedOldList, "NestedOldList");
+                    $this->content .= $this->diffList($nestedOldList, $nestedNewList);
+                }
+                
+                continue;
+            }*/
+            
+            if ($listDepth && $this->isOpeningListTag($word)) {
+                $listDepth++;
+                continue;
+            } else if ($listDepth && $this->isClosingListTag($word)) {
+                $listDepth--;
+                continue;
+            } else if ($listDepth) {
+                continue;
+            }
+            
+            if ($this->isOpeningListTag($word)) {
+                $listIndexValue = array_search($key, $this->listsIndex['new']);
+                $newList = $this->childLists['new'][$listIndexValue];
+                
+                $textMatchKey = array_search($listIndexValue, array_column($this->textMatches, 'new'));
+                $oldList = $this->childLists['old'][$this->textMatches[$textMatchKey]['old']];
+                
+                $this->content .= "<li>";
+                $listResult = $this->processPlaceholders(
+                    $this->diffElements(
+                        $this->convertListContentArrayToString($oldList),
+                        $this->convertListContentArrayToString($newList),
+                        false
+                    ),
+                    $this->textMatches[$textMatchKey]
+                );
+                $this->content .= $listResult;
+                $this->content .= "</li>";
+                //$this->dump("<li>".$listResult."</li>", "List Result");
+                
+                $listDepth++;
+                continue;
+            }
+            
+            if (in_array($word, $this->isolatedDiffTags)) {
+                //$this->dump($key, "This word key");
+                //$this->dump($this->listIsolatedDiffTags['new'], "New ListIsolatedDiffTags");
+                $nestedNewList = implode($this->listIsolatedDiffTags['new'][$key]);
+                
+                
+                $nestedOldList = in_array($nestedCount, $nestedKeys)
+                    ? implode('', $this->listIsolatedDiffTags['old'][$nestedKeys[$nestedCount]])
+                    : '';
+                
+                $this->dump($nestedNewList, "NestedListContent - NEW");
+                $this->dump($nestedOldList, "NestedListContent - OLD");
+                $nestedOldList = '<ol class"testy"> <li>Hello, how are you</li> <li>You dont know the half of it</li> </ol>';
+                
+                //$this->dump($this->diffList($nestedOldList, $nestedNewList), "ul, ol, dl, LIST FOUND");
+                $this->content .= $this->diffList($nestedOldList, $nestedNewList);
+                //$this->dump($this->diffList($nestedOldList, $nestedNewList), "Nested List Result");
+                $nestedCount++;
+                continue;
+            }
+            
+            $this->content .= $word;
         }
 
         // Add the closing parent node from listType. So if ol, </ol>, etc.
@@ -549,6 +661,7 @@ class ListDiff extends HtmlDiff
     {
         $this->listIsolatedDiffTags['old'] = $this->createIsolatedDiffTagPlaceholders($this->list['old']);
         $this->listIsolatedDiffTags['new'] = $this->createIsolatedDiffTagPlaceholders($this->list['new']);
+        //$this->dump($this->listIsolatedDiffTags, "ListIsolatedDiffTags");
     }
 
     /**
@@ -564,7 +677,7 @@ class ListDiff extends HtmlDiff
         $arrayDepth = 0;
         $nestedCount = array();
         foreach ($contentArray as $index => $word) {
-
+            
             if ($this->isOpeningListTag($word)) {
                 $arrayDepth++;
                 if (!array_key_exists($arrayDepth, $nestedCount)) {

@@ -37,9 +37,12 @@ demo.controller('diffCtrl', ['$scope', '$http', '$sce', '$timeout', function ($s
         $scope.waiting = false;
         $scope.loading = true;
         $http.post('index.php', { oldText: $scope.oldText, newText: $scope.newText })
-            .success(function (data) {
-                $scope.diff = data.diff;
+            .then(function (response) {
+                $scope.diff = response.data.hasOwnProperty('diff') ? response.data.diff : response.data;
                 $scope.loading = false;
+            })
+            .catch(function (response) {
+                console.error('Gists error', response.status, response.data);
             });
     };
 
