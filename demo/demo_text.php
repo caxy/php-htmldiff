@@ -8,6 +8,7 @@ $demos = array(
 <li>Return air shall not be taken from a hazardous or insanitary location or a refrigeration room as defined in this code.</li>
 <li>The amount of return air taken from any room or space shall be not greater than the flow rate of supply air delivered to such room or space.</li>
 <li>Return and transfer openings shall be sized in accordance with the appliance or equipment manufacturer\'s installation instructions, ACCA Manual D or the design of the registered design professional.</li>
+<ol><li>This is me previously.</li></ol>
 <li>Return air taken from one dwelling unit shall not be discharged into another dwelling unit.</li>
 <li>Taking return air from a crawl space shall not be accomplished through a direct connection to the return side of a forced air furnace. Transfer openings in the crawl space enclosure shall not be prohibited.</li>
 <li>Return air shall not be taken from a closet, bathroom, toilet room, kitchen, garage, boiler room, furnace room or unconditioned attic.</li>
@@ -24,13 +25,10 @@ $demos = array(
 <ol>
 <li>Openings shall not be located less than 10 feet (3048 mm) measured in any direction from an open combustion chamber or draft hood of another appliance located in the same room or space.</li>
 <li>Return air shall not be taken from a hazardous or insanitary location or a refrigeration room as defined in this code.</li>
+<ol><li>This is me after the fact.</li></ol>
 <li>The amount of return air taken from any room or space shall be not greater than the flow rate of supply air delivered to such room or space.</li>
 <li>Return and transfer openings shall be sized in accordance with the appliance or equipment manufacturer\'s installation instructions, ACCA Manual D or the design of the registered design professional.</li>
 <li>Return air taken from one dwelling unit shall not be discharged into another dwelling unit.</li>
-<ol class"testy">
-<li>Hello, how are you</li>
-<li>You dont know the half of it</li>
-</ol>
 <li>Taking return air from a crawl space shall not be accomplished through a direct connection to the return side of a forced air furnace. Transfer openings in the crawl space enclosure shall not be prohibited.</li>
 <li>Return air shall not be taken from a closet, bathroom, toilet room, kitchen, garage, boiler room, furnace room or unconditioned attic.</li>
 </ol>
