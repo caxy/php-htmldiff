@@ -3,7 +3,7 @@
 use Caxy\HtmlDiff\HtmlDiff;
 
 ini_set('display_errors', 1);
-error_reporting(E_ERROR);
+error_reporting(E_ALL);
 
 $classes = array(
     'Caxy/HtmlDiff/AbstractDiff',
