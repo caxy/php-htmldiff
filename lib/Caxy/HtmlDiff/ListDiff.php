@@ -102,9 +102,8 @@ class ListDiff extends HtmlDiff
         $this->formatThisListContent();
         
         /* Build an index of content outside of list tags.
-         * Create an array of matches to be used when diffing.
          */
-        $this->matchAndCompareContent();
+        $this->indexContent();
         
         /* In cases where we're dealing with nested lists,
          * make sure we use placeholders to replace the nested lists
@@ -123,19 +122,10 @@ class ListDiff extends HtmlDiff
         $this->diff();
     }
     
-    protected function matchAndCompareContent()
-    {
-        $this->indexContent();
-        
-        $this->matchContent();
-    }
-    
     protected function indexContent()
     {
         $this->contentIndex = array();
         $this->diffOrderIndex = array();
-        $type = 'new';
-        $list = $this->list['new'];
         foreach ($this->list as $type => $list) {
             
             $this->contentIndex[$type] = array();
@@ -185,31 +175,6 @@ class ListDiff extends HtmlDiff
                 
                 $newBlock = false;
             }
-        }
-    }
-    
-    protected function matchContent()
-    {
-        $this->createNewOldMatches($this->contentIndex, $this->contentMatches);
-    }
-
-
-    protected function dump($asset, $string = '')
-    {
-        ini_set('xdebug.var_display_max_depth', 5);
-        ini_set('xdebug.var_display_max_children', 2000);
-        ini_set('xdebug.var_display_max_data', 1024);
-        
-        if ($string) {
-            $trueString = "======================= " . $string;
-            var_dump(strtoupper($trueString));
-        }
-        
-        var_dump($asset);
-        
-        if (isset($trueString)) {
-            $trueString .= " ========= END END END";
-            var_dump(strtoupper($trueString));
         }
     }
 
@@ -440,21 +405,20 @@ class ListDiff extends HtmlDiff
      * Build the content of the class.
      */
     protected function diff()
-    {
+    {        
         // Add the opening parent node from listType. So if ol, <ol>, etc.
         $this->content = $this->addListTypeWrapper();
         
-        // GOAL: Build the content and the lists.
-        // HOW?
-        // Cherry-pick the content between list nodes.
-        
-        foreach ($this->diffOrderIndex['new'] as $index) {
-            if ($index['type'] == 'list') {
-                $match = $this->textMatches[$index['position']];
+        $oldIndexCount = 0;
+        foreach ($this->diffOrderIndex['new'] as $key => $index) {
+            
+            if ($index['type'] == "list") {
+                $match = $this->getArrayByColumnValue($this->textMatches, 'new', $index['position']);
                 $newList = $this->childLists['new'][$match['new']];
                 $oldList = $this->childLists['old'][$match['old']];
-                $this->content .= "<li>";
-                $this->content .= $this->processPlaceholders(
+                
+                $content = "<li>";
+                $content .= $this->processPlaceholders(
                     $this->diffElements(
                         $this->convertListContentArrayToString($oldList),
                         $this->convertListContentArrayToString($newList),
@@ -462,20 +426,47 @@ class ListDiff extends HtmlDiff
                     ),
                     $match
                 );
-                $this->content .= "</li>"; //die;
-            } else {
-                $match = $this->contentMatches[$index['position']];
-                $newContent = $this->contentIndex['new'][$match['new']];
-                $oldContent = array_key_exists($match['old'], $this->contentIndex)
-                    ? $this->contentIndex['old'][$match['old']]
-                    : '';
-                $htmlDiff = new HtmlDiff($oldContent, $newContent);
-                $this->content .= $htmlDiff->build();
+                $content .= "</li>";
+                $this->content .= $content;
             }
+            
+            if ($index['type'] == 'content') {
+                $newContent = $this->contentIndex['new'][$index['position']];
+                
+                $oldDiffOrderIndexMatch = array_key_exists($oldIndexCount, $this->diffOrderIndex['old'])
+                    ? $this->diffOrderIndex['old'][$oldIndexCount]
+                    : false;
+                
+                $oldContent = $oldDiffOrderIndexMatch && array_key_exists($oldDiffOrderIndexMatch['position'], $this->contentIndex['old'])
+                    ? $this->contentIndex['old'][$oldDiffOrderIndexMatch['position']]
+                    : '';
+                
+                $diffObject = new HtmlDiff($oldContent, $newContent);
+                $content = $diffObject->build();
+                $this->content .= $content;
+            }
+            
+            $oldIndexCount++;
         }
 
         // Add the closing parent node from listType. So if ol, </ol>, etc.
         $this->content .= $this->addListTypeWrapper(false);
+    }
+    
+    protected function getArrayByColumnValue($parentArray, $column, $value, $allMatches = false)
+    {
+        $returnArray = array();
+        foreach ($parentArray as $array) {
+            if (array_key_exists($column, $array) && $array[$column] == $value) {
+                if ($allMatches) {
+                    $returnArray[] = $array;
+                } else {
+                    return $array;
+                }
+            }
+        }
+        
+        return $allMatches ? $returnArray : false;
     }
     
     protected function diffThisList($word, $key)
