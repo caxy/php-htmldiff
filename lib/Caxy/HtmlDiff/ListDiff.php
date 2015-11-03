@@ -415,7 +415,9 @@ class ListDiff extends HtmlDiff
             if ($index['type'] == "list") {
                 $match = $this->getArrayByColumnValue($this->textMatches, 'new', $index['position']);
                 $newList = $this->childLists['new'][$match['new']];
-                $oldList = $this->childLists['old'][$match['old']];
+                $oldList = array_key_exists($match['old'], $this->childLists['old'])
+                    ? $this->childLists['old'][$match['old']]
+                    : '';
                 
                 $content = "<li>";
                 $content .= $this->processPlaceholders(
@@ -435,7 +437,7 @@ class ListDiff extends HtmlDiff
                 
                 $oldDiffOrderIndexMatch = array_key_exists($oldIndexCount, $this->diffOrderIndex['old'])
                     ? $this->diffOrderIndex['old'][$oldIndexCount]
-                    : false;
+                    : '';
                 
                 $oldContent = $oldDiffOrderIndexMatch && array_key_exists($oldDiffOrderIndexMatch['position'], $this->contentIndex['old'])
                     ? $this->contentIndex['old'][$oldDiffOrderIndexMatch['position']]
