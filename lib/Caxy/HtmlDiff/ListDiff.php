@@ -2,6 +2,8 @@
 
 namespace Caxy\HtmlDiff;
 
+error_reporting(E_ALL);
+
 class ListDiff extends HtmlDiff
 {
     /**
@@ -125,7 +127,7 @@ class ListDiff extends HtmlDiff
     protected function indexContent()
     {
         $this->contentIndex = array();
-        $this->diffOrderIndex = array();
+        $this->diffOrderIndex = array('new' => array(), 'old' => array());
         foreach ($this->list as $type => $list) {
             
             $this->contentIndex[$type] = array();
@@ -406,6 +408,8 @@ class ListDiff extends HtmlDiff
      */
     protected function diff()
     {        
+        //$this->dump($this->diffOrderIndex, "diff order index");
+        //$this->dump($this->list, "list");
         // Add the opening parent node from listType. So if ol, <ol>, etc.
         $this->content = $this->addListTypeWrapper();
         
@@ -453,6 +457,25 @@ class ListDiff extends HtmlDiff
 
         // Add the closing parent node from listType. So if ol, </ol>, etc.
         $this->content .= $this->addListTypeWrapper(false);
+    }
+    
+    protected function dump($asset, $string = '')
+    {
+        ini_set('xdebug.var_display_max_depth', 5);
+        ini_set('xdebug.var_display_max_children', 2000);
+        ini_set('xdebug.var_display_max_data', 1024);
+        
+        if ($string) {
+            $trueString = "======================= " . $string;
+            var_dump(strtoupper($trueString));
+        }
+        
+        var_dump($asset);
+        
+        if (isset($trueString)) {
+            $trueString .= " ========= END END END";
+            var_dump(strtoupper($trueString));
+        }
     }
     
     protected function getArrayByColumnValue($parentArray, $column, $value, $allMatches = false)
