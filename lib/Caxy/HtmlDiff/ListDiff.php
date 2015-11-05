@@ -2,8 +2,6 @@
 
 namespace Caxy\HtmlDiff;
 
-error_reporting(E_ALL);
-
 class ListDiff extends HtmlDiff
 {
     /**
@@ -40,8 +38,16 @@ class ListDiff extends HtmlDiff
      */
     protected $listType;
     
+    /**
+     * Used to hold what type of list the old list is.
+     * @var string
+     */
     protected $oldListType;
     
+    /**
+     * Used to hold what type of list the new list is.
+     * @var string
+     */
     protected $newListType;
 
     /**
@@ -68,10 +74,16 @@ class ListDiff extends HtmlDiff
      */
     protected $listsIndex;
     
+    /**
+     * Array that holds the index of all content outside of the array. Format is array(index => content).
+     * @var array
+     */
     protected $contentIndex = array();
     
-    protected $contentMatches = array();
-    
+    /** 
+     * Holds the order and data on each list/content block within this list.
+     * @var array
+     */
     protected $diffOrderIndex = array();
 
     /**
@@ -124,6 +136,9 @@ class ListDiff extends HtmlDiff
         $this->diff();
     }
     
+    /**
+     * This function is used to populate both contentIndex and diffOrderIndex arrays for use in the diff function.
+     */
     protected function indexContent()
     {
         $this->contentIndex = array();
@@ -262,12 +277,23 @@ class ListDiff extends HtmlDiff
          */
         $this->compareChildLists();
     }
-
+    
+    /**
+     * Creates matches for lists.
+     */
     protected function compareChildLists()
     {
         $this->createNewOldMatches($this->childLists, $this->textMatches, 'content');
     }
     
+    /**
+     * Abstracted function used to match items in an array.
+     * This is used primarily for populating lists matches.
+     * 
+     * @param array $listArray
+     * @param array $resultArray
+     * @param string|null $column
+     */
     protected function createNewOldMatches(&$listArray, &$resultArray, $column = null)
     {
         // Always compare the new against the old.
@@ -408,8 +434,6 @@ class ListDiff extends HtmlDiff
      */
     protected function diff()
     {        
-        //$this->dump($this->diffOrderIndex, "diff order index");
-        //$this->dump($this->list, "list");
         // Add the opening parent node from listType. So if ol, <ol>, etc.
         $this->content = $this->addListTypeWrapper();
         
@@ -459,25 +483,15 @@ class ListDiff extends HtmlDiff
         $this->content .= $this->addListTypeWrapper(false);
     }
     
-    protected function dump($asset, $string = '')
-    {
-        ini_set('xdebug.var_display_max_depth', 5);
-        ini_set('xdebug.var_display_max_children', 2000);
-        ini_set('xdebug.var_display_max_data', 1024);
-        
-        if ($string) {
-            $trueString = "======================= " . $string;
-            var_dump(strtoupper($trueString));
-        }
-        
-        var_dump($asset);
-        
-        if (isset($trueString)) {
-            $trueString .= " ========= END END END";
-            var_dump(strtoupper($trueString));
-        }
-    }
-    
+    /**
+     * This function replaces array_column function in PHP for older versions of php.
+     * 
+     * @param array $parentArray
+     * @param string $column
+     * @param mixed $value
+     * @param boolean $allMatches
+     * @return array|boolean
+     */
     protected function getArrayByColumnValue($parentArray, $column, $value, $allMatches = false)
     {
         $returnArray = array();
@@ -492,41 +506,6 @@ class ListDiff extends HtmlDiff
         }
         
         return $allMatches ? $returnArray : false;
-    }
-    
-    protected function diffThisList($word, $key)
-    {
-        $listIndexValue = $this->getListIndexValue($key);
-        $newList = $this->childLists['new'][$listIndexValue];
-
-        $textMatchKey = $this->getTextMatchKey($listIndexValue);
-        $oldList = $this->childLists['old'][$this->textMatches[$textMatchKey]['old']];
-        
-        return $this->processPlaceholders(
-            $this->diffElements(
-                $this->convertListContentArrayToString($oldList),
-                $this->convertListContentArrayToString($newList),
-                false
-            ),
-            $this->textMatches[$textMatchKey]
-        );
-    }
-    
-    protected function getListIndexValue($key, $type = 'new')
-    {
-        return array_search($key, $this->listsIndex[$type]);
-    }
-    
-    protected function getTextMatchKey($listIndexValue, $type = 'new')
-    {
-        return array_search($listIndexValue, array_column($this->textMatches, $type));
-    }
-    
-    protected function getListByMatchKey($textMatchKey, $type = 'old')
-    {
-        return array_key_exists($textMatchKey, $this->textMatches)
-            ? $this->childLists[$type][$this->textMatches[$textMatchKey][$type]]
-            : '';
     }
 
     /**
