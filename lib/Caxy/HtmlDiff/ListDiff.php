@@ -8,7 +8,7 @@ class ListDiff extends HtmlDiff
      * This is the minimum percentage a list item can match its counterpart in order to be considered a match.
      * @var integer
      */
-    protected static $listMatchThreshold = 50;
+    protected static $listMatchThreshold = 35;
     
     /** @var array */
     protected $listWords = array();
@@ -433,54 +433,116 @@ class ListDiff extends HtmlDiff
      * Build the content of the class.
      */
     protected function diff()
-    {        
+    {
         // Add the opening parent node from listType. So if ol, <ol>, etc.
         $this->content = $this->addListTypeWrapper();
         
         $oldIndexCount = 0;
+        $diffOrderNewKeys = array_keys($this->diffOrderIndex['new']);
         foreach ($this->diffOrderIndex['new'] as $key => $index) {
             
             if ($index['type'] == "list") {
+                
+                // Check to see if an old list was deleted.
+                $oldMatch = $this->getArrayByColumnValue($this->textMatches, 'old', $index['position']);
+                if ($oldMatch && $oldMatch['new'] === null) {
+                    $newList = '';
+                    $oldList = $this->getListByMatch($oldMatch, 'old');
+                    $this->content .= $this->addListElementToContent($newList, $oldList, $oldMatch);
+                }
+                
                 $match = $this->getArrayByColumnValue($this->textMatches, 'new', $index['position']);
                 $newList = $this->childLists['new'][$match['new']];
-                $oldList = array_key_exists($match['old'], $this->childLists['old'])
-                    ? $this->childLists['old'][$match['old']]
-                    : '';
-                
-                $content = "<li>";
-                $content .= $this->processPlaceholders(
-                    $this->diffElements(
-                        $this->convertListContentArrayToString($oldList),
-                        $this->convertListContentArrayToString($newList),
-                        false
-                    ),
-                    $match
-                );
-                $content .= "</li>";
-                $this->content .= $content;
+                $oldList = $this->getListByMatch($match, 'old');
+                $this->content .= $this->addListElementToContent($newList, $oldList, $match);
             }
             
             if ($index['type'] == 'content') {
-                $newContent = $this->contentIndex['new'][$index['position']];
-                
-                $oldDiffOrderIndexMatch = array_key_exists($oldIndexCount, $this->diffOrderIndex['old'])
-                    ? $this->diffOrderIndex['old'][$oldIndexCount]
-                    : '';
-                
-                $oldContent = $oldDiffOrderIndexMatch && array_key_exists($oldDiffOrderIndexMatch['position'], $this->contentIndex['old'])
-                    ? $this->contentIndex['old'][$oldDiffOrderIndexMatch['position']]
-                    : '';
-                
-                $diffObject = new HtmlDiff($oldContent, $newContent);
-                $content = $diffObject->build();
-                $this->content .= $content;
+                $this->content .= $this->addContentElementsToContent($oldIndexCount, $index['position']);
             }
             
             $oldIndexCount++;
+            
+            if ($key == $diffOrderNewKeys[count($diffOrderNewKeys) - 1]) {
+                foreach ($this->diffOrderIndex['old'] as $oldKey => $oldIndex) {
+                    if ($oldKey > $key) {
+                        if ($oldIndex['type'] == 'list') {
+                            $oldMatch = $this->getArrayByColumnValue($this->textMatches, 'old', $oldIndex['position']);
+                            if ($oldMatch && $oldMatch['new'] === null) {
+                                $newList = '';
+                                $oldList = $this->getListByMatch($oldMatch, 'old');
+                                $this->content .= $this->addListElementToContent($newList, $oldList, $oldMatch);
+                            }
+                        } else {
+                            $this->content .= $this->addContentElementsToContent($oldKey);
+                        }
+                    }
+                }
+            }
         }
 
         // Add the closing parent node from listType. So if ol, </ol>, etc.
         $this->content .= $this->addListTypeWrapper(false);
+    }
+    
+    /**
+     * 
+     * @param string $newList
+     * @param string $oldList
+     * @param array $match
+     * @return string
+     */
+    protected function addListElementToContent($newList, $oldList, array $match)
+    {
+        $content = "<li>";
+        $content .= $this->processPlaceholders(
+            $this->diffElements(
+                $this->convertListContentArrayToString($oldList),
+                $this->convertListContentArrayToString($newList),
+                false
+            ),
+            $match
+        );
+        $content .= "</li>";
+        return $content;
+    }
+    
+    /**
+     * 
+     * @param integer $oldIndexCount
+     * @param null|integer $newPosition
+     * @return string
+     */
+    protected function addContentElementsToContent($oldIndexCount, $newPosition = null)
+    {
+        $newContent = $newPosition && array_key_exists($newPosition, $this->contentIndex['new'])
+            ? $this->contentIndex['new'][$newPosition]
+            : '';
+
+        $oldDiffOrderIndexMatch = array_key_exists($oldIndexCount, $this->diffOrderIndex['old'])
+            ? $this->diffOrderIndex['old'][$oldIndexCount]
+            : '';
+
+        $oldContent = $oldDiffOrderIndexMatch && array_key_exists($oldDiffOrderIndexMatch['position'], $this->contentIndex['old'])
+            ? $this->contentIndex['old'][$oldDiffOrderIndexMatch['position']]
+            : '';
+
+        $diffObject = new HtmlDiff($oldContent, $newContent);
+        $content = $diffObject->build();
+        return $content;
+    }
+    
+    /**
+     * 
+     * @param array $match
+     * @param string $type
+     * @return array|string
+     */
+    protected function getListByMatch(array $match, $type = 'new')
+    {
+        return array_key_exists($match[$type], $this->childLists[$type])
+            ? $this->childLists[$type][$match[$type]]
+            : '';
     }
     
     /**
