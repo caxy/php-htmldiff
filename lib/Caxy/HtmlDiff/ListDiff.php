@@ -85,6 +85,18 @@ class ListDiff extends HtmlDiff
      * @var array
      */
     protected $diffOrderIndex = array();
+    
+    /**
+     * This is the opening ol,ul,dl ist tag.
+     * @var string
+     */
+    protected $oldParentTag;
+    
+    /**
+     * This is the opening ol,ul,dl ist tag.
+     * @var string
+     */
+    protected $newParentTag;
 
     /**
      * We're using the same functions as the parent in build() to get us to the point of
@@ -232,10 +244,12 @@ class ListDiff extends HtmlDiff
             array_key_exists($closingTag, $this->isolatedDiffTags)
         ) {
             if ($index == 'new' && $this->isOpeningTag($arrayData[0])) {
+                $this->newParentTag = $arrayData[0];
                 $this->newListType = $this->getAndStripTag($arrayData[0]);
             }
             
             if ($index == 'old' && $this->isOpeningTag($arrayData[0])) {
+                $this->oldParentTag = $arrayData[0];
                 $this->oldListType = $this->getAndStripTag($arrayData[0]);
             }
             
@@ -448,13 +462,13 @@ class ListDiff extends HtmlDiff
                 if ($oldMatch && $oldMatch['new'] === null) {
                     $newList = '';
                     $oldList = $this->getListByMatch($oldMatch, 'old');
-                    $this->content .= $this->addListElementToContent($newList, $oldList, $oldMatch);
+                    $this->content .= $this->addListElementToContent($newList, $oldList, $oldMatch, $index, 'old');
                 }
                 
                 $match = $this->getArrayByColumnValue($this->textMatches, 'new', $index['position']);
                 $newList = $this->childLists['new'][$match['new']];
                 $oldList = $this->getListByMatch($match, 'old');
-                $this->content .= $this->addListElementToContent($newList, $oldList, $match);
+                $this->content .= $this->addListElementToContent($newList, $oldList, $match, $index, 'new');
             }
             
             if ($index['type'] == 'content') {
@@ -471,7 +485,7 @@ class ListDiff extends HtmlDiff
                             if ($oldMatch && $oldMatch['new'] === null) {
                                 $newList = '';
                                 $oldList = $this->getListByMatch($oldMatch, 'old');
-                                $this->content .= $this->addListElementToContent($newList, $oldList, $oldMatch);
+                                $this->content .= $this->addListElementToContent($newList, $oldList, $oldMatch, $oldIndex, 'old');
                             }
                         } else {
                             $this->content .= $this->addContentElementsToContent($oldKey);
@@ -490,11 +504,12 @@ class ListDiff extends HtmlDiff
      * @param string $newList
      * @param string $oldList
      * @param array $match
+     * @param array $index
      * @return string
      */
-    protected function addListElementToContent($newList, $oldList, array $match)
+    protected function addListElementToContent($newList, $oldList, array $match, array $index, $type)
     {
-        $content = "<li>";
+        $content = $this->list[$type][$index['index']];
         $content .= $this->processPlaceholders(
             $this->diffElements(
                 $this->convertListContentArrayToString($oldList),
@@ -768,7 +783,12 @@ class ListDiff extends HtmlDiff
      */
     protected function addListTypeWrapper($opening = true)
     {
-        return "<" . (!$opening ? "/" : '') . $this->listType . ">";
+        
+        if ($opening) {
+            return $this->newParentTag ?: $this->oldParentTag;
+        } else {
+            return "<" . (!$opening ? "/" : '') . $this->listType . ">";
+        }
     }
 
     /**
