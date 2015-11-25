@@ -462,7 +462,7 @@ class ListDiff extends HtmlDiff
                 if ($oldMatch && $oldMatch['new'] === null) {
                     $newList = '';
                     $oldList = $this->getListByMatch($oldMatch, 'old');
-                    $this->content .= $this->addListElementToContent($newList, $oldList, $oldMatch);
+                    $this->content .= $this->addListElementToContent($newList, $oldList, $oldMatch, $index, 'old');
                 }
                 
                 $match = $this->getArrayByColumnValue($this->textMatches, 'new', $index['position']);
