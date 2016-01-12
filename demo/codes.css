@@ -1,0 +1,276 @@
+/*
+    Document   : codes
+    Created on : Sep 23, 2013, 4:41:58 PM
+    Author     : mgersten
+    Description: CSS related to I-code specific display
+*/
+.diff-list > li.normal,
+.diff-list > li.removed,
+.diff-list > li.replacement{
+    display: table-row;
+}
+.diff-list > li.normal:before,
+.diff-list > li.removed:before,
+.diff-list > li.replacement:before{
+    width: 15px;
+    overflow: hidden;
+    content: counters(section,".") ". ";
+    display: table-cell;
+    text-indent: -1em;
+    padding-left: 1em;
+}
+
+/* overwrite width of :before on ballot pages */
+.ballot-monograph .diff-list > li.normal:before,
+.ballot-monograph .diff-list > li.removed:before,
+.ballot-monograph .diff-list > li.replacement:before {
+    width: 30px;
+}
+
+.diff-list > li.normal:before,
+li.replacement + li.replacement:before,
+.diff-list > li.replacement:first-child:before{
+    counter-increment: section;
+}
+.diff-list > li.removed:before{
+    counter-increment: section;
+    text-decoration: line-through;
+}
+ol.diff-list li.removed + li.replacement {
+    counter-increment: none;
+}
+ol.diff-list li.removed + li.removed + li.replacement {
+    counter-increment: section -1;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.replacement {
+    counter-increment: section -2;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.removed + li.replacement {
+    counter-increment: section -3;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.removed + li.removed + li.replacement {
+    counter-increment: section -4;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.replacement {
+    counter-increment: section -5;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.replacement {
+    counter-increment: section -6;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.replacement {
+    counter-increment: section -7;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.replacement {
+    counter-increment: section -8;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.replacement {
+    counter-increment: section -9;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.replacement{
+    counter-increment: section -10;
+}
+ol.diff-list li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.removed + li.replacement {
+    counter-increment: section -11;
+}
+.diff-list > li.replacement:before,
+.diff-list > li.new:before{
+    text-decoration: underline;
+}
+.diff-list > li > div{
+    display: inline;
+}
+.diff-list{
+    list-style: none;
+    counter-reset: section;
+    display: table;
+}
+.sectionContent ol,
+.revision-container ol{
+    list-style: none;
+    counter-reset: section;
+}
+.sectionContent ol li,
+.revision-container ol li{
+    position: relative;
+    padding: 0 0 0 30px;
+    color: #000000;
+    text-indent: 0px;
+}
+.sectionContent ol ol li,
+.revision-container ol ol li{
+    padding: 0 0 0 45px;
+}
+.sectionContent ol ol ol li,
+.revision-container ol ol ol li{
+    padding: 0 0 0 60px;
+}
+.sectionContent ol ol ol ol li,
+.revision-container ol ol ol ol li{
+    padding: 0 0 0 75px;
+}
+.sectionContent ol ol ol ol ol li,
+.revision-container ol ol ol ol ol li{
+    padding: 0 0 0 90px;
+}
+.sectionContent ol ol ol ol ol ol li,
+.revision-container ol ol ol ol ol ol li{
+    padding: 0 0 0 105px;
+}
+.sectionContent ol ol ol ol ol ol ol li,
+.revision-container ol ol ol ol ol ol ol li{
+    padding: 0 0 0 120px;
+}
+.sectionContent ol ol ol ol ol ol ol ol li,
+.revision-container ol ol ol ol ol ol ol ol li{
+    padding: 0 0 0 135px;
+}
+.sectionContent ol ol ol ol ol ol ol ol ol li,
+.revision-container ol ol ol ol ol ol ol ol ol li{
+    padding: 0 0 0 160px;
+}
+.sectionContent ol ol ol ol ol ol ol ol ol ol li,
+.revision-container ol ol ol ol ol ol ol ol ol ol li{
+    padding: 0 0 0 175px;
+}
+.sectionContent ol li:before,
+.revision-container ol li:before{
+    counter-increment: section;
+    content:counters(section, ".") ".";
+    position: absolute;
+    left: 0px;
+}
+li.italic {
+    font-style: italic;
+}
+
+.sectionTitle {
+    text-align: center;
+    margin: 23px 0 15px;
+}
+
+.precontent-title {
+    margin-bottom: 10px;
+    display: block;
+}
+
+.secondParagraph {
+    text-indent: 1em;
+}
+
+.indentedParagraph {
+    margin-left: 1em;
+}
+
+.outdentOneLevel {
+    margin-left: -75px;
+}
+
+ol.list-alpha-upper > li:before {
+    content: counter(section, upper-alpha) ".";
+}
+
+ol.list-alpha-lower > li:before {
+    content: counter(section, lower-alpha) ".";
+}
+
+ol.list-roman-upper > li:before {
+    content: counter(section, upper-roman) ".";
+}
+
+ol.list-roman-lower > li:before {
+    content: counter(section, lower-roman) ".";
+}
+
+ol.list-roman-lower-parentheses > li:before {
+    content: "(" counter(section, lower-roman) ")";
+}
+
+ol.list-alpha-lower-parentheses > li:before {
+    content: "(" counter(section, lower-alpha) ")";
+}
+
+ol.list-numeric-right-parenthesis > li:before {
+    content: counter(section) ")";
+}
+
+.revision-content,
+.revision-content p,
+.revision-content ol,
+.revision-content ul,
+.revision-content li,
+.revision-content td,
+.sectionContent,
+.sectionContent p,
+.sectionContent ol,
+.sectionContent ul,
+.sectionContent li,
+.sectionContent td,
+.revision-notes {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif !important;
+    font-size: 14px !important;
+    font-weight: normal !important;
+    line-height: 18px !important;
+    color:#404040 !important;
+}
+
+.revision-content .footnotes p,
+.revision-content .footnotes ol,
+.revision-content .footnotes ul,
+.revision-content .footnotes li,
+.revision-content .footnotes td,
+.sectionContent .footnotes p,
+.sectionContent .footnotes ol,
+.sectionContent .footnotes ul,
+.sectionContent .footnotes li,
+.sectionContent .footnotes td {
+    font-size: 12px !important;
+}
+.diff-list ul.exception ol ,
+.sectionContent ul.exception ol ,
+.revision-container ul.exception ol{
+    list-style: none;
+    counter-reset: exception-section;
+    /* Creates a new instance of the section counter with each ol element */
+}
+ul.exception,
+ul.exception li:before {
+    list-style: none;
+    content: none;
+}
+.diff-list ul.exception ol > li:before,
+.sectionContent ul.exception ol > li:before,
+.revision-container ul.exception ol > li:before {
+    counter-increment: exception-section;
+    content:counters(exception-section, ".") ".";
+}
+.sectionContent i > sub,
+.revision-container i > sub {
+    font-style: italic;
+}
+div.print-section a {
+    text-align: center;
+    color: #818181;
+    display: block;
+    text-decoration: none;
+    font-size: 0.8em;
+}
+div.print-section a.disabled {
+    display: none;
+}
+
+.print-link {
+    color: #818181;
+}
+.print-link.disabled {
+    cursor: text;
+    text-decoration: none;
+}
+
+/* Hack for generic styles that shouldn't exist in the database */
+.content_bold {
+    font-weight: bold;
+}
+
+.content_italics {
+    font-style: italic;
+}
