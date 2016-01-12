@@ -1,41 +1,158 @@
-<html ng-app="demo">
+<!DOCTYPE html>
+<html lang="en" ng-app="demo">
     <head>
-        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-sanitize.min.js"></script>
-        <script type="text/javascript" src="demo.js"></script>
-        <link type="text/css" href="demo.css" rel="stylesheet">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+        <link rel="stylesheet"
+            href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css"
+            integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd"
+            crossorigin="anonymous"
+        >
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+        <link type="text/css" href="codes.css" rel="stylesheet">
     </head>
     <body>
-        <div ng-controller="diffCtrl">
-            <div class="controls row">
-                <button ng-click="reset()">RESET</button>
-                <span ng-repeat="demo in demos">
-                    <button ng-click="diffDemo($index)">DEMO {{$index + 1}}</button>
-                </span>
+        <!-- Main Navigation -->
+        <nav class="navbar navbar-light bg-faded">
+            <a class="navbar-brand" href="#">caxy/php-htmldiff</a>
+            <ul class="nav navbar-nav">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Demo <span class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="container-fluid" ng-controller="diffCtrl">
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-danger-outline btn-sm" ng-click="reset()">RESET</button>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Load Custom Demo
+                            </button>
+                            <div class="dropdown-menu">
+                                <a href ng-repeat="demo in demos" type="button" class="dropdown-item" ng-class="{active: demo == currentDemo}" ng-click="diffDemo($index)">
+                                    {{ demo.name }}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Load Diff Override Demo
+                            </button>
+                            <div class="dropdown-menu">
+                                <a href class="dropdown-item" ng-repeat="override in overrides" ng-class="{active: demo == override}" ng-click="diffOverride(override, $index)">
+                                    Override Demo {{ $index + 1 }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div ng-if="currentDemo">
+                        <p>Current Demo: {{ currentDemo.name }} <button ng-if="!currentDemo.isOverride" type="button" class="btn btn-primary btn-sm" ng-click="updateDemo()">Update Demo</button></p>
+                    </div>
+                    <button type="button" class="btn btn-link" ng-click="swapText()">Swap Text</button>
+                </div>
+                <div class="col-sm-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Demo Name" ng-model="diffName" />
+                        <span class="input-group-btn">
+                            <button class="btn btn-secondary" type="button" ng-click="saveNewDemo()">Save as New Demo</button>
+                        </span>
+                    </div>
+                </div>
             </div>
 
-            <div class="row">
-                <h2>Old HTML</h2>
-                <div class="html-edit">
-                    <textarea ng-model="oldText" name="old_text" ng-change="update()"></textarea>
+            <form>
+                <div class="form-group row">
+                    <div class="col-sm-12">
+                        <label class="form-control-label" for="matchThreshold">Match Threshold</label>
+                        <input type="number" class="form-control" ng-model="matchThreshold" id="matchThreshold" ng-change="update()">
+                    </div>
                 </div>
-                <div class="html-preview" ng-bind-html="trustHtml(oldText)"></div>
-            </div>
-            <div class="row">
-                <h2>New HTML</h2>
-                <div class="html-edit">
-                    <textarea ng-model="newText" name="new_text" ng-change="update()"></textarea>
+                <div class="form-group row">
+                    <div class="col-sm-6">
+                        <label class="form-control-label" for="oldText">
+                            Old Text
+                            <button type="button" class="btn btn-sm btn-secondary clipboard" data-clipboard-target="#oldText">
+                                <i class="fa fa-clipboard"></i>
+                            </button>
+                        </label>
+                        <textarea id="oldText" class="form-control" ng-model="oldText" name="old_text" ng-change="update()" rows="15"></textarea>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-control-label" for="newText">
+                            New Text
+                            <button type="button" class="btn btn-sm btn-secondary clipboard" data-clipboard-target="#newText">
+                                <i class="fa fa-clipboard"></i>
+                            </button>
+                        </label>
+                        <textarea id="newText" class="form-control" ng-model="newText" name="new_text" ng-change="update()" rows="15"></textarea>
+                    </div>
                 </div>
-                <div class="html-preview" ng-bind-html="trustHtml(newText)"></div>
-            </div>
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <p ng-show="loading || waiting">{{ loading ? 'Loading' : 'Waiting' }}...</p>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-sm-6">
+                        <label class="form-control-label" for="rawDiff">
+                            Diff Output (HTML)
+                            <button type="button" class="btn btn-sm btn-secondary clipboard" data-clipboard-target="#rawDiff">
+                                <i class="fa fa-clipboard"></i>
+                            </button>
+                        </label>
+                        <textarea id="rawDiff" class="form-control" ng-model="diff" name="diff" readonly ng-change="update()" rows="15"></textarea>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-control-label" for="rawDiff">
+                            Diff Output
+                            <button type="button" class="btn btn-sm btn-secondary clipboard" data-clipboard-target="#diffPreview">
+                                <i class="fa fa-clipboard"></i>
+                            </button>
+                        </label>
+                        <div id="diffPreview" class="html-preview" ng-bind-html="trustHtml(diff)"></div>
+                    </div>
+                </div>
+            </form>
 
             <div class="row">
-                <h2>Compared HTML <span ng-show="loading || waiting">- {{ loading ? 'Loading' : 'Waiting' }}...</span></h2>
-                <div class="html-edit">
-                    <textarea ng-model="diff" name="diff" disabled ng-change="update()"></textarea>
+                <div class="col-sm-6">
+                    <h3>Debug Output</h3>
+                    <div ng-repeat="(category, messages) in debugOutput">
+                        <h5>{{ category }}</h5>
+                        <pre ng-repeat="message in messages">
+                            {{ message }}
+                        </pre>
+                    </div>
                 </div>
-                <div class="html-preview" ng-bind-html="trustHtml(diff)"></div>
+                <div class="col-sm-6" ng-show="legislativeOverride">
+                    <h3>Legislative Override</h3>
+                    <div class="html-preview" ng-bind-html="trustHtml(legislativeOverride)"></div>
+                </div>
             </div>
         </div>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/js/bootstrap.min.js" integrity="sha384-vZ2WRJMwsjRMW/8U7i6PWi6AlO1L79snBrmgiDpgIWJ82z8eA5lenwvxbMV1PAh7" crossorigin="anonymous"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-sanitize.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.5/clipboard.min.js"></script>
+
+        <script type="text/javascript" src="demo.js"></script>
+
+        <script>
+            new Clipboard('.clipboard');
+        </script>
     </body>
 </html>
