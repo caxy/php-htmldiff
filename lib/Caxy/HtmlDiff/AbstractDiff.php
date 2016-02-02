@@ -224,11 +224,11 @@ abstract class AbstractDiff
                     }
                     $current_word = "<";
                     $mode = 'tag';
-                } elseif ( preg_match( "[^\s]", $character ) > 0 ) {
-                    if ($current_word != '') {
+                } elseif (preg_match("/\s/", $character)) {
+                    if ($current_word !== '') {
                         $words[] = $current_word;
                     }
-                    $current_word = $character;
+                    $current_word = preg_replace('/\s+/S', ' ', $character);
                     $mode = 'whitespace';
                 } else {
                     if (
@@ -259,13 +259,14 @@ abstract class AbstractDiff
                 break;
                 case 'whitespace':
                 if ( $this->isStartOfTag( $character ) ) {
-                    if ($current_word != '') {
+                    if ($current_word !== '') {
                         $words[] = $current_word;
                     }
                     $current_word = "<";
                     $mode = 'tag';
-                } elseif ( preg_match( "[^\s]", $character ) ) {
+                } elseif ( preg_match( "/\s/", $character ) ) {
                     $current_word .= $character;
+                    $current_word = preg_replace('/\s+/S', ' ', $current_word);
                 } else {
                     if ($current_word != '') {
                         $words[] = $current_word;

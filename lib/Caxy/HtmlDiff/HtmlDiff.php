@@ -468,7 +468,16 @@ class HtmlDiff extends AbstractDiff
                 }
                 $newMatchLength = ( isset( $matchLengthAt[ $indexInNew - 1 ] ) ? $matchLengthAt[ $indexInNew - 1 ] : 0 ) + 1;
                 $newMatchLengthAt[ $indexInNew ] = $newMatchLength;
-                if ($newMatchLength > $bestMatchSize) {
+                if ($newMatchLength > $bestMatchSize ||
+                    (
+                        $this->isGroupDiffs() &&
+                        $bestMatchSize > 0 &&
+                        preg_match(
+                            '/^\s+$/',
+                            implode('', array_slice($this->oldWords, $bestMatchInOld, $bestMatchSize))
+                        )
+                    )
+                ) {
                     $bestMatchInOld = $indexInOld - $newMatchLength + 1;
                     $bestMatchInNew = $indexInNew - $newMatchLength + 1;
                     $bestMatchSize = $newMatchLength;
