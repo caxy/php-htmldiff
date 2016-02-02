@@ -14,6 +14,9 @@ build:
                 coverage:
                     file: 'code-coverage-file'
                     format: 'php-clover'
+filter:
+    excluded_paths:
+        - tests/*
 checks:
     php:
         uppercase_constants: true
