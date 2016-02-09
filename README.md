@@ -1,3 +1,7 @@
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master)
+[![Build Status](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/build.png?b=master)](https://scrutinizer-ci.com/g/caxy/php-htmldiff/build-status/master)
+[![Code Coverage](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master)
+
 php-htmldiff
 =======
 *A library for comparing two HTML files/snippets and highlighting the differences using simple HTML.*
