@@ -1,0 +1,39 @@
+<oldText>
+    <ol>
+        <li>
+            Etiam feugiat lorem non metus. Nullam accumsan lorem in dui.
+        </li>
+
+        <li>
+            Praesent ac sem eget est egestas volutpat. Nulla neque dolor, sagittis eget, iaculis quis, molestie non, velit. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Aenean massa.
+        </li>
+
+        <li>
+            Vestibulum suscipit nulla quis orci. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos hymenaeos.
+        </li>
+
+        <li>
+            Suspendisse non nisl sit amet velit hendrerit rutrum. Aenean massa. Curabitur ullamcorper ultricies nisi. Praesent vestibulum dapibus nibh. In dui magna, posuere eget, vestibulum et, tempor auctor, justo.
+        </li>
+    </ol>
+</oldText>
+
+<newText>
+    <ol>
+        <li>
+            Suspendisse non nisl sit amet velit hendrerit rutrum. Aenean massa. Curabitur ullamcorper ultricies nisi. Praesent vestibulum dapibus nibh. In dui magna, posuere eget, vestibulum et, tempor auctor, justo.
+        </li>
+
+        <li>
+            Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu.
+        </li>
+
+        <li>
+            Duis lobortis massa imperdiet quam. Donec sodales sagittis magna. Nam ipsum risus, rutrum vitae, vestibulum eu, molestie vel, lacus. Suspendisse eu ligula. Morbi nec metus.
+        </li>
+    </ol>
+</newText>
+
+<expected>
+    <ol class="diff-list"><li class="normal"><del class="diffmod">Etiam feugiat lorem</del><ins class="diffmod">Suspendisse</ins> non <del class="diffmod">metus</del><ins class="diffmod">nisl sit amet velit hendrerit rutrum</ins>. <del class="diffmod">Nullam accumsan lorem in</del><ins class="diffmod">Aenean massa. Curabitur ullamcorper ultricies nisi. Praesent vestibulum dapibus nibh. In</ins> dui<ins class="diffins"> magna, posuere eget, vestibulum et, tempor auctor, justo</ins>.</li><li class="normal"><del class="diffmod">Praesent ac sem eget est egestas volutpat. Nulla neque dolor</del><ins class="diffmod">Donec pede justo</ins>, <del class="diffmod">sagittis</del><ins class="diffmod">fringilla vel, aliquet nec, vulputate</ins> eget, <del class="diffmod">iaculis quis, molestie non, velit</del><ins class="diffmod">arcu</ins>.<del class="diffdel"> Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Aenean massa.</del></li><li class="normal"><del class="diffmod">Vestibulum suscipit nulla quis orci</del><ins class="diffmod">Duis lobortis massa imperdiet quam</ins>. <del class="diffmod">Integer ante arcu</del><ins class="diffmod">Donec sodales sagittis magna. Nam ipsum risus</ins>, <del class="diffmod">accumsan a</del><ins class="diffmod">rutrum vitae</ins>, <del class="diffmod">consectetuer eget</del><ins class="diffmod">vestibulum eu</ins>, <del class="diffmod">posuere ut</del><ins class="diffmod">molestie vel</ins>, <del class="diffmod">mauris</del><ins class="diffmod">lacus</ins>. <del class="diffmod">Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos hymenaeos</del><ins class="diffmod">Suspendisse eu ligula</ins>.<ins class="diffins"> Morbi nec metus.</ins></li><li class="removed"><del> Suspendisse non nisl sit amet velit hendrerit rutrum. Aenean massa. Curabitur ullamcorper ultricies nisi. Praesent vestibulum dapibus nibh. In dui magna, posuere eget, vestibulum et, tempor auctor, justo. </del></li></ol>
+</expected>

@@ -23,5 +23,11 @@
     },
     "autoload": {
         "psr-0": { "Caxy\\HtmlDiff": "lib/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "Caxy\\Tests\\": "tests/Caxy/Tests" }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8"
     }
 }
