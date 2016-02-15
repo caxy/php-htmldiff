@@ -2,6 +2,8 @@
 
 namespace Caxy\HtmlDiff;
 
+use Caxy\HtmlDiff\Table\TableDiff;
+
 class HtmlDiff extends AbstractDiff
 {
     protected $wordIndices;
