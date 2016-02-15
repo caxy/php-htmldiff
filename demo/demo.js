@@ -12,6 +12,7 @@ demo.controller('diffCtrl', ['$scope', '$http', '$sce', '$timeout', function ($s
     $scope.matchThreshold = 80;
     $scope.overrides = [];
     $scope.legislativeOverride = null;
+    $scope.tableDiffNumber = 1;
 
     $scope.trustHtml = function (text) {
         return typeof text !== 'undefined' ? $sce.trustAsHtml(text) : '';
@@ -101,6 +102,29 @@ demo.controller('diffCtrl', ['$scope', '$http', '$sce', '$timeout', function ($s
             $scope.currentDemo.name = 'Override Demo ' + (index + 1);
         }
         $scope.currentDemo.isOverride = true;
+    };
+
+    $scope.diffTableDemo = function(index) {
+        $scope.loadTableDiff(index)
+            .then(function(response) {
+                $scope.oldText = response.data.old;
+                $scope.newText = response.data.new;
+                $scope.legislativeOverride = null;
+                $scope.getDiff();
+                $scope.currentDemo = null;
+            })
+            .catch(function(e) {
+                console.log(e);
+            });
+    };
+
+    $scope.loadTableDiff = function(index) {
+        return $http({
+            url: 'load_table_diff.php',
+            method: 'POST',
+            data: {index: index},
+            header: {'Content-Type': 'application/json; charset=UTF-8'}
+        });
     };
 
     $scope.updateDemo = function() {

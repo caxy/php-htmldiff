@@ -111,52 +111,6 @@ class HtmlDiff extends AbstractDiff
 
     }
 
-    private function replaceTables()
-    {
-        $this->oldTables = $this->createTablePlaceholders($this->oldWords);
-        $this->newTables = $this->createTablePlaceholders($this->newWords);
-    }
-
-    private function createTablePlaceholders(&$words)
-    {
-        $openTables = 0;
-        $tableIndices = array();
-        $tableStart = 0;
-        foreach ($words as $index => $word) {
-            if ($this->isOpeningTable($word)) {
-                if ($openTables === 0) {
-                    $tableStart = $index;
-                }
-                $openTables++;
-            } elseif ($openTables > 0 && $this->isClosingTable($word)) {
-                $openTables--;
-                if ($openTables === 0) {
-                    $tableIndices[] = array('start' => $tableStart, 'length' => $index - $tableStart + 1);
-                }
-            }
-        }
-
-        $tables = array();
-        $offset = 0;
-        foreach ($tableIndices as $tableIndex) {
-            $start = $tableIndex['start'] - $offset;
-            $tables[$start] = array_splice($words, $start, $tableIndex['length'], '[[REPLACE_TABLE]]');
-            $offset += $tableIndex['length'] - 1;
-        }
-
-        return $tables;
-    }
-
-    private function isOpeningTable($item)
-    {
-        return preg_match("#<table[^>]*>\\s*#iU", $item);
-    }
-
-    private function isClosingTable($item)
-    {
-        return preg_match("#</table[^>]*>\\s*#iU", $item);
-    }
-
     protected function isOpeningIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
         $tagsToMatch = $currentIsolatedDiffTag !== null ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag]) : $this->isolatedDiffTags;
@@ -256,6 +210,8 @@ class HtmlDiff extends AbstractDiff
 
         if ($this->isListPlaceholder($placeholder)) {
             return $this->diffList($oldText, $newText);
+        } elseif ($this->isTablePlaceholder($placeholder)) {
+            return $this->diffTables($oldText, $newText);
         } elseif ($this->isLinkPlaceholder($placeholder)) {
             return $this->diffLinks($oldText, $newText);
         }
@@ -293,9 +249,11 @@ class HtmlDiff extends AbstractDiff
         return $diff->build();
     }
 
-    private function diffTables($oldText, $newText)
+    protected function diffTables($oldText, $newText)
     {
         $diff = new TableDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
+        $diff->setMatchThreshold($this->matchThreshold);
+
         return $diff->build();
     }
 
@@ -392,6 +350,13 @@ class HtmlDiff extends AbstractDiff
         }
 
         return in_array($text, $criteria, $strict);
+    }
+
+    protected function isTablePlaceholder($text)
+    {
+        return in_array($text, array(
+            $this->isolatedDiffTags['table'],
+        ), true);
     }
 
     protected function findIsolatedDiffTagsInOld($operation, $posInNew)
