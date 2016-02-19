@@ -28,6 +28,8 @@ function addDebugOutput($value, $key = 'general')
 $input = file_get_contents('php://input');
 
 if ($input) {
+    header('Content-Type: application/json');
+
     $data = json_decode($input, true);
 
 //    $oldText = $data['oldText'];
@@ -42,10 +44,10 @@ if ($input) {
         $diff->setMatchThreshold($data['matchThreshold']);
     }
     $diff->setUseTableDiffing($useTableDiffing);
-    addDebugOutput($diff->build());
+    $diff->build();
 
-    header('Content-Type: application/json');
-    echo json_encode(array('diff' => $diff->getDifference(), 'debug' => $debugOutput));
+//    echo json_encode(array('diff' => $diff->getDifference(), 'debug' => $debugOutput));
+    echo $diff->getDifference();
 } else {
     header('Content-Type: text/html');
     echo file_get_contents('demo.html');

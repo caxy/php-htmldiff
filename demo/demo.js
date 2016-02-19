@@ -13,6 +13,7 @@ demo.controller('diffCtrl', ['$scope', '$http', '$sce', '$timeout', function ($s
     $scope.overrides = [];
     $scope.legislativeOverride = null;
     $scope.tableDiffNumber = 1;
+    $scope.tableDiffing = true;
 
     $scope.trustHtml = function (text) {
         return typeof text !== 'undefined' ? $sce.trustAsHtml(text) : '';
@@ -53,7 +54,12 @@ demo.controller('diffCtrl', ['$scope', '$http', '$sce', '$timeout', function ($s
     $scope.getDiff = function () {
         $scope.waiting = false;
         $scope.loading = true;
-        $http.post('index.php', { oldText: $scope.oldText, newText: $scope.newText, matchThreshold: $scope.matchThreshold })
+        $http.post('index.php', {
+            oldText: $scope.oldText,
+            newText: $scope.newText,
+            matchThreshold: $scope.matchThreshold,
+            tableDiffing: $scope.tableDiffing
+        })
             .then(function (response) {
                 $scope.diff = response.data.hasOwnProperty('diff') ? response.data.diff : response.data;
                 $scope.loading = false;

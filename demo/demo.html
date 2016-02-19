@@ -76,9 +76,14 @@
 
             <form>
                 <div class="form-group row">
-                    <div class="col-sm-12">
+                    <div class="col-sm-3">
                         <label class="form-control-label" for="matchThreshold">Match Threshold</label>
                         <input type="number" class="form-control" ng-model="matchThreshold" id="matchThreshold" ng-change="update()">
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="form-control-label" for="tableDiffing">Use Table Diffing?
+                            <input type="checkbox" class="form-control checkbox" ng-model="tableDiffing" id="tableDiffing" ng-change="update()">
+                        </label>
                     </div>
                 </div>
                 <div class="form-group row">
