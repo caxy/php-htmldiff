@@ -11,18 +11,61 @@ use Caxy\HtmlDiff\HtmlDiff;
  * @todo find matches of row/cells in order to handle row/cell additions/deletions
  * @todo clean up way to iterate between new and old cells
  * @todo Make sure diffed table keeps <tbody> or other table structure elements
+ * @todo Encoding
  */
 class TableDiff extends AbstractDiff
 {
+    /**
+     * @var null|Table
+     */
     protected $oldTable = null;
+
+    /**
+     * @var null|Table
+     */
     protected $newTable = null;
+
+    /**
+     * @var null|Table
+     */
     protected $diffTable = null;
+
+    /**
+     * @var null|\DOMDocument
+     */
     protected $diffDom = null;
 
+    /**
+     * @var int
+     */
     protected $newRowOffsets = 0;
+
+    /**
+     * @var int
+     */
     protected $oldRowOffsets = 0;
 
+    /**
+     * @var array
+     */
     protected $cellValues = array();
+
+    /**
+     * @var \HTMLPurifier
+     */
+    protected $purifier;
+    
+    public function __construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs)
+    {
+        parent::__construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs);
+
+        $config = \HTMLPurifier_Config::createDefault();
+//        $config->set('Cache.SerializerPath', $this->container->get('kernel')->getCacheDir());
+//        $config->set('Cache.SerializerPermissions', 0775);
+//        $this->addTagTransform('b', 'strong');
+//        $this->addTagTransform('i', 'em');
+        $this->purifier = new \HTMLPurifier($config);
+    }
 
     public function build()
     {
@@ -56,8 +99,11 @@ class TableDiff extends AbstractDiff
             $newRowOffset = 0;
             $oldRowOffset = 0;
 
-            foreach ($newRow->getCells() as $cellIndex => $newCell) {
-                $oldCell = $oldRow->getCell($cellIndex);
+            $newCells = $newRow->getCells();
+            $oldCells = $oldRow->getCells();
+
+            foreach ($newCells as $cellIndex => $newCell) {
+                $oldCell = isset($oldCells[$cellIndex]) ? $oldCells[$cellIndex] : null;
 
                 if ($oldCell) {
                     $oldNode = $oldCell->getDomNode();
@@ -80,6 +126,36 @@ class TableDiff extends AbstractDiff
                             $oldRowOffset = $offset;
                         }
                     }
+
+                    $oldColOffset = 0;
+                    $newColOffset = 0;
+                    if ($oldColspan > $newColspan) {
+                        // add placeholders in next cells
+                        $newColOffset = $oldColspan - $newColspan;
+                    } elseif ($newColspan > $oldColspan) {
+                        $oldColOffset = $newColspan - $oldColspan;
+                    }
+
+                    // @todo: Figure out colspan
+//                    if ($oldColOffset > 0 && isset($newCells[$cellIndex + 1])) {
+//                        $blankCell = $this->diffDom->createElement('td');
+//
+//                        $insertArray = array();
+//                        for ($i = 0; $i < $oldColOffset; $i++) {
+//                            $insertArray[] = new TableCell($blankCell);
+//                        }
+//
+//                        $oldRow->insertCells($insertArray, $cellIndex + 1);
+//                    } elseif ($newColOffset > 0 && isset($oldCells[$cellIndex + 1])) {
+//                        $blankCell = $this->diffDom->createElement('td');
+//
+//                        $insertArray = array();
+//                        for ($i = 0; $i < $newColOffset; $i++) {
+//                            $insertArray[] = new TableCell($blankCell);
+//                        }
+//
+//                        $newRow->insertCells($insertArray, $cellIndex + 1);
+//                    }
                 }
             }
 
@@ -211,8 +287,8 @@ class TableDiff extends AbstractDiff
 
     protected function buildTableDoms()
     {
-        $this->oldTable = $this->parseTableStructure($this->oldText);
-        $this->newTable = $this->parseTableStructure($this->newText);
+        $this->oldTable = $this->parseTableStructure(mb_convert_encoding($this->oldText, 'HTML-ENTITIES', 'UTF-8'));
+        $this->newTable = $this->parseTableStructure(mb_convert_encoding($this->newText, 'HTML-ENTITIES', 'UTF-8'));
     }
 
     protected function parseTableStructure($text)
@@ -281,8 +357,13 @@ class TableDiff extends AbstractDiff
 
     protected function setInnerHtml($node, $html)
     {
+        // DOMDocument::loadHTML does not allow empty strings.
+        if (strlen($html) === 0) {
+            $html = '<span class="empty"></span>';
+        }
+
         $doc = new \DOMDocument();
-        $doc->loadHTML($html);
+        $doc->loadHTML(mb_convert_encoding($this->purifier->purify($html), 'HTML-ENTITIES', 'UTF-8'));
         $fragment = $node->ownerDocument->createDocumentFragment();
         $root = $doc->getElementsByTagName('body')->item(0);
         foreach ($root->childNodes as $child) {

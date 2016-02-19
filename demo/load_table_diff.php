@@ -19,4 +19,4 @@ if (!array_key_exists($requestJson['index'], $demoStorage)) {
 $targetDemo = $demoStorage[$requestJson['index']];
 
 header('Content-Type: application/json');
-echo json_encode($targetDemo, JSON_UNESCAPED_UNICODE);
+echo json_encode($targetDemo);

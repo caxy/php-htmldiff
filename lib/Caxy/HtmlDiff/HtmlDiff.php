@@ -19,8 +19,20 @@ class HtmlDiff extends AbstractDiff
         'sup' => '[[REPLACE_SUPER_SCRIPT]]',
         'dl' => '[[REPLACE_DEFINITION_LIST]]',
         'table' => '[[REPLACE_TABLE]]',
+        'strong' => '[[REPLACE_STRONG]]',
+        'b' => '[[REPLACE_B]]',
+        'em' => '[[REPLACE_EM]]',
+        'i' => '[[REPLACE_I]]',
         'a' => '[[REPLACE_A]]',
     );
+    protected $useTableDiffing = true;
+
+    public function setUseTableDiffing($bool)
+    {
+        $this->useTableDiffing = $bool;
+
+        return $this;
+    }
 
     /**
      * @param  boolean  $boolean
@@ -210,7 +222,7 @@ class HtmlDiff extends AbstractDiff
 
         if ($this->isListPlaceholder($placeholder)) {
             return $this->diffList($oldText, $newText);
-        } elseif ($this->isTablePlaceholder($placeholder)) {
+        } elseif ($this->useTableDiffing && $this->isTablePlaceholder($placeholder)) {
             return $this->diffTables($oldText, $newText);
         } elseif ($this->isLinkPlaceholder($placeholder)) {
             return $this->diffLinks($oldText, $newText);

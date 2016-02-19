@@ -4,6 +4,9 @@ namespace Caxy\HtmlDiff\Table;
 
 class TableCell extends AbstractTableElement
 {
+    /**
+     * @var TableRow
+     */
     protected $row;
 
     public function getRow()

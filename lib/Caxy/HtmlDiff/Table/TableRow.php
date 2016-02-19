@@ -4,8 +4,14 @@ namespace Caxy\HtmlDiff\Table;
 
 class TableRow extends AbstractTableElement
 {
+    /**
+     * @var Table
+     */
     protected $table;
 
+    /**
+     * @var array
+     */
     protected $cells = array();
     
     public function getTable()
@@ -55,5 +61,18 @@ class TableRow extends AbstractTableElement
     public function getCell($index)
     {
         return isset($this->cells[$index]) ? $this->cells[$index] : null;
+    }
+
+    /**
+     * @param array $cells
+     * @param null  $position
+     */
+    public function insertCells($cells, $position = null)
+    {
+        if ($position === null) {
+            $this->cells = array_merge($this->cells, $cells);
+        } else {
+            array_splice($this->cells, $position, 0, $cells);
+        }
     }
 }
