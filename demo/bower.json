@@ -1,0 +1,16 @@
+{
+  "name": "php-htmldiff-demo",
+  "dependencies": {
+    "bootstrap": "v4.0.0-alpha.2",
+    "angular": "1.5.0",
+    "clipboard": "^1.5.8",
+    "font-awesome": "^4.5.0",
+    "angular-sanitize": "^1.5.0",
+    "tether": "^1.2.0",
+    "ng-ckeditor": "^0.2.1",
+    "ckeditor": "^4.5.7",
+    "angular-ui": "^0.4.0",
+    "AngularJS-Toaster": "angularjs-toaster#^1.2.0",
+    "angular-bootstrap": "^1.1.2"
+  }
+}

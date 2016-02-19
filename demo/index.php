@@ -46,8 +46,8 @@ if ($input) {
     $diff->setUseTableDiffing($useTableDiffing);
     $diff->build();
 
-//    echo json_encode(array('diff' => $diff->getDifference(), 'debug' => $debugOutput));
-    echo $diff->getDifference();
+    echo json_encode(array('diff' => $diff->getDifference(), 'debug' => $debugOutput));
+//    echo $diff->getDifference();
 } else {
     header('Content-Type: text/html');
     echo file_get_contents('demo.html');
