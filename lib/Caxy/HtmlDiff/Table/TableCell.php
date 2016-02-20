@@ -24,4 +24,14 @@ class TableCell extends AbstractTableElement
 
         return $this;
     }
+
+    public function getColspan()
+    {
+        return $this->getAttribute('colspan') ?: 1;
+    }
+
+    public function getRowspan()
+    {
+        return $this->getAttribute('rowspan') ?: 1;
+    }
 }

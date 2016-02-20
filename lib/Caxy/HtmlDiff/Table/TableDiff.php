@@ -1,5 +1,7 @@
 <?php
 
+use Caxy\HtmlDiff\Table\TableCell;
+
 namespace Caxy\HtmlDiff\Table;
 
 use Caxy\HtmlDiff\AbstractDiff;
@@ -190,28 +192,42 @@ class TableDiff extends AbstractDiff
         $newRows = $this->newTable->getRows();
 
         foreach ($newRows as $index => $row) {
-            $rowDom = $this->diffRows(
+            list($rowDom, $extraRow) = $this->diffRows(
                 $this->oldTable->getRow($index),
                 $row
             );
 
             $this->diffTable->appendChild($rowDom);
+
+            if ($extraRow) {
+                $this->diffTable->appendChild($extraRow);
+            }
         }
 
         if (count($oldRows) > count($newRows)) {
             foreach (array_slice($oldRows, count($newRows)) as $row) {
-                $rowDom = $this->diffRows(
+                list($rowDom, $extraRow) = $this->diffRows(
                     $row,
                     null
                 );
 
                 $this->diffTable->appendChild($rowDom);
+
+                if ($extraRow) {
+                    $this->diffTable->appendChild($extraRow);
+                }
             }
         }
 
         $this->content = $this->htmlFromNode($this->diffTable);
     }
 
+    /**
+     * @param TableRow|null $oldRow
+     * @param TableRow|null $newRow
+     *
+     * @return \DOMNode
+     */
     protected function diffRows($oldRow, $newRow)
     {
         // create tr dom element
@@ -221,27 +237,145 @@ class TableDiff extends AbstractDiff
         $oldCells = $oldRow ? $oldRow->getCells() : array();
         $newCells = $newRow ? $newRow->getCells() : array();
 
-        foreach ($newCells as $index => $cell) {
-            $diffCell = $this->diffCells(
-                $oldRow->getCell($index),
-                $cell
-            );
+        // @todo: Figure out what we're doing with the cells
+        $columnsWithColspanDifferences = 0;
 
-            $diffRow->appendChild($diffCell);
-        }
+        $indexInOld = 0;
+        $indexInNew = 0;
 
-        if (count($oldCells) > count($newCells)) {
-            foreach (array_slice($oldCells, count($newCells)) as $cell) {
-                $diffCell = $this->diffCells(
-                    $cell,
-                    null
-                );
+        $newCellCount = count($newCells);
+        $oldCellCount = count($oldCells);
 
-                $diffRow->appendChild($diffCell);
+        $extraRow = null;
+
+        $expandCells = array();
+
+        $currentOffset = 0;
+
+        $virtualColInOld = 0;
+        $virtualColInNew = 0;
+
+        $indexInDiff = 0;
+
+        while ($indexInNew < $newCellCount) {
+            /* @var $newCell TableCell */
+            $newCell = $newCells[$indexInNew];
+            /* @var $oldCell TableCell */
+            $oldCell = isset($oldCells[$indexInOld]) ? $oldCells[$indexInOld] : null;
+
+            $newColspan = $newCell->getColspan();
+
+            if ($virtualColInOld > $virtualColInNew) {
+                // Add old cell, and catch up the new cells.
+                $targetCol = $virtualColInOld;
+
+                while ($virtualColInNew < $targetCol && $newCell) {
+                    $newDiffCell = $this->diffCells(null, $newCell);
+                    $extraRow->appendChild($newDiffCell);
+                    $virtualColInNew += $newCell->getColspan();
+                    $indexInNew++;
+                    $newCell = $newRow->getCell($indexInNew);
+                }
+
+                continue;
+            } elseif ($virtualColInNew > $virtualColInOld) {
+                // Add new cell, and catch up the old cells.
+                $targetCol = $virtualColInNew;
+
+                while ($virtualColInOld < $targetCol && $oldCell) {
+                    $oldDiffCell = $this->diffCells($oldCell, null);
+                    $diffRow->appendChild($oldDiffCell);
+                    $indexInDiff++;
+                    $virtualColInOld += $oldCell->getColspan();
+                    $indexInOld++;
+                    $oldCell = $oldRow->getCell($indexInOld);
+                }
+
+                continue;
+            }
+
+            if ($oldCell) {
+                $oldColspan = $oldCell->getColspan();
+
+                if ($newColspan != $oldColspan) {
+                    // colspans are different, so the way we output diffs is a little odd.
+                    if (null === $extraRow) {
+                        $extraRow = $this->diffDom->importNode($rowToClone->getDomNode()->cloneNode(false), false);
+                    }
+
+                    if ($oldColspan > $newColspan) {
+                        // Add old cell, and catch up the new cells.
+                        $targetCol = $virtualColInOld + $oldColspan;
+
+                        $oldDiffCell = $this->diffCells($oldCell, null);
+                        $diffRow->appendChild($oldDiffCell);
+                        $indexInDiff++;
+                        $virtualColInOld += $oldColspan;
+                        $indexInOld++;
+
+                        while ($virtualColInNew < $targetCol && $newCell) {
+                            $newDiffCell = $this->diffCells(null, $newCell);
+                            $extraRow->appendChild($newDiffCell);
+                            $virtualColInNew += $newCell->getColspan();
+                            $indexInNew++;
+                            $newCell = $newRow->getCell($indexInNew);
+                        }
+                    } else {
+                        // Add new cell, and catch up the old cells.
+                        $targetCol = $virtualColInNew + $newColspan;
+
+                        $newDiffCell = $this->diffCells(null, $newCell);
+                        $extraRow->appendChild($newDiffCell);
+                        $virtualColInNew += $newColspan;
+                        $indexInNew++;
+
+                        while ($virtualColInOld < $targetCol && $oldCell) {
+                            $oldDiffCell = $this->diffCells($oldCell, null);
+                            $diffRow->appendChild($oldDiffCell);
+                            $indexInDiff++;
+                            $virtualColInOld += $oldCell->getColspan();
+                            $indexInOld++;
+                            $oldCell = $oldRow->getCell($indexInOld);
+                        }
+                    }
+                } else {
+                    $diffCell = $this->diffCells($oldCell, $newCell);
+                    $diffRow->appendChild($diffCell);
+
+                    $expandCells[] = $diffCell;
+                    $indexInNew++;
+                    $indexInOld++;
+                    $indexInDiff++;
+                    $virtualColInNew += $newColspan;
+                    $virtualColInOld += $oldColspan;
+                }
+            } else {
+                // new cell all alone
+                $newDiffCell = $this->diffCells(null, $newCell);
+                $diffRow->appendChild($newDiffCell);
+
+                $expandCells[] = $newDiffCell;
+
+                $virtualColInNew += $newColspan;
+                $indexInNew++;
+                $indexInDiff++;
             }
         }
 
-        return $diffRow;
+        while ($indexInOld < $oldCellCount) {
+            $diffCell = $this->diffCells($oldCells[$indexInOld], null);
+            $diffRow->appendChild($diffCell);
+
+            $expandCells[] = $diffCell;
+            $indexInDiff++;
+            $indexInOld++;
+        }
+
+        foreach ($expandCells as $expandCell) {
+            $expandCell->setAttribute('rowspan', $expandCell->getAttribute('rowspan') + 1);
+        }
+
+        return array($diffRow, $extraRow);
     }
 
     protected function getNewCellNode(TableCell $oldCell = null, TableCell $newCell = null)

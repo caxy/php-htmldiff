@@ -4,9 +4,12 @@ namespace Caxy\HtmlDiff\Table;
 
 abstract class AbstractTableElement
 {
+    /**
+     * @var \DOMElement
+     */
     protected $domNode;
 
-    public function __construct(\DOMNode $domNode = null)
+    public function __construct(\DOMElement $domNode = null)
     {
         $this->domNode = $domNode;
     }
@@ -16,7 +19,7 @@ abstract class AbstractTableElement
         return $this->domNode;
     }
 
-    public function setDomNode(\DOMNode $domNode)
+    public function setDomNode(\DOMElement $domNode)
     {
         $this->domNode = $domNode;
 
@@ -34,6 +37,10 @@ abstract class AbstractTableElement
         }
 
         return $innerHtml;
+    }
+
+    public function getAttribute($name) {
+        return $this->domNode->getAttribute($name);
     }
 
     public static function htmlFromNode($node)

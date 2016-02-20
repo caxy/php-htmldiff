@@ -58,6 +58,11 @@ class TableRow extends AbstractTableElement
         }
     }
 
+    /**
+     * @param $index
+     *
+     * @return TableCell|null
+     */
     public function getCell($index)
     {
         return isset($this->cells[$index]) ? $this->cells[$index] : null;
