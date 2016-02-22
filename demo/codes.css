@@ -274,15 +274,3 @@ div.print-section a.disabled {
 .content_italics {
     font-style: italic;
 }
-
-/*region Table Diffing Styles */
-td.del {
-    background: repeating-linear-gradient(
-        45deg,
-        #ffffff,
-        #ffffff 8px,
-        #aaaaaa 5px,
-        #aaaaaa 10px
-    );
-}
-/*endregion */
