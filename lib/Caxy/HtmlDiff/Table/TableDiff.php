@@ -1,7 +1,5 @@
 <?php
 
-use Caxy\HtmlDiff\Table\TableCell;
-
 namespace Caxy\HtmlDiff\Table;
 
 use Caxy\HtmlDiff\AbstractDiff;
@@ -191,10 +189,15 @@ class TableDiff extends AbstractDiff
         $oldRows = $this->oldTable->getRows();
         $newRows = $this->newTable->getRows();
 
+        $appliedRowSpans = array();
+
+        // @todo: Do row matching
+
         foreach ($newRows as $index => $row) {
             list($rowDom, $extraRow) = $this->diffRows(
                 $this->oldTable->getRow($index),
-                $row
+                $row,
+                $appliedRowSpans
             );
 
             $this->diffTable->appendChild($rowDom);
@@ -208,7 +211,8 @@ class TableDiff extends AbstractDiff
             foreach (array_slice($oldRows, count($newRows)) as $row) {
                 list($rowDom, $extraRow) = $this->diffRows(
                     $row,
-                    null
+                    null,
+                    $appliedRowSpans
                 );
 
                 $this->diffTable->appendChild($rowDom);
@@ -225,10 +229,11 @@ class TableDiff extends AbstractDiff
     /**
      * @param TableRow|null $oldRow
      * @param TableRow|null $newRow
+     * @param array         $appliedRowSpans
      *
      * @return \DOMNode
      */
-    protected function diffRows($oldRow, $newRow)
+    protected function diffRows($oldRow, $newRow, array &$appliedRowSpans)
     {
         // create tr dom element
         $rowToClone = $newRow ?: $oldRow;
@@ -237,147 +242,86 @@ class TableDiff extends AbstractDiff
         $oldCells = $oldRow ? $oldRow->getCells() : array();
         $newCells = $newRow ? $newRow->getCells() : array();
 
-        // @todo: Figure out what we're doing with the cells
-        $columnsWithColspanDifferences = 0;
-
-        $indexInOld = 0;
-        $indexInNew = 0;
-
-        $newCellCount = count($newCells);
-        $oldCellCount = count($oldCells);
+        $position = new DiffRowPosition();
 
         $extraRow = null;
 
         $expandCells = array();
+        $cellsWithMultipleRows = array();
 
-        $currentOffset = 0;
+        // @todo: Do cell matching
 
-        $virtualColInOld = 0;
-        $virtualColInNew = 0;
-
-        $indexInDiff = 0;
-
-        while ($indexInNew < $newCellCount) {
-            /* @var $newCell TableCell */
-            $newCell = $newCells[$indexInNew];
-            /* @var $oldCell TableCell */
-            $oldCell = isset($oldCells[$indexInOld]) ? $oldCells[$indexInOld] : null;
-
-            $newColspan = $newCell->getColspan();
-
-            if ($virtualColInOld > $virtualColInNew) {
-                // Add old cell, and catch up the new cells.
-                $targetCol = $virtualColInOld;
-
-                while ($virtualColInNew < $targetCol && $newCell) {
-                    $newDiffCell = $this->diffCells(null, $newCell);
-                    $extraRow->appendChild($newDiffCell);
-                    $virtualColInNew += $newCell->getColspan();
-                    $indexInNew++;
-                    $newCell = $newRow->getCell($indexInNew);
+        $newCellCount = count($newCells);
+        while ($position->getIndexInNew() < $newCellCount) {
+            if (!$position->areColumnsEqual()) {
+                $type = $position->getLesserColumnType();
+                if ($type === 'new') {
+                    $row = $newRow;
+                    $targetRow = $extraRow;
+                } else {
+                    $row = $oldRow;
+                    $targetRow = $diffRow;
                 }
-
-                continue;
-            } elseif ($virtualColInNew > $virtualColInOld) {
-                // Add new cell, and catch up the old cells.
-                $targetCol = $virtualColInNew;
-
-                while ($virtualColInOld < $targetCol && $oldCell) {
-                    $oldDiffCell = $this->diffCells($oldCell, null);
-                    $diffRow->appendChild($oldDiffCell);
-                    $indexInDiff++;
-                    $virtualColInOld += $oldCell->getColspan();
-                    $indexInOld++;
-                    $oldCell = $oldRow->getCell($indexInOld);
-                }
+                $this->syncVirtualColumns($row, $position, $cellsWithMultipleRows, $targetRow, $type);
 
                 continue;
             }
 
-            if ($oldCell) {
-                $oldColspan = $oldCell->getColspan();
+            /* @var $newCell TableCell */
+            $newCell = $newCells[$position->getIndexInNew()];
+            /* @var $oldCell TableCell */
+            $oldCell = isset($oldCells[$position->getIndexInOld()]) ? $oldCells[$position->getIndexInOld()] : null;
 
-                if ($newColspan != $oldColspan) {
-                    // colspans are different, so the way we output diffs is a little odd.
-                    if (null === $extraRow) {
-                        $extraRow = $this->diffDom->importNode($rowToClone->getDomNode()->cloneNode(false), false);
-                    }
+            if ($oldCell && $newCell->getColspan() != $oldCell->getColspan()) {
+                if (null === $extraRow) {
+                    $extraRow = $this->diffDom->importNode($rowToClone->getDomNode()->cloneNode(false), false);
+                }
 
-                    if ($oldColspan > $newColspan) {
-                        // Add old cell, and catch up the new cells.
-                        $targetCol = $virtualColInOld + $oldColspan;
+                // @todo: How do we handle cells that have both rowspan and colspan?
 
-                        $oldDiffCell = $this->diffCells($oldCell, null);
-                        $diffRow->appendChild($oldDiffCell);
-                        $indexInDiff++;
-                        $virtualColInOld += $oldColspan;
-                        $indexInOld++;
-
-                        while ($virtualColInNew < $targetCol && $newCell) {
-                            $newDiffCell = $this->diffCells(null, $newCell);
-                            $extraRow->appendChild($newDiffCell);
-                            $virtualColInNew += $newCell->getColspan();
-                            $indexInNew++;
-                            $newCell = $newRow->getCell($indexInNew);
-                        }
-                    } else {
-                        // Add new cell, and catch up the old cells.
-                        $targetCol = $virtualColInNew + $newColspan;
-
-                        $newDiffCell = $this->diffCells(null, $newCell);
-                        $extraRow->appendChild($newDiffCell);
-                        $virtualColInNew += $newColspan;
-                        $indexInNew++;
-
-                        while ($virtualColInOld < $targetCol && $oldCell) {
-                            $oldDiffCell = $this->diffCells($oldCell, null);
-                            $diffRow->appendChild($oldDiffCell);
-                            $indexInDiff++;
-                            $virtualColInOld += $oldCell->getColspan();
-                            $indexInOld++;
-                            $oldCell = $oldRow->getCell($indexInOld);
-                        }
-                    }
+                if ($oldCell->getColspan() > $newCell->getColspan()) {
+                    $this->diffCellsAndIncrementCounters($oldCell, null, $cellsWithMultipleRows, $diffRow, $position);
+                    $this->syncVirtualColumns($newRow, $position, $cellsWithMultipleRows, $extraRow, 'new');
                 } else {
-                    $diffCell = $this->diffCells($oldCell, $newCell);
-                    $diffRow->appendChild($diffCell);
-
-                    $expandCells[] = $diffCell;
-                    $indexInNew++;
-                    $indexInOld++;
-                    $indexInDiff++;
-                    $virtualColInNew += $newColspan;
-                    $virtualColInOld += $oldColspan;
+                    $this->diffCellsAndIncrementCounters(null, $newCell, $cellsWithMultipleRows, $extraRow, $position);
+                    $this->syncVirtualColumns($oldRow, $position, $cellsWithMultipleRows, $diffRow, 'old');
                 }
             } else {
-                // new cell all alone
-                $newDiffCell = $this->diffCells(null, $newCell);
-                $diffRow->appendChild($newDiffCell);
-
-                $expandCells[] = $newDiffCell;
-
-                $virtualColInNew += $newColspan;
-                $indexInNew++;
-                $indexInDiff++;
+                $diffCell = $this->diffCellsAndIncrementCounters($oldCell, $newCell, $cellsWithMultipleRows, $diffRow, $position);
+                $expandCells[] = $diffCell;
             }
         }
 
-        while ($indexInOld < $oldCellCount) {
-            $diffCell = $this->diffCells($oldCells[$indexInOld], null);
-            $diffRow->appendChild($diffCell);
-
+        $oldCellCount = count($oldCells);
+        while ($position->getIndexInOld() < $oldCellCount) {
+            $diffCell = $this->diffCellsAndIncrementCounters($oldCells[$position->getIndexInOld()], null, $cellsWithMultipleRows, $diffRow, $position);
             $expandCells[] = $diffCell;
-            $indexInDiff++;
-            $indexInOld++;
         }
 
-        foreach ($expandCells as $expandCell) {
-            $expandCell->setAttribute('rowspan', $expandCell->getAttribute('rowspan') + 1);
+        if ($extraRow) {
+            foreach ($expandCells as $expandCell) {
+                $expandCell->setAttribute('rowspan', $expandCell->getAttribute('rowspan') + 1);
+            }
+            foreach ($appliedRowSpans as $rowSpanCells) {
+                foreach ($rowSpanCells as $extendCell) {
+                    $extendCell->setAttribute('rowspan', $extendCell->getAttribute('rowspan') + 1);
+                }
+            }
         }
+
+        array_shift($appliedRowSpans);
+        $appliedRowSpans = array_values($appliedRowSpans);
+        $appliedRowSpans = array_merge($appliedRowSpans, array_values($cellsWithMultipleRows));
 
         return array($diffRow, $extraRow);
     }
 
+    /**
+     * @param TableCell|null $oldCell
+     * @param TableCell|null $newCell
+     *
+     * @return \DOMElement
+     */
     protected function getNewCellNode(TableCell $oldCell = null, TableCell $newCell = null)
     {
         // If only one cell exists, use it
@@ -410,11 +354,14 @@ class TableDiff extends AbstractDiff
         $oldContent = $oldCell ? $this->getInnerHtml($oldCell->getDomNode()) : '';
         $newContent = $newCell ? $this->getInnerHtml($newCell->getDomNode()) : '';
 
-        $htmlDiff = new HtmlDiff($oldContent, $newContent, $this->encoding, $this->specialCaseChars, $this->groupDiffs);
-
+        $htmlDiff = new HtmlDiff($oldContent, $newContent, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
         $diff = $htmlDiff->build();
 
         $this->setInnerHtml($diffCell, $diff);
+
+        if (null === $newCell) {
+            $diffCell->setAttribute('class', trim($diffCell->getAttribute('class') . ' del'));
+        }
 
         return $diffCell;
     }
@@ -611,5 +558,66 @@ class TableDiff extends AbstractDiff
         }
 
         return null;
+    }
+
+    /**
+     * @param $tableRow
+     * @param $currentColumn
+     * @param $targetColumn
+     * @param $currentCell
+     * @param $cellsWithMultipleRows
+     * @param $diffRow
+     * @param $currentIndex
+     * @param string $diffType
+     */
+    protected function syncVirtualColumns($tableRow, DiffRowPosition $position, &$cellsWithMultipleRows, $diffRow, $diffType)
+    {
+        $currentCell = $tableRow->getCell($position->getIndex($diffType));
+        while ($position->isColumnLessThanOther($diffType) && $currentCell) {
+            $diffCell = $diffType === 'new' ? $this->diffCells(null, $currentCell) : $this->diffCells($currentCell, null);
+            // Store cell in appliedRowSpans if spans multiple rows
+            if ($diffCell->getAttribute('rowspan') > 1) {
+                $cellsWithMultipleRows[$diffCell->getAttribute('rowspan')][] = $diffCell;
+            }
+            $diffRow->appendChild($diffCell);
+            $position->incrementColumn($diffType, $currentCell->getColspan());
+            $currentCell = $tableRow->getCell($position->incrementIndex($diffType));
+        }
+    }
+
+    /**
+     * @param $oldCell
+     * @param $newCell
+     * @param $cellsWithMultipleRows
+     * @param $diffRow
+     * @param $expandCells
+     * @param $indexInNew
+     * @param $indexInOld
+     * @param $newColspan
+     * @param $virtualColInNew
+     * @param $oldColspan
+     * @param $virtualColInOld
+     * @param $diffCell
+     */
+    protected function diffCellsAndIncrementCounters($oldCell, $newCell, &$cellsWithMultipleRows, $diffRow, DiffRowPosition $position)
+    {
+        $diffCell = $this->diffCells($oldCell, $newCell);
+        // Store cell in appliedRowSpans if spans multiple rows
+        if ($diffCell->getAttribute('rowspan') > 1) {
+            $cellsWithMultipleRows[$diffCell->getAttribute('rowspan')][] = $diffCell;
+        }
+        $diffRow->appendChild($diffCell);
+
+        if ($newCell !== null) {
+            $position->incrementIndexInNew();
+            $position->incrementColumnInNew($newCell->getColspan());
+        }
+
+        if ($oldCell !== null) {
+            $position->incrementIndexInOld();
+            $position->incrementColumnInOld($oldCell->getColspan());
+        }
+
+        return $diffCell;
     }
 }

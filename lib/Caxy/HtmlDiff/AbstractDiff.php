@@ -20,6 +20,7 @@ abstract class AbstractDiff
     protected $specialCaseChars;
     protected $groupDiffs;
     protected $matchThreshold = 80;
+    protected $debug = false;
 
     public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
     {
@@ -38,6 +39,18 @@ abstract class AbstractDiff
         $this->groupDiffs = $groupDiffs;
         $this->setSpecialCaseTags($specialCaseTags);
         $this->setSpecialCaseChars(static::$defaultSpecialCaseChars);
+    }
+
+    public function setDebug($debug)
+    {
+        $this->debug = $debug;
+
+        return $this;
+    }
+
+    public function getDebug()
+    {
+        return $this->debug;
     }
 
     /**
