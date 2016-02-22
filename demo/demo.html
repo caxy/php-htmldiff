@@ -124,9 +124,12 @@
                             <button type="button" class="btn btn-sm btn-secondary clipboard" data-clipboard-target="#oldText">
                                 <i class="fa fa-clipboard"></i>
                             </button>
+                            <a ng-click="vm.toggleCkEditor()">Toggle CK</a>
                         </label>
-                        <textarea ckeditor="vm.editorOptions" ng-model="vm.oldText" id="oldText" ng-change="vm.update()"></textarea>
-                        <!--<textarea id="oldText" class="form-control" ng-model="oldText" name="old_text" ng-change="vm.update()" rows="15"></textarea>-->
+                        <div ng-if="vm.ckEditorEnabled">
+                            <textarea ckeditor="vm.editorOptions" ng-model="vm.oldText" id="oldText" ng-change="vm.update()"></textarea>
+                        </div>
+                        <textarea ng-if="!vm.ckEditorEnabled" class="form-control" ng-model="vm.oldText" name="old_text" ng-change="vm.update()" rows="15"></textarea>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-control-label" for="newText">
@@ -134,9 +137,12 @@
                             <button type="button" class="btn btn-sm btn-secondary clipboard" data-clipboard-target="#newText">
                                 <i class="fa fa-clipboard"></i>
                             </button>
+                            <a ng-click="vm.toggleCkEditor()">Toggle CK</a>
                         </label>
-                        <textarea ckeditor="vm.editorOptions" ng-model="vm.newText" id="newText" ng-change="vm.update()"></textarea>
-                        <!--<textarea id="newText" class="form-control" ng-model="newText" name="new_text" ng-change="vm.update()" rows="15"></textarea>-->
+                        <div ng-if="vm.ckEditorEnabled">
+                            <textarea ckeditor="vm.editorOptions" ng-model="vm.newText" id="newText" ng-change="vm.update()"></textarea>
+                        </div>
+                        <textarea ng-if="!vm.ckEditorEnabled" class="form-control" ng-model="vm.newText" name="new_text" ng-change="vm.update()" rows="15"></textarea>
                     </div>
                 </div><!-- end of diff inputs -->
             </div><!-- end of diff controls card-block -->
@@ -195,11 +201,19 @@
         <div class="row">
             <div class="col-sm-6">
                 <h3>Debug Output</h3>
-                <div ng-repeat="(category, messages) in vm.debugOutput">
-                    <h5>{{ category }}</h5>
-                    <pre ng-repeat="message in messages">
-                        {{ message }}
-                    </pre>
+                <div class="card" ng-repeat="(category, categoryMessages) in vm.debugOutput track by category">
+                    <div class="card-header">
+                        <h5>
+                            <a ng-click="categoryMessages.isCollapsed = !categoryMessages.isCollapsed">
+                                {{ category }}
+                            </a>
+                        </h5>
+                    </div>
+                    <div class="card-block" uib-collapse="categoryMessages.isCollapsed">
+                        <pre ng-repeat="message in categoryMessages.messages track by $index">
+                            {{ message }}
+                        </pre>
+                    </div>
                 </div>
             </div>
             <div class="col-sm-6" ng-show="vm.legislativeOverride">

@@ -24,6 +24,7 @@
         vm.tableDiffNumber = 1;
         vm.tableDiffing = true;
         vm.editorOptions = {};
+        vm.ckEditorEnabled = true;
 
         vm.trustHtml = trustHtml;
         vm.reset = reset;
@@ -34,6 +35,7 @@
         vm.diffTableDemo = diffTableDemo;
         vm.updateDemo = updateDemo;
         vm.saveNewDemo = saveNewDemo;
+        vm.toggleCkEditor = toggleCkEditor;
 
         activate();
 
@@ -46,6 +48,10 @@
 
         function trustHtml(text) {
             return typeof text !== 'undefined' ? $sce.trustAsHtml(text) : '';
+        }
+
+        function toggleCkEditor() {
+            vm.ckEditorEnabled = !vm.ckEditorEnabled;
         }
 
         function reset() {
@@ -69,6 +75,7 @@
                 getDiff();
             }, vm.updateDelay);
 
+            vm.diff = null;
             vm.waiting = true;
         }
 
@@ -158,6 +165,7 @@
         function getDiff() {
             vm.waiting = false;
             vm.loading = true;
+            vm.diff = null;
             $http.post('index.php', {
                     oldText: vm.oldText,
                     newText: vm.newText,
@@ -191,7 +199,14 @@
         }
 
         function addDebugOutput(data) {
-            angular.extend(vm.debugOutput, data);
+            angular.forEach(data, function(value, key) {
+                data[key] = {
+                    messages: value,
+                    isCollapsed: true
+                };
+            });
+
+            vm.debugOutput = data;
         }
     }
 })();
