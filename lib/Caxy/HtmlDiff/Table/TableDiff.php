@@ -60,10 +60,6 @@ class TableDiff extends AbstractDiff
         parent::__construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs);
 
         $config = \HTMLPurifier_Config::createDefault();
-//        $config->set('Cache.SerializerPath', $this->container->get('kernel')->getCacheDir());
-//        $config->set('Cache.SerializerPermissions', 0775);
-//        $this->addTagTransform('b', 'strong');
-//        $this->addTagTransform('i', 'em');
         $this->purifier = new \HTMLPurifier($config);
     }
 
@@ -126,36 +122,6 @@ class TableDiff extends AbstractDiff
                             $oldRowOffset = $offset;
                         }
                     }
-
-                    $oldColOffset = 0;
-                    $newColOffset = 0;
-                    if ($oldColspan > $newColspan) {
-                        // add placeholders in next cells
-                        $newColOffset = $oldColspan - $newColspan;
-                    } elseif ($newColspan > $oldColspan) {
-                        $oldColOffset = $newColspan - $oldColspan;
-                    }
-
-                    // @todo: Figure out colspan
-//                    if ($oldColOffset > 0 && isset($newCells[$cellIndex + 1])) {
-//                        $blankCell = $this->diffDom->createElement('td');
-//
-//                        $insertArray = array();
-//                        for ($i = 0; $i < $oldColOffset; $i++) {
-//                            $insertArray[] = new TableCell($blankCell);
-//                        }
-//
-//                        $oldRow->insertCells($insertArray, $cellIndex + 1);
-//                    } elseif ($newColOffset > 0 && isset($oldCells[$cellIndex + 1])) {
-//                        $blankCell = $this->diffDom->createElement('td');
-//
-//                        $insertArray = array();
-//                        for ($i = 0; $i < $newColOffset; $i++) {
-//                            $insertArray[] = new TableCell($blankCell);
-//                        }
-//
-//                        $newRow->insertCells($insertArray, $cellIndex + 1);
-//                    }
                 }
             }
 
@@ -192,34 +158,89 @@ class TableDiff extends AbstractDiff
         $appliedRowSpans = array();
 
         // @todo: Do row matching
+        $oldMatchData = array();
+        $newMatchData = array();
 
-        foreach ($newRows as $index => $row) {
-            list($rowDom, $extraRow) = $this->diffRows(
-                $this->oldTable->getRow($index),
-                $row,
-                $appliedRowSpans
-            );
+        /* @var $oldRow TableRow */
+        foreach ($oldRows as $oldIndex => $oldRow) {
+            $oldMatchData[$oldIndex] = array();
 
-            $this->diffTable->appendChild($rowDom);
+            // Get match percentages
+            /* @var $newRow TableRow */
+            foreach ($newRows as $newIndex => $newRow) {
+                if (!array_key_exists($newIndex, $newMatchData)) {
+                    $newMatchData[$newIndex] = array();
+                }
 
-            if ($extraRow) {
-                $this->diffTable->appendChild($extraRow);
+                $oldText = $oldRow->getInnerHtml();
+                $newText = $newRow->getInnerHtml();
+
+                // similar_text
+                $percentage = null;
+                similar_text($oldText, $newText, $percentage);
+                $percentage = $this->getMatchPercentage($oldRow, $newRow);
+
+                $oldMatchData[$oldIndex][$newIndex] = $percentage;
+                $newMatchData[$newIndex][$oldIndex] = $percentage;
+            }
+        }
+
+        $currentIndexInOld = 0;
+        $currentIndexInNew = 0;
+        $oldCount = count($oldRows);
+        $newCount = count($newRows);
+        $difference = max($oldCount, $newCount) - min($oldCount, $newCount);
+
+//        $this->matchThreshold = ($this->matchThreshold * 0.80);
+
+        foreach ($newRows as $newIndex => $row) {
+            $oldRow = $this->oldTable->getRow($currentIndexInOld);
+
+            if ($oldRow) {
+                $matchPercentage = $oldMatchData[$currentIndexInOld][$newIndex];
+
+                // does the old row match better?
+                $otherMatchBetter = false;
+                foreach ($oldMatchData[$currentIndexInOld] as $index => $percentage) {
+                    if ($index > $newIndex && $percentage > $matchPercentage) {
+                        $otherMatchBetter = $index;
+                    }
+                }
+
+                if (false !== $otherMatchBetter && $newCount > $oldCount && $difference > 0) {
+                    // insert row as new
+                    $this->diffAndAppendRows(null, $row, $appliedRowSpans, true);
+                    $difference--;
+
+                    continue;
+                }
+
+                $nextOldIndex = array_key_exists($currentIndexInOld + 1, $oldRows) ? $currentIndexInOld + 1 : null;
+
+                $replacement = false;
+
+                if ($nextOldIndex !== null &&
+                    $oldMatchData[$nextOldIndex][$newIndex] > $matchPercentage &&
+                    $oldMatchData[$nextOldIndex][$newIndex] > $this->matchThreshold
+                ) {
+                    // Following row in old is better match, use that.
+                    $this->diffAndAppendRows($oldRows[$currentIndexInOld], null, $appliedRowSpans, true);
+
+                    $currentIndexInOld++;
+                    $matchPercentage = $oldMatchData[$currentIndexInOld];
+                    $replacement = true;
+                }
+
+                $this->diffAndAppendRows($oldRows[$currentIndexInOld], $row, $appliedRowSpans, $replacement);
+                $currentIndexInOld++;
+            } else {
+                $this->diffAndAppendRows(null, $row, $appliedRowSpans);
             }
         }
 
         if (count($oldRows) > count($newRows)) {
             foreach (array_slice($oldRows, count($newRows)) as $row) {
-                list($rowDom, $extraRow) = $this->diffRows(
-                    $row,
-                    null,
-                    $appliedRowSpans
-                );
-
-                $this->diffTable->appendChild($rowDom);
-
-                if ($extraRow) {
-                    $this->diffTable->appendChild($extraRow);
-                }
+                $this->diffAndAppendRows($row, null, $appliedRowSpans);
             }
         }
 
@@ -230,10 +251,11 @@ class TableDiff extends AbstractDiff
      * @param TableRow|null $oldRow
      * @param TableRow|null $newRow
      * @param array         $appliedRowSpans
+     * @param bool          $forceExpansion
      *
      * @return \DOMNode
      */
-    protected function diffRows($oldRow, $newRow, array &$appliedRowSpans)
+    protected function diffRows($oldRow, $newRow, array &$appliedRowSpans, $forceExpansion = false)
     {
         // create tr dom element
         $rowToClone = $newRow ?: $oldRow;
@@ -262,9 +284,11 @@ class TableDiff extends AbstractDiff
                     $row = $oldRow;
                     $targetRow = $diffRow;
                 }
-                $this->syncVirtualColumns($row, $position, $cellsWithMultipleRows, $targetRow, $type);
+                if ($row && (!$type === 'old' || isset($oldCells[$position->getIndexInOld()]))) {
+                    $this->syncVirtualColumns($row, $position, $cellsWithMultipleRows, $targetRow, $type);
 
-                continue;
+                    continue;
+                }
             }
 
             /* @var $newCell TableCell */
@@ -302,6 +326,9 @@ class TableDiff extends AbstractDiff
             foreach ($expandCells as $expandCell) {
                 $expandCell->setAttribute('rowspan', $expandCell->getAttribute('rowspan') + 1);
             }
+        }
+
+        if ($extraRow || $forceExpansion) {
             foreach ($appliedRowSpans as $rowSpanCells) {
                 foreach ($rowSpanCells as $extendCell) {
                     $extendCell->setAttribute('rowspan', $extendCell->getAttribute('rowspan') + 1);
@@ -309,8 +336,10 @@ class TableDiff extends AbstractDiff
             }
         }
 
-        array_shift($appliedRowSpans);
-        $appliedRowSpans = array_values($appliedRowSpans);
+        if (!$forceExpansion) {
+            array_shift($appliedRowSpans);
+            $appliedRowSpans = array_values($appliedRowSpans);
+        }
         $appliedRowSpans = array_merge($appliedRowSpans, array_values($cellsWithMultipleRows));
 
         return array($diffRow, $extraRow);
@@ -355,6 +384,7 @@ class TableDiff extends AbstractDiff
         $newContent = $newCell ? $this->getInnerHtml($newCell->getDomNode()) : '';
 
         $htmlDiff = new HtmlDiff($oldContent, $newContent, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
+        $htmlDiff->setMatchThreshold($this->matchThreshold);
         $diff = $htmlDiff->build();
 
         $this->setInnerHtml($diffCell, $diff);
@@ -619,5 +649,58 @@ class TableDiff extends AbstractDiff
         }
 
         return $diffCell;
+    }
+
+    /**
+     * @param $oldRow
+     * @param $newRow
+     * @param $appliedRowSpans
+     * @param bool $forceExpansion
+     */
+    protected function diffAndAppendRows($oldRow, $newRow, &$appliedRowSpans, $forceExpansion = false)
+    {
+        list($rowDom, $extraRow) = $this->diffRows(
+            $oldRow,
+            $newRow,
+            $appliedRowSpans,
+            $forceExpansion
+        );
+
+        $this->diffTable->appendChild($rowDom);
+
+        if ($extraRow) {
+            $this->diffTable->appendChild($extraRow);
+        }
+    }
+
+    protected function getMatchPercentage(TableRow $oldRow, TableRow $newRow)
+    {
+        $matches = array();
+        $thresholdCount = 0;
+        foreach ($newRow->getCells() as $newIndex => $newCell) {
+            $oldCell = $oldRow->getCell($newIndex);
+
+            if ($oldCell) {
+                $percentage = null;
+                similar_text($oldCell->getInnerHtml(), $newCell->getInnerHtml(), $percentage);
+
+                $matches[$newIndex] = $percentage;
+
+                if ($percentage > ($this->matchThreshold * 0.50)) {
+                    $thresholdCount++;
+                }
+            }
+        }
+
+        $matchPercentage = count($matches) > 0 ? $thresholdCount / count($matches) : 0;
+
+        $fullPercentage = null;
+        similar_text($oldRow->getInnerHtml(), $newRow->getInnerHtml(), $fullPercentage);
+
+        if ($matchPercentage > $fullPercentage) {
+            addDebugOutput(sprintf('Using match percentage! %s vs %s', $matchPercentage, $fullPercentage), __METHOD__);
+        }
+
+        return $matchPercentage;
     }
 }
