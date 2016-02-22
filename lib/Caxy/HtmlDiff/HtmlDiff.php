@@ -14,7 +14,8 @@ class HtmlDiff extends AbstractDiff
         'sub' => '[[REPLACE_SUB_SCRIPT]]',
         'sup' => '[[REPLACE_SUPER_SCRIPT]]',
         'dl' => '[[REPLACE_DEFINITION_LIST]]',
-        'table' => '[[REPLACE_TABLE]]'
+        'table' => '[[REPLACE_TABLE]]',
+        'a' => '[[REPLACE_A]]',
     );
 
     /**
@@ -69,7 +70,6 @@ class HtmlDiff extends AbstractDiff
     {
         $this->oldIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->oldWords);
         $this->newIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->newWords);
-
     }
 
     protected function createIsolatedDiffTagPlaceholders(&$words)
@@ -191,6 +191,28 @@ class HtmlDiff extends AbstractDiff
         $this->insertTag( "del", $cssClass, $text );
     }
 
+    /**
+     * @param Operation $operation
+     * @param int       $pos
+     * @param string    $placeholder
+     * @param bool      $stripWrappingTags
+     *
+     * @return string
+     */
+    protected function diffIsolatedPlaceholder($operation, $pos, $placeholder, $stripWrappingTags = true)
+    {
+        $oldText = implode("", $this->findIsolatedDiffTagsInOld($operation, $pos));
+        $newText = implode("", $this->newIsolatedDiffTags[$pos]);
+
+        if ($this->isListPlaceholder($placeholder)) {
+            return $this->diffList($oldText, $newText);
+        } elseif ($this->isLinkPlaceholder($placeholder)) {
+            return $this->diffLinks($oldText, $newText);
+        }
+
+        return $this->diffElements($oldText, $newText, $stripWrappingTags);
+    }
+
     protected function diffElements($oldText, $newText, $stripWrappingTags = true)
     {
         $wrapStart = '';
@@ -221,6 +243,28 @@ class HtmlDiff extends AbstractDiff
         return $diff->build();
     }
 
+    /**
+     * @param string $oldText
+     * @param string $newText
+     *
+     * @return string
+     */
+    protected function diffLinks($oldText, $newText)
+    {
+        $oldHref = $this->getAttributeFromTag($oldText, 'href');
+        $newHref = $this->getAttributeFromTag($newText, 'href');
+
+        if ($oldHref != $newHref) {
+            return sprintf(
+                '%s%s',
+                $this->wrapText($oldText, 'del', 'diffmod diff-href'),
+                $this->wrapText($newText, 'ins', 'diffmod diff-href')
+            );
+        }
+
+        return $this->diffElements($oldText, $newText);
+    }
+
     protected function processEqualOperation($operation)
     {
         $result = array();
@@ -229,14 +273,7 @@ class HtmlDiff extends AbstractDiff
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
                 if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
 
-                    $oldText = implode("", $this->findIsolatedDiffTagsInOld($operation, $pos));
-                    $newText = implode("", $this->newIsolatedDiffTags[$pos]);
-
-                    if ($this->isListPlaceholder($s)) {
-                        $result[] = $this->diffList($oldText, $newText);
-                    } else {
-                        $result[] = $this->diffElements($oldText, $newText);
-                    }
+                    $result[] = $this->diffIsolatedPlaceholder($operation, $pos, $s);
                 } else {
                     $result[] = $s;
                 }
@@ -245,17 +282,60 @@ class HtmlDiff extends AbstractDiff
         $this->content .= implode( "", $result );
     }
 
-    protected function isListPlaceholder($text)
+    /**
+     * @param string $text
+     * @param string $attribute
+     *
+     * @return null|string
+     */
+    protected function getAttributeFromTag($text, $attribute)
     {
-        if (in_array($text, array(
-            $this->isolatedDiffTags['ol'],
-            $this->isolatedDiffTags['dl'],
-            $this->isolatedDiffTags['ul']
-        ))) {
-            return true;
+        $matches = array();
+        if (preg_match(sprintf('/<a\s+[^>]*%s=([\'"])(.*)\1[^>]*>/i', $attribute), $text, $matches)) {
+            return $matches[2];
         }
 
-        return false;
+        return null;
+    }
+
+    protected function isListPlaceholder($text)
+    {
+        return $this->isPlaceholderType($text, array('ol', 'dl', 'ul'));
+    }
+
+    /**
+     * @param string $text
+     *
+     * @return bool
+     */
+    public function isLinkPlaceholder($text)
+    {
+        return $this->isPlaceholderType($text, 'a');
+    }
+
+    /**
+     * @param string       $text
+     * @param array|string $types
+     * @param bool         $strict
+     *
+     * @return bool
+     */
+    protected function isPlaceholderType($text, $types, $strict = true)
+    {
+        if (!is_array($types)) {
+            $types = array($types);
+        }
+
+        $criteria = array();
+        foreach ($types as $type) {
+            if (isset($this->isolatedDiffTags[$type])) {
+                $criteria[] = $this->isolatedDiffTags[$type];
+            } else {
+                $criteria[] = $type;
+            }
+        }
+
+        return in_array($text, $criteria, $strict);
     }
 
     protected function findIsolatedDiffTagsInOld($operation, $posInNew)
@@ -334,6 +414,7 @@ class HtmlDiff extends AbstractDiff
     protected function extractConsecutiveWords(&$words, $condition)
     {
         $indexOfFirstTag = null;
+        $words = array_values($words);
         foreach ($words as $i => $word) {
             if ( !$this->checkCondition( $word, $condition ) ) {
                 $indexOfFirstTag = $i;
