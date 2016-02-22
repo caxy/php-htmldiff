@@ -54,7 +54,7 @@ class TableDiff extends AbstractDiff
      * @var \HTMLPurifier
      */
     protected $purifier;
-    
+
     public function __construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs)
     {
         parent::__construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs);
@@ -155,7 +155,6 @@ class TableDiff extends AbstractDiff
 
         $appliedRowSpans = array();
 
-        // @todo: Do row matching
         $oldMatchData = array();
         $newMatchData = array();
 
@@ -302,21 +301,47 @@ class TableDiff extends AbstractDiff
                 // @todo: How do we handle cells that have both rowspan and colspan?
 
                 if ($oldCell->getColspan() > $newCell->getColspan()) {
-                    $this->diffCellsAndIncrementCounters($oldCell, null, $cellsWithMultipleRows, $diffRow, $position, true);
+                    $this->diffCellsAndIncrementCounters(
+                        $oldCell,
+                        null,
+                        $cellsWithMultipleRows,
+                        $diffRow,
+                        $position,
+                        true
+                    );
                     $this->syncVirtualColumns($newRow, $position, $cellsWithMultipleRows, $extraRow, 'new', true);
                 } else {
-                    $this->diffCellsAndIncrementCounters(null, $newCell, $cellsWithMultipleRows, $extraRow, $position, true);
+                    $this->diffCellsAndIncrementCounters(
+                        null,
+                        $newCell,
+                        $cellsWithMultipleRows,
+                        $extraRow,
+                        $position,
+                        true
+                    );
                     $this->syncVirtualColumns($oldRow, $position, $cellsWithMultipleRows, $diffRow, 'old', true);
                 }
             } else {
-                $diffCell = $this->diffCellsAndIncrementCounters($oldCell, $newCell, $cellsWithMultipleRows, $diffRow, $position);
+                $diffCell = $this->diffCellsAndIncrementCounters(
+                    $oldCell,
+                    $newCell,
+                    $cellsWithMultipleRows,
+                    $diffRow,
+                    $position
+                );
                 $expandCells[] = $diffCell;
             }
         }
 
         $oldCellCount = count($oldCells);
         while ($position->getIndexInOld() < $oldCellCount) {
-            $diffCell = $this->diffCellsAndIncrementCounters($oldCells[$position->getIndexInOld()], null, $cellsWithMultipleRows, $diffRow, $position);
+            $diffCell = $this->diffCellsAndIncrementCounters(
+                $oldCells[$position->getIndexInOld()],
+                null,
+                $cellsWithMultipleRows,
+                $diffRow,
+                $position
+            );
             $expandCells[] = $diffCell;
         }
 
@@ -377,7 +402,7 @@ class TableDiff extends AbstractDiff
     protected function diffCells($oldCell, $newCell, $usingExtraRow = false)
     {
         $diffCell = $this->getNewCellNode($oldCell, $newCell);
-        
+
         $oldContent = $oldCell ? $this->getInnerHtml($oldCell->getDomNode()) : '';
         $newContent = $newCell ? $this->getInnerHtml($newCell->getDomNode()) : '';
 
@@ -394,15 +419,15 @@ class TableDiff extends AbstractDiff
         $this->setInnerHtml($diffCell, $diff);
 
         if (null === $newCell) {
-            $diffCell->setAttribute('class', trim($diffCell->getAttribute('class') . ' del'));
+            $diffCell->setAttribute('class', trim($diffCell->getAttribute('class').' del'));
         }
 
         if (null === $oldCell) {
-            $diffCell->setAttribute('class', trim($diffCell->getAttribute('class') . ' ins'));
+            $diffCell->setAttribute('class', trim($diffCell->getAttribute('class').' ins'));
         }
 
         if ($usingExtraRow) {
-            $diffCell->setAttribute('class', trim($diffCell->getAttribute('class') . ' extra-row'));
+            $diffCell->setAttribute('class', trim($diffCell->getAttribute('class').' extra-row'));
         }
 
         return $diffCell;
@@ -475,6 +500,7 @@ class TableDiff extends AbstractDiff
         $domDocument = new \DOMDocument();
         $newNode = $domDocument->importNode($node, true);
         $domDocument->appendChild($newNode);
+
         return trim($domDocument->saveHTML());
     }
 
@@ -492,7 +518,7 @@ class TableDiff extends AbstractDiff
         foreach ($root->childNodes as $child) {
             $fragment->appendChild($node->ownerDocument->importNode($child, true));
         }
-        
+
         $node->appendChild($fragment);
     }
 
@@ -520,8 +546,12 @@ class TableDiff extends AbstractDiff
 
         $startInOld = new TablePosition(0, 0);
         $startInNew = new TablePosition(0, 0);
-        $endInOld = new TablePosition($oldRowCount - 1, count($this->oldTable->getRow($oldRowCount - 1)->getCells()) - 1);
-        $endInNew = new TablePosition($newRowCount - 1, count($this->newTable->getRow($newRowCount - 1)->getCells()) - 1);
+        $endInOld = new TablePosition(
+            $oldRowCount - 1, count($this->oldTable->getRow($oldRowCount - 1)->getCells()) - 1
+        );
+        $endInNew = new TablePosition(
+            $newRowCount - 1, count($this->newTable->getRow($newRowCount - 1)->getCells()) - 1
+        );
 
         $this->findMatches($startInOld, $endInOld, $startInNew, $endInNew, $matches);
 
@@ -535,7 +565,13 @@ class TableDiff extends AbstractDiff
             if (TablePosition::compare($startInOld, $match->getStartInOld()) < 0 &&
                 TablePosition::compare($startInNew, $match->getStartInNew()) < 0
             ) {
-                $this->findMatches($startInOld, $match->getStartInOld(), $startInNew, $match->getStartInNew(), $matches);
+                $this->findMatches(
+                    $startInOld,
+                    $match->getStartInOld(),
+                    $startInNew,
+                    $match->getStartInNew(),
+                    $matches
+                );
             }
 
             $matches[] = $match;
@@ -568,7 +604,7 @@ class TableDiff extends AbstractDiff
                 $currentPos = $this->oldTable->getPositionAfter($currentPos);
                 continue;
             }
-            
+
             foreach ($this->cellValues[$value] as $posInNew) {
                 if (TablePosition::compare($posInNew, $startInNew) < 0) {
                     continue;
@@ -596,6 +632,7 @@ class TableDiff extends AbstractDiff
         if ($bestMatchSize != 0) {
             $bestEndInOld = $this->oldTable->getPositionAfter($bestMatchInOld, $bestMatchSize);
             $bestEndInNew = $this->newTable->getPositionAfter($bestMatchInNew, $bestMatchSize);
+
             return new TableMatch($bestMatchInOld, $bestMatchInNew, $bestEndInOld, $bestEndInNew);
         }
 
@@ -603,20 +640,30 @@ class TableDiff extends AbstractDiff
     }
 
     /**
-     * @param $tableRow
-     * @param $currentColumn
-     * @param $targetColumn
-     * @param $currentCell
-     * @param $cellsWithMultipleRows
-     * @param $diffRow
-     * @param $currentIndex
+     * @param        $tableRow
+     * @param        $currentColumn
+     * @param        $targetColumn
+     * @param        $currentCell
+     * @param        $cellsWithMultipleRows
+     * @param        $diffRow
+     * @param        $currentIndex
      * @param string $diffType
      */
-    protected function syncVirtualColumns($tableRow, DiffRowPosition $position, &$cellsWithMultipleRows, $diffRow, $diffType, $usingExtraRow = false)
-    {
+    protected function syncVirtualColumns(
+        $tableRow,
+        DiffRowPosition $position,
+        &$cellsWithMultipleRows,
+        $diffRow,
+        $diffType,
+        $usingExtraRow = false
+    ) {
         $currentCell = $tableRow->getCell($position->getIndex($diffType));
         while ($position->isColumnLessThanOther($diffType) && $currentCell) {
-            $diffCell = $diffType === 'new' ? $this->diffCells(null, $currentCell, $usingExtraRow) : $this->diffCells($currentCell, null, $usingExtraRow);
+            $diffCell = $diffType === 'new' ? $this->diffCells(null, $currentCell, $usingExtraRow) : $this->diffCells(
+                $currentCell,
+                null,
+                $usingExtraRow
+            );
             // Store cell in appliedRowSpans if spans multiple rows
             if ($diffCell->getAttribute('rowspan') > 1) {
                 $cellsWithMultipleRows[$diffCell->getAttribute('rowspan')][] = $diffCell;
@@ -628,21 +675,23 @@ class TableDiff extends AbstractDiff
     }
 
     /**
-     * @param $oldCell
-     * @param $newCell
-     * @param $cellsWithMultipleRows
-     * @param $diffRow
-     * @param $expandCells
-     * @param $indexInNew
-     * @param $indexInOld
-     * @param $newColspan
-     * @param $virtualColInNew
-     * @param $oldColspan
-     * @param $virtualColInOld
-     * @param $diffCell
+     * @param null|TableCell  $oldCell
+     * @param null|TableCell  $newCell
+     * @param array           $cellsWithMultipleRows
+     * @param \DOMElement     $diffRow
+     * @param DiffRowPosition $position
+     * @param bool            $usingExtraRow
+     *
+     * @return \DOMElement
      */
-    protected function diffCellsAndIncrementCounters($oldCell, $newCell, &$cellsWithMultipleRows, $diffRow, DiffRowPosition $position, $usingExtraRow = false)
-    {
+    protected function diffCellsAndIncrementCounters(
+        $oldCell,
+        $newCell,
+        &$cellsWithMultipleRows,
+        $diffRow,
+        DiffRowPosition $position,
+        $usingExtraRow = false
+    ) {
         $diffCell = $this->diffCells($oldCell, $newCell, $usingExtraRow);
         // Store cell in appliedRowSpans if spans multiple rows
         if ($diffCell->getAttribute('rowspan') > 1) {
@@ -664,9 +713,9 @@ class TableDiff extends AbstractDiff
     }
 
     /**
-     * @param $oldRow
-     * @param $newRow
-     * @param $appliedRowSpans
+     * @param      $oldRow
+     * @param      $newRow
+     * @param      $appliedRowSpans
      * @param bool $forceExpansion
      */
     protected function diffAndAppendRows($oldRow, $newRow, &$appliedRowSpans, $forceExpansion = false)
@@ -704,15 +753,6 @@ class TableDiff extends AbstractDiff
             }
         }
 
-        $matchPercentage = count($matches) > 0 ? $thresholdCount / count($matches) : 0;
-
-        $fullPercentage = null;
-        similar_text($oldRow->getInnerHtml(), $newRow->getInnerHtml(), $fullPercentage);
-
-        if ($matchPercentage > $fullPercentage) {
-            addDebugOutput(sprintf('Using match percentage! %s vs %s', $matchPercentage, $fullPercentage), __METHOD__);
-        }
-
-        return $matchPercentage;
+        return (count($matches) > 0) ? $thresholdCount / count($matches) : 0;
     }
 }
