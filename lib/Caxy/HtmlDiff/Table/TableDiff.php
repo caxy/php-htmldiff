@@ -76,8 +76,6 @@ class TableDiff extends AbstractDiff
 
         $this->indexCellValues($this->newTable);
 
-//        $matches = $this->getMatches();
-
         $this->diffTableContent();
 
         return $this->content;
@@ -737,108 +735,6 @@ class TableDiff extends AbstractDiff
                 $this->cellValues[$value][] = new TablePosition($rowIndex, $cellIndex);
             }
         }
-    }
-
-    protected function getMatches()
-    {
-        $matches = array();
-
-        $oldRowCount = count($this->oldTable->getRows());
-        $newRowCount = count($this->newTable->getRows());
-
-        $startInOld = new TablePosition(0, 0);
-        $startInNew = new TablePosition(0, 0);
-        $endInOld = new TablePosition(
-            $oldRowCount - 1, count($this->oldTable->getRow($oldRowCount - 1)->getCells()) - 1
-        );
-        $endInNew = new TablePosition(
-            $newRowCount - 1, count($this->newTable->getRow($newRowCount - 1)->getCells()) - 1
-        );
-
-        $this->findMatches($startInOld, $endInOld, $startInNew, $endInNew, $matches);
-
-        return $matches;
-    }
-
-    protected function findMatches($startInOld, $endInOld, $startInNew, $endInNew, &$matches)
-    {
-        $match = $this->findMatch($startInOld, $endInOld, $startInNew, $endInNew);
-        if ($match !== null) {
-            if (TablePosition::compare($startInOld, $match->getStartInOld()) < 0 &&
-                TablePosition::compare($startInNew, $match->getStartInNew()) < 0
-            ) {
-                $this->findMatches(
-                    $startInOld,
-                    $match->getStartInOld(),
-                    $startInNew,
-                    $match->getStartInNew(),
-                    $matches
-                );
-            }
-
-            $matches[] = $match;
-
-            if (TablePosition::compare($match->getEndInOld(), $endInOld) < 0 &&
-                TablePosition::compare($match->getEndInNew(), $endInNew) < 0
-            ) {
-                $this->findMatches($match->getEndInOld(), $endInOld, $match->getEndInNew(), $endInNew, $matches);
-            }
-        }
-    }
-
-    protected function findMatch($startInOld, $endInOld, $startInNew, $endInNew)
-    {
-        $bestMatchInOld = $startInOld;
-        $bestMatchInNew = $startInNew;
-        $bestMatchSize = 0;
-        $matchLengthAt = array();
-
-        $currentPos = $startInOld;
-
-        while ($currentPos && TablePosition::compare($currentPos, $endInOld) < 0) {
-            $newMatchLengthAt = array();
-            $oldCell = $this->oldTable->getCellByPosition($currentPos);
-
-            $value = trim($oldCell->getDomNode()->textContent);
-
-            if (!isset($this->cellValues[$value])) {
-                $matchLengthAt = $newMatchLengthAt;
-                $currentPos = $this->oldTable->getPositionAfter($currentPos);
-                continue;
-            }
-
-            foreach ($this->cellValues[$value] as $posInNew) {
-                if (TablePosition::compare($posInNew, $startInNew) < 0) {
-                    continue;
-                }
-                if (TablePosition::compare($posInNew, $endInNew) >= 0) {
-                    break;
-                }
-
-                $posBefore = $this->newTable->getPositionBefore($posInNew);
-
-                $newMatchLength = 1 + (isset($matchLengthAt[(string)$posBefore]) ? $matchLengthAt[(string)$posBefore] : 0);
-                $newMatchLengthAt[(string)$posInNew] = $newMatchLength;
-
-                if ($newMatchLength > $bestMatchSize) {
-                    $bestMatchInOld = $this->oldTable->getPositionBefore($currentPos, $newMatchLength - 1);
-                    $bestMatchInNew = $this->newTable->getPositionBefore($posInNew, $newMatchLength - 1);
-                    $bestMatchSize = $newMatchLength;
-                }
-            }
-            $matchLengthAt = $newMatchLengthAt;
-
-            $currentPos = $this->oldTable->getPositionAfter($currentPos);
-        }
-
-        if ($bestMatchSize != 0) {
-            $bestEndInOld = $this->oldTable->getPositionAfter($bestMatchInOld, $bestMatchSize);
-            $bestEndInNew = $this->newTable->getPositionAfter($bestMatchInNew, $bestMatchSize);
-
-            return new TableMatch($bestMatchInOld, $bestMatchInNew, $bestEndInOld, $bestEndInNew);
-        }
-
-        return null;
     }
 
     /**
