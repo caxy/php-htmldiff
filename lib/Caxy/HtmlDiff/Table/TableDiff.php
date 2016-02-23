@@ -248,11 +248,11 @@ class TableDiff extends AbstractDiff
                     break;
 
                 case 'delete':
-                    $this->processDeleteOperation($operation, $oldRows, $newRows, $appliedRowSpans);
+                    $this->processDeleteOperation($operation, $oldRows, $appliedRowSpans);
                     break;
 
                 case 'insert':
-                    $this->processInsertOperation($operation, $oldRows, $newRows, $appliedRowSpans);
+                    $this->processInsertOperation($operation, $newRows, $appliedRowSpans);
                     break;
 
                 case 'replace':
@@ -262,7 +262,7 @@ class TableDiff extends AbstractDiff
         }
     }
 
-    protected function processInsertOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans, $forceExpansion = false)
+    protected function processInsertOperation(Operation $operation, $newRows, &$appliedRowSpans, $forceExpansion = false)
     {
         $targetRows = array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew);
         foreach ($targetRows as $row) {
@@ -270,7 +270,7 @@ class TableDiff extends AbstractDiff
         }
     }
 
-    protected function processDeleteOperation($operation, $oldRows, $newRows, &$appliedRowSpans, $forceExpansion = false)
+    protected function processDeleteOperation(Operation $operation, $oldRows, &$appliedRowSpans, $forceExpansion = false)
     {
         $targetRows = array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld);
         foreach ($targetRows as $row) {
@@ -278,7 +278,7 @@ class TableDiff extends AbstractDiff
         }
     }
 
-    protected function processEqualOperation($operation, $oldRows, $newRows, &$appliedRowSpans)
+    protected function processEqualOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans)
     {
         $targetOldRows = array_values(array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld));
         $targetNewRows = array_values(array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew));
@@ -292,10 +292,10 @@ class TableDiff extends AbstractDiff
         }
     }
 
-    protected function processReplaceOperation($operation, $oldRows, $newRows, &$appliedRowSpans)
+    protected function processReplaceOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans)
     {
-        $this->processDeleteOperation($operation, $oldRows, $newRows, $appliedRowSpans, true);
-        $this->processInsertOperation($operation, $oldRows, $newRows, $appliedRowSpans, true);
+        $this->processDeleteOperation($operation, $oldRows, $appliedRowSpans, true);
+        $this->processInsertOperation($operation, $newRows, $appliedRowSpans, true);
     }
 
     protected function getRowMatches($oldMatchData, $newMatchData)
