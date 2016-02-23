@@ -56,6 +56,9 @@ class TableDiff extends AbstractDiff
      */
     protected $purifier;
 
+    /**
+     * @var string
+     */
     protected $strategy = self::STRATEGY_MATCHING;
 
     public function __construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs)

@@ -20,7 +20,6 @@
     },
     "require": {
         "php": ">=5.3.3",
-        "neitanod/forceutf8": "^2.0",
         "ezyang/htmlpurifier": "^4.7"
     },
     "autoload": {

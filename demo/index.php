@@ -1,7 +1,6 @@
 <?php
 
 use Caxy\HtmlDiff\HtmlDiff;
-use ForceUTF8\Encoding;
 
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
@@ -32,11 +31,8 @@ if ($input) {
 
     $data = json_decode($input, true);
 
-//    $oldText = $data['oldText'];
-//    $newText = $data['newText'];
-
-    $oldText = Encoding::toUTF8($data['oldText']);
-    $newText = Encoding::toUTF8($data['newText']);
+    $oldText = $data['oldText'];
+    $newText = $data['newText'];
     $useTableDiffing = isset($data['tableDiffing']) ? $data['tableDiffing'] : true;
 
     $diff = new HtmlDiff($oldText, $newText, 'UTF-8', array());
@@ -50,7 +46,6 @@ if ($input) {
     $diff->build();
 
     echo json_encode(array('diff' => $diff->getDifference(), 'debug' => $debugOutput));
-//    echo $diff->getDifference();
 } else {
     header('Content-Type: text/html');
     echo file_get_contents('demo.html');
