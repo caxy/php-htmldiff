@@ -4,6 +4,7 @@ namespace Caxy\HtmlDiff\Table;
 
 use Caxy\HtmlDiff\AbstractDiff;
 use Caxy\HtmlDiff\HtmlDiff;
+use Caxy\HtmlDiff\Operation;
 
 /**
  * @todo Add getters to TableMatch entity
@@ -15,6 +16,9 @@ use Caxy\HtmlDiff\HtmlDiff;
  */
 class TableDiff extends AbstractDiff
 {
+    const STRATEGY_MATCHING = 'matching';
+    const STRATEGY_RELATIVE = 'relative';
+
     /**
      * @var null|Table
      */
@@ -55,12 +59,26 @@ class TableDiff extends AbstractDiff
      */
     protected $purifier;
 
+    protected $strategy = self::STRATEGY_MATCHING;
+
     public function __construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs)
     {
         parent::__construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs);
 
         $config = \HTMLPurifier_Config::createDefault();
         $this->purifier = new \HTMLPurifier($config);
+    }
+
+    public function setStrategy($strategy)
+    {
+        $this->strategy = $strategy;
+
+        return $this;
+    }
+
+    public function getStrategy()
+    {
+        return $this->strategy;
     }
 
     public function build()
@@ -184,9 +202,125 @@ class TableDiff extends AbstractDiff
 
         addDebugOutput($matches, __METHOD__);
 
-        $this->diffTableRows($oldRows, $newRows, $oldMatchData);
+        // new solution for diffing rows
+        switch ($this->strategy) {
+            case self::STRATEGY_MATCHING:
+                $this->diffTableRowsWithMatches($oldRows, $newRows, $matches);
+                break;
+
+            case self::STRATEGY_RELATIVE:
+                $this->diffTableRows($oldRows, $newRows, $oldMatchData);
+                break;
+
+            default:
+                $this->diffTableRowsWithMatches($oldRows, $newRows, $matches);
+                break;
+        }
 
         $this->content = $this->htmlFromNode($this->diffTable);
+    }
+
+    /**
+     * @param TableRow[] $oldRows
+     * @param TableRow[] $newRows
+     * @param RowMatch[] $matches
+     */
+    protected function diffTableRowsWithMatches($oldRows, $newRows, $matches)
+    {
+        $operations = array();
+
+        $indexInOld = 0;
+        $indexInNew = 0;
+
+        $oldRowCount = count($oldRows);
+        $newRowCount = count($newRows);
+
+        $matches[] = new RowMatch($newRowCount, $oldRowCount, $newRowCount, $oldRowCount);
+
+        // build operations
+        foreach ($matches as $match) {
+            $matchAtIndexInOld = $indexInOld === $match->getStartInOld();
+            $matchAtIndexInNew = $indexInNew === $match->getStartInNew();
+
+            $action = 'equal';
+
+            if (!$matchAtIndexInOld && !$matchAtIndexInNew) {
+                $action = 'replace';
+            } elseif ($matchAtIndexInOld && !$matchAtIndexInNew) {
+                $action = 'insert';
+            } elseif (!$matchAtIndexInOld && $matchAtIndexInNew) {
+                $action = 'delete';
+            }
+
+            if ($action !== 'equal') {
+                $operations[] = new Operation($action, $indexInOld, $match->getStartInOld(), $indexInNew, $match->getStartInNew());
+            }
+
+            $operations[] = new Operation('equal', $match->getStartInOld(), $match->getEndInOld(), $match->getStartInNew(), $match->getEndInNew());
+
+            $indexInOld = $match->getEndInOld();
+            $indexInNew = $match->getEndInNew();
+        }
+
+        $appliedRowSpans = array();
+
+        // process operations
+        foreach ($operations as $operation) {
+            switch ($operation->action) {
+                case 'equal':
+                    $this->processEqualOperation($operation, $oldRows, $newRows, $appliedRowSpans);
+                    break;
+
+                case 'delete':
+                    $this->processDeleteOperation($operation, $oldRows, $newRows, $appliedRowSpans);
+                    break;
+
+                case 'insert':
+                    $this->processInsertOperation($operation, $oldRows, $newRows, $appliedRowSpans);
+                    break;
+
+                case 'replace':
+                    $this->processReplaceOperation($operation, $oldRows, $newRows, $appliedRowSpans);
+                    break;
+            }
+        }
+    }
+
+    protected function processInsertOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans, $forceExpansion = false)
+    {
+        $targetRows = array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew);
+        foreach ($targetRows as $row) {
+            $this->diffAndAppendRows(null, $row, $appliedRowSpans, $forceExpansion);
+        }
+    }
+
+    protected function processDeleteOperation($operation, $oldRows, $newRows, &$appliedRowSpans, $forceExpansion = false)
+    {
+        $targetRows = array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld);
+        foreach ($targetRows as $row) {
+            $this->diffAndAppendRows($row, null, $appliedRowSpans, $forceExpansion);
+        }
+    }
+
+    protected function processEqualOperation($operation, $oldRows, $newRows, &$appliedRowSpans)
+    {
+        $targetOldRows = array_values(array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld));
+        $targetNewRows = array_values(array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew));
+
+        foreach ($targetNewRows as $index => $newRow) {
+            if (!isset($targetOldRows[$index])) {
+                addDebugOutput('failed finding matchign row', __METHOD__);
+                continue;
+            }
+
+            $this->diffAndAppendRows($targetOldRows[$index], $newRow, $appliedRowSpans);
+        }
+    }
+
+    protected function processReplaceOperation($operation, $oldRows, $newRows, &$appliedRowSpans)
+    {
+        $this->processDeleteOperation($operation, $oldRows, $newRows, $appliedRowSpans, true);
+        $this->processInsertOperation($operation, $oldRows, $newRows, $appliedRowSpans, true);
     }
 
     protected function getRowMatches($oldMatchData, $newMatchData)
@@ -240,7 +374,7 @@ class TableDiff extends AbstractDiff
                 continue;
             }
 
-            if ($newIndex > $endInNew) {
+            if ($newIndex >= $endInNew) {
                 break;
             }
             foreach ($oldMatches as $oldIndex => $percentage) {
@@ -248,7 +382,7 @@ class TableDiff extends AbstractDiff
                     continue;
                 }
 
-                if ($oldIndex > $endInOld) {
+                if ($oldIndex >= $endInOld) {
                     break;
                 }
 
@@ -257,13 +391,14 @@ class TableDiff extends AbstractDiff
                     $bestMatch = array(
                         'oldIndex' => $oldIndex,
                         'newIndex' => $newIndex,
+                        'percentage' => $percentage,
                     );
                 }
             }
         }
 
         if ($bestMatch !== null) {
-            return new RowMatch($bestMatch['newIndex'], $bestMatch['oldIndex'], $bestMatch['newIndex'] + 1, $bestMatch['oldIndex'] + 1);
+            return new RowMatch($bestMatch['newIndex'], $bestMatch['oldIndex'], $bestMatch['newIndex'] + 1, $bestMatch['oldIndex'] + 1, $bestMatch['percentage']);
         }
 
         return null;
@@ -826,9 +961,9 @@ class TableDiff extends AbstractDiff
 
     protected function getMatchPercentage(TableRow $oldRow, TableRow $newRow)
     {
-        $matches = array();
+        $firstCellWeight = 3;
         $thresholdCount = 0;
-        $firstCellMatch = false;
+        $totalCount = (min(count($newRow->getCells()), count($oldRow->getCells())) + $firstCellWeight) * 100;
         foreach ($newRow->getCells() as $newIndex => $newCell) {
             $oldCell = $oldRow->getCell($newIndex);
 
@@ -836,23 +971,17 @@ class TableDiff extends AbstractDiff
                 $percentage = null;
                 similar_text($oldCell->getInnerHtml(), $newCell->getInnerHtml(), $percentage);
 
-                $matches[$newIndex] = $percentage;
-
                 if ($percentage > ($this->matchThreshold * 0.50)) {
-                    if ($newIndex === 0 && $percentage > 0.95) {
-                        $firstCellMatch = true;
+                    $increment = $percentage;
+                    if ($newIndex === 0 && $percentage > 95) {
+                        $increment = $increment * $firstCellWeight;
                     }
-                    $thresholdCount++;
+                    $thresholdCount += $increment;
                 }
             }
         }
 
-        $matchPercentage = (count($matches) > 0) ? ($thresholdCount / count($matches)) : 0;
-
-        if ($firstCellMatch) {
-            // @todo: Weight the first cell match higher
-            $matchPercentage = $matchPercentage * 1.50;
-        }
+        $matchPercentage = ($totalCount > 0) ? ($thresholdCount / $totalCount) : 0;
 
         return $matchPercentage;
     }
