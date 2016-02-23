@@ -43,7 +43,7 @@ class HtmlFileIterator implements \Iterator
      */
     public function key()
     {
-        return $this->key;
+        return basename($this->files[$this->key]);
     }
 
     /**
