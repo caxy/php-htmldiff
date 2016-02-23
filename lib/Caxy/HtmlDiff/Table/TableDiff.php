@@ -16,9 +16,6 @@ use Caxy\HtmlDiff\Operation;
  */
 class TableDiff extends AbstractDiff
 {
-    const STRATEGY_MATCHING = 'matching';
-    const STRATEGY_RELATIVE = 'relative';
-
     /**
      * @var null|Table
      */
@@ -67,18 +64,6 @@ class TableDiff extends AbstractDiff
 
         $config = \HTMLPurifier_Config::createDefault();
         $this->purifier = new \HTMLPurifier($config);
-    }
-
-    public function setStrategy($strategy)
-    {
-        $this->strategy = $strategy;
-
-        return $this;
-    }
-
-    public function getStrategy()
-    {
-        return $this->strategy;
     }
 
     public function build()
@@ -185,12 +170,7 @@ class TableDiff extends AbstractDiff
                     $newMatchData[$newIndex] = array();
                 }
 
-                $oldText = $oldRow->getInnerHtml();
-                $newText = $newRow->getInnerHtml();
-
                 // similar_text
-//                $percentage = null;
-//                similar_text($oldText, $newText, $percentage);
                 $percentage = $this->getMatchPercentage($oldRow, $newRow);
 
                 $oldMatchData[$oldIndex][$newIndex] = $percentage;
@@ -198,13 +178,10 @@ class TableDiff extends AbstractDiff
             }
         }
 
-        $matches = $this->getRowMatches($oldMatchData, $newMatchData);
-
-        addDebugOutput($matches, __METHOD__);
-
         // new solution for diffing rows
         switch ($this->strategy) {
             case self::STRATEGY_MATCHING:
+                $matches = $this->getRowMatches($oldMatchData, $newMatchData);
                 $this->diffTableRowsWithMatches($oldRows, $newRows, $matches);
                 break;
 
@@ -213,6 +190,7 @@ class TableDiff extends AbstractDiff
                 break;
 
             default:
+                $matches = $this->getRowMatches($oldMatchData, $newMatchData);
                 $this->diffTableRowsWithMatches($oldRows, $newRows, $matches);
                 break;
         }
@@ -309,7 +287,6 @@ class TableDiff extends AbstractDiff
 
         foreach ($targetNewRows as $index => $newRow) {
             if (!isset($targetOldRows[$index])) {
-                addDebugOutput('failed finding matchign row', __METHOD__);
                 continue;
             }
 
@@ -433,7 +410,7 @@ class TableDiff extends AbstractDiff
 
                 if (false !== $otherMatchBetter && $newCount > $oldCount && $difference > 0) {
                     // insert row as new
-                    $this->diffAndAppendRows(null, $row, $appliedRowSpans, true);
+                    $this->diffAndAppendRows(null, $row, $appliedRowSpans);
                     $difference--;
 
                     continue;
