@@ -56,11 +56,6 @@ class TableDiff extends AbstractDiff
      */
     protected $purifier;
 
-    /**
-     * @var string
-     */
-    protected $strategy = self::STRATEGY_MATCHING;
-
     public function __construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs)
     {
         parent::__construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs);
@@ -179,22 +174,8 @@ class TableDiff extends AbstractDiff
             }
         }
 
-        // new solution for diffing rows
-        switch ($this->strategy) {
-            case self::STRATEGY_MATCHING:
-                $matches = $this->getRowMatches($oldMatchData, $newMatchData);
-                $this->diffTableRowsWithMatches($oldRows, $newRows, $matches);
-                break;
-
-            case self::STRATEGY_RELATIVE:
-                $this->diffTableRows($oldRows, $newRows, $oldMatchData);
-                break;
-
-            default:
-                $matches = $this->getRowMatches($oldMatchData, $newMatchData);
-                $this->diffTableRowsWithMatches($oldRows, $newRows, $matches);
-                break;
-        }
+        $matches = $this->getRowMatches($oldMatchData, $newMatchData);
+        $this->diffTableRowsWithMatches($oldRows, $newRows, $matches);
 
         $this->content = $this->htmlFromNode($this->diffTable);
     }
@@ -380,71 +361,6 @@ class TableDiff extends AbstractDiff
         }
 
         return null;
-    }
-
-    /**
-     * @param $oldRows
-     * @param $newRows
-     * @param $oldMatchData
-     */
-    protected function diffTableRows($oldRows, $newRows, $oldMatchData)
-    {
-        $appliedRowSpans = array();
-        $currentIndexInOld = 0;
-        $oldCount = count($oldRows);
-        $newCount = count($newRows);
-        $difference = max($oldCount, $newCount) - min($oldCount, $newCount);
-
-        foreach ($newRows as $newIndex => $row) {
-            $oldRow = $this->oldTable->getRow($currentIndexInOld);
-
-            if ($oldRow) {
-                $matchPercentage = $oldMatchData[$currentIndexInOld][$newIndex];
-
-                // does the old row match better?
-                $otherMatchBetter = false;
-                foreach ($oldMatchData[$currentIndexInOld] as $index => $percentage) {
-                    if ($index > $newIndex && $percentage > $matchPercentage) {
-                        $otherMatchBetter = $index;
-                    }
-                }
-
-                if (false !== $otherMatchBetter && $newCount > $oldCount && $difference > 0) {
-                    // insert row as new
-                    $this->diffAndAppendRows(null, $row, $appliedRowSpans);
-                    $difference--;
-
-                    continue;
-                }
-
-                $nextOldIndex = array_key_exists($currentIndexInOld + 1, $oldRows) ? $currentIndexInOld + 1 : null;
-
-                $replacement = false;
-
-                if ($nextOldIndex !== null &&
-                    $oldMatchData[$nextOldIndex][$newIndex] > $matchPercentage &&
-                    $oldMatchData[$nextOldIndex][$newIndex] > $this->matchThreshold
-                ) {
-                    // Following row in old is better match, use that.
-                    $this->diffAndAppendRows($oldRows[$currentIndexInOld], null, $appliedRowSpans, true);
-
-                    $currentIndexInOld++;
-                    $matchPercentage = $oldMatchData[$currentIndexInOld];
-                    $replacement = true;
-                }
-
-                $this->diffAndAppendRows($oldRows[$currentIndexInOld], $row, $appliedRowSpans, $replacement);
-                $currentIndexInOld++;
-            } else {
-                $this->diffAndAppendRows(null, $row, $appliedRowSpans);
-            }
-        }
-
-        if (count($oldRows) > count($newRows)) {
-            foreach (array_slice($oldRows, count($newRows)) as $row) {
-                $this->diffAndAppendRows($row, null, $appliedRowSpans);
-            }
-        }
     }
 
     /**

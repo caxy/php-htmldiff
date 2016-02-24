@@ -265,7 +265,6 @@ class HtmlDiff extends AbstractDiff
     {
         $diff = new TableDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
         $diff->setMatchThreshold($this->matchThreshold);
-        $diff->setStrategy($this->strategy);
 
         return $diff->build();
     }

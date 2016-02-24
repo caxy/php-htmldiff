@@ -4,9 +4,6 @@ namespace Caxy\HtmlDiff;
 
 abstract class AbstractDiff
 {
-    const STRATEGY_MATCHING = 'matching';
-    const STRATEGY_RELATIVE = 'relative';
-
     public static $defaultSpecialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
     public static $defaultSpecialCaseChars = array('.', ',', '(', ')', '\'');
     public static $defaultGroupDiffs = true;
@@ -23,9 +20,6 @@ abstract class AbstractDiff
     protected $specialCaseChars;
     protected $groupDiffs;
     protected $matchThreshold = 80;
-    protected $debug = false;
-
-    protected $strategy = self::STRATEGY_MATCHING;
 
     public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
     {
@@ -44,30 +38,6 @@ abstract class AbstractDiff
         $this->groupDiffs = $groupDiffs;
         $this->setSpecialCaseTags($specialCaseTags);
         $this->setSpecialCaseChars(static::$defaultSpecialCaseChars);
-    }
-
-    public function setStrategy($strategy)
-    {
-        $this->strategy = $strategy;
-
-        return $this;
-    }
-
-    public function getStrategy()
-    {
-        return $this->strategy;
-    }
-
-    public function setDebug($debug)
-    {
-        $this->debug = $debug;
-
-        return $this;
-    }
-
-    public function getDebug()
-    {
-        return $this->debug;
     }
 
     /**
