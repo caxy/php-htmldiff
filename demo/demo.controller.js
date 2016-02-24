@@ -23,7 +23,6 @@
         vm.legislativeOverride = null;
         vm.tableDiffNumber = 1;
         vm.tableDiffing = true;
-        vm.tableDiffingStrategy = 'matching';
         vm.editorOptions = {};
         vm.ckEditorEnabled = true;
 
@@ -171,8 +170,7 @@
                     oldText: vm.oldText,
                     newText: vm.newText,
                     matchThreshold: vm.matchThreshold,
-                    tableDiffing: vm.tableDiffing,
-                    tableDiffingStrategy: vm.tableDiffingStrategy
+                    tableDiffing: vm.tableDiffing
                 })
                 .then(function (response) {
                     vm.diff = response.data.hasOwnProperty('diff') ? response.data.diff : response.data;
