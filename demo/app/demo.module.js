@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    angular.module('demo', [
+    angular.module('app.demo', [
         'ngSanitize',
         'ngCkeditor',
         'ui.bootstrap'
