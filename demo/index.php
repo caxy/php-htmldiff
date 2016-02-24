@@ -40,9 +40,6 @@ if ($input) {
         $diff->setMatchThreshold($data['matchThreshold']);
     }
     $diff->setUseTableDiffing($useTableDiffing);
-    if (isset($data['tableDiffingStrategy'])) {
-        $diff->setStrategy($data['tableDiffingStrategy']);
-    }
     $diff->build();
 
     echo json_encode(array('diff' => $diff->getDifference(), 'debug' => $debugOutput));
