@@ -75,7 +75,7 @@ class TableDiff extends AbstractDiff
 
         $this->diffDom = new \DOMDocument();
 
-        $this->normalizeFormat();
+//        $this->normalizeFormat();
 
         $this->indexCellValues($this->newTable);
 
@@ -172,12 +172,14 @@ class TableDiff extends AbstractDiff
                 }
 
                 // similar_text
-                $percentage = $this->getMatchPercentage($oldRow, $newRow);
+                $percentage = $this->getMatchPercentage($oldRow, $newRow, $oldIndex, $newIndex);
 
                 $oldMatchData[$oldIndex][$newIndex] = $percentage;
                 $newMatchData[$newIndex][$oldIndex] = $percentage;
             }
         }
+
+        addDebugOutput($newMatchData, 'matches');
 
         // new solution for diffing rows
         switch ($this->strategy) {
@@ -267,6 +269,7 @@ class TableDiff extends AbstractDiff
 
     protected function processInsertOperation(Operation $operation, $newRows, &$appliedRowSpans, $forceExpansion = false)
     {
+        addDebugOutput($operation, __METHOD__);
         $targetRows = array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew);
         foreach ($targetRows as $row) {
             $this->diffAndAppendRows(null, $row, $appliedRowSpans, $forceExpansion);
@@ -275,6 +278,7 @@ class TableDiff extends AbstractDiff
 
     protected function processDeleteOperation(Operation $operation, $oldRows, &$appliedRowSpans, $forceExpansion = false)
     {
+        addDebugOutput($operation, __METHOD__);
         $targetRows = array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld);
         foreach ($targetRows as $row) {
             $this->diffAndAppendRows($row, null, $appliedRowSpans, $forceExpansion);
@@ -283,6 +287,7 @@ class TableDiff extends AbstractDiff
 
     protected function processEqualOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans)
     {
+        addDebugOutput($operation, __METHOD__);
         $targetOldRows = array_values(array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld));
         $targetNewRows = array_values(array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew));
 
@@ -297,6 +302,7 @@ class TableDiff extends AbstractDiff
 
     protected function processReplaceOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans)
     {
+        addDebugOutput($operation, __METHOD__);
         $this->processDeleteOperation($operation, $oldRows, $appliedRowSpans, true);
         $this->processInsertOperation($operation, $newRows, $appliedRowSpans, true);
     }
@@ -835,11 +841,12 @@ class TableDiff extends AbstractDiff
         }
     }
 
-    protected function getMatchPercentage(TableRow $oldRow, TableRow $newRow)
+    protected function getMatchPercentage(TableRow $oldRow, TableRow $newRow, $oldIndex, $newIndex)
     {
-        $firstCellWeight = 3;
+        $firstCellWeight = 1.5;
+        $indexDeltaWeight = 0.25 * (abs($oldIndex - $newIndex));
         $thresholdCount = 0;
-        $totalCount = (min(count($newRow->getCells()), count($oldRow->getCells())) + $firstCellWeight) * 100;
+        $totalCount = (min(count($newRow->getCells()), count($oldRow->getCells())) + $firstCellWeight + $indexDeltaWeight) * 100;
         foreach ($newRow->getCells() as $newIndex => $newCell) {
             $oldCell = $oldRow->getCell($newIndex);
 
