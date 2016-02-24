@@ -7,12 +7,8 @@ use Caxy\HtmlDiff\HtmlDiff;
 use Caxy\HtmlDiff\Operation;
 
 /**
- * @todo Add getters to TableMatch entity
- * @todo Move applicable functions to new table classes
- * @todo find matches of row/cells in order to handle row/cell additions/deletions
- * @todo clean up way to iterate between new and old cells
- * @todo Make sure diffed table keeps <tbody> or other table structure elements
- * @todo Encoding
+ * Class TableDiff
+ * @package Caxy\HtmlDiff\Table
  */
 class TableDiff extends AbstractDiff
 {
@@ -321,8 +317,6 @@ class TableDiff extends AbstractDiff
         $expandCells = array();
         $cellsWithMultipleRows = array();
 
-        // @todo: Do cell matching
-
         $newCellCount = count($newCells);
         while ($position->getIndexInNew() < $newCellCount) {
             if (!$position->areColumnsEqual()) {
@@ -350,8 +344,6 @@ class TableDiff extends AbstractDiff
                 if (null === $extraRow) {
                     $extraRow = $this->diffDom->importNode($rowToClone->getDomNode()->cloneNode(false), false);
                 }
-
-                // @todo: How do we handle cells that have both rowspan and colspan?
 
                 if ($oldCell->getColspan() > $newCell->getColspan()) {
                     $this->diffCellsAndIncrementCounters(
