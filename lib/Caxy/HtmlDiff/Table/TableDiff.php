@@ -179,8 +179,6 @@ class TableDiff extends AbstractDiff
             }
         }
 
-        addDebugOutput($newMatchData, 'matches');
-
         // new solution for diffing rows
         switch ($this->strategy) {
             case self::STRATEGY_MATCHING:
@@ -269,7 +267,6 @@ class TableDiff extends AbstractDiff
 
     protected function processInsertOperation(Operation $operation, $newRows, &$appliedRowSpans, $forceExpansion = false)
     {
-        addDebugOutput($operation, __METHOD__);
         $targetRows = array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew);
         foreach ($targetRows as $row) {
             $this->diffAndAppendRows(null, $row, $appliedRowSpans, $forceExpansion);
@@ -278,7 +275,6 @@ class TableDiff extends AbstractDiff
 
     protected function processDeleteOperation(Operation $operation, $oldRows, &$appliedRowSpans, $forceExpansion = false)
     {
-        addDebugOutput($operation, __METHOD__);
         $targetRows = array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld);
         foreach ($targetRows as $row) {
             $this->diffAndAppendRows($row, null, $appliedRowSpans, $forceExpansion);
@@ -287,7 +283,6 @@ class TableDiff extends AbstractDiff
 
     protected function processEqualOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans)
     {
-        addDebugOutput($operation, __METHOD__);
         $targetOldRows = array_values(array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld));
         $targetNewRows = array_values(array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew));
 
@@ -302,7 +297,6 @@ class TableDiff extends AbstractDiff
 
     protected function processReplaceOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans)
     {
-        addDebugOutput($operation, __METHOD__);
         $this->processDeleteOperation($operation, $oldRows, $appliedRowSpans, true);
         $this->processInsertOperation($operation, $newRows, $appliedRowSpans, true);
     }
