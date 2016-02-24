@@ -70,77 +70,11 @@ class TableDiff extends AbstractDiff
 
         $this->diffDom = new \DOMDocument();
 
-//        $this->normalizeFormat();
-
         $this->indexCellValues($this->newTable);
 
         $this->diffTableContent();
 
         return $this->content;
-    }
-
-    protected function normalizeFormat()
-    {
-        $oldRows = $this->oldTable->getRows();
-        $newRows = $this->newTable->getRows();
-
-        foreach ($newRows as $rowIndex => $newRow) {
-            $oldRow = isset($oldRows[$rowIndex]) ? $oldRows[$rowIndex] : null;
-
-            if (!$oldRow) {
-                continue;
-            }
-
-            $newRowOffset = 0;
-            $oldRowOffset = 0;
-
-            $newCells = $newRow->getCells();
-            $oldCells = $oldRow->getCells();
-
-            foreach ($newCells as $cellIndex => $newCell) {
-                $oldCell = isset($oldCells[$cellIndex]) ? $oldCells[$cellIndex] : null;
-
-                if ($oldCell) {
-                    $oldNode = $oldCell->getDomNode();
-                    $newNode = $newCell->getDomNode();
-
-                    $oldRowspan = $oldNode->getAttribute('rowspan') ?: 1;
-                    $newRowspan = $newNode->getAttribute('rowspan') ?: 1;
-
-                    if ($oldRowspan > $newRowspan) {
-                        // add placeholders in next row of new rows
-                        $offset = $oldRowspan - $newRowspan;
-                        if ($offset > $newRowOffset) {
-                            $newRowOffset = $offset;
-                        }
-                    } elseif ($newRowspan > $oldRowspan) {
-                        $offset = $newRowspan - $oldRowspan;
-                        if ($offset > $oldRowOffset) {
-                            $oldRowOffset = $offset;
-                        }
-                    }
-                }
-            }
-
-            if ($oldRowOffset > 0 && isset($newRows[$rowIndex + 1])) {
-                $blankRow = $this->diffDom->createElement('tr');
-
-                $insertArray = array();
-                for ($i = 0; $i < $oldRowOffset; $i++) {
-                    $insertArray[] = new TableRow($blankRow);
-                }
-
-                $this->oldTable->insertRows($insertArray, $rowIndex + 1);
-            } elseif ($newRowOffset > 0 && isset($newRows[$rowIndex + 1])) {
-                $blankRow = $this->diffDom->createElement('tr');
-
-                $insertArray = array();
-                for ($i = 0; $i < $newRowOffset; $i++) {
-                    $insertArray[] = new TableRow($blankRow);
-                }
-                $this->newTable->insertRows($insertArray, $rowIndex + 1);
-            }
-        }
     }
 
     protected function diffTableContent()
