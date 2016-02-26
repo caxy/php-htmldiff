@@ -6,7 +6,7 @@ namespace Caxy\HtmlDiff\Table;
  * Class TablePosition
  * @package Caxy\HtmlDiff\Table
  */
-class TablePosition extends AbstractTableElement
+class TablePosition
 {
     /**
      * @var int

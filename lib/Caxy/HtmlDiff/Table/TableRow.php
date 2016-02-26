@@ -14,7 +14,7 @@ class TableRow extends AbstractTableElement
     protected $table;
 
     /**
-     * @var array
+     * @var TableCell[]
      */
     protected $cells = array();
 
@@ -43,7 +43,7 @@ class TableRow extends AbstractTableElement
     }
 
     /**
-     * @return array
+     * @return TableCell[]
      */
     public function getCells()
     {

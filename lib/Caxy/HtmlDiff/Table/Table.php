@@ -9,12 +9,12 @@ namespace Caxy\HtmlDiff\Table;
 class Table extends AbstractTableElement
 {
     /**
-     * @var array
+     * @var TableRow[]
      */
     protected $rows = array();
 
     /**
-     * @return array
+     * @return TableRow[]
      */
     public function getRows()
     {

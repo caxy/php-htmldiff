@@ -64,7 +64,8 @@ abstract class AbstractTableElement
      *
      * @return string
      */
-    public function getAttribute($name) {
+    public function getAttribute($name)
+    {
         return $this->domNode->getAttribute($name);
     }
 

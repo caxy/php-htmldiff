@@ -6,7 +6,7 @@ namespace Caxy\HtmlDiff\Table;
  * Class TableMatch
  * @package Caxy\HtmlDiff\Table
  */
-class TableMatch extends AbstractTableElement
+class TableMatch
 {
     /**
      * @var int

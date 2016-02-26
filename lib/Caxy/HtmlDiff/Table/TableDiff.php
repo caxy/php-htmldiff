@@ -23,7 +23,7 @@ class TableDiff extends AbstractDiff
     protected $newTable = null;
 
     /**
-     * @var null|Table
+     * @var null|\DOMElement
      */
     protected $diffTable = null;
 
@@ -205,8 +205,12 @@ class TableDiff extends AbstractDiff
      * @param array     $appliedRowSpans
      * @param bool      $forceExpansion
      */
-    protected function processInsertOperation(Operation $operation, $newRows, &$appliedRowSpans, $forceExpansion = false)
-    {
+    protected function processInsertOperation(
+        Operation $operation,
+        $newRows,
+        &$appliedRowSpans,
+        $forceExpansion = false
+    ) {
         $targetRows = array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew);
         foreach ($targetRows as $row) {
             $this->diffAndAppendRows(null, $row, $appliedRowSpans, $forceExpansion);
@@ -219,8 +223,12 @@ class TableDiff extends AbstractDiff
      * @param array     $appliedRowSpans
      * @param bool      $forceExpansion
      */
-    protected function processDeleteOperation(Operation $operation, $oldRows, &$appliedRowSpans, $forceExpansion = false)
-    {
+    protected function processDeleteOperation(
+        Operation $operation,
+        $oldRows,
+        &$appliedRowSpans,
+        $forceExpansion = false
+    ) {
         $targetRows = array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld);
         foreach ($targetRows as $row) {
             $this->diffAndAppendRows($row, null, $appliedRowSpans, $forceExpansion);
@@ -235,8 +243,12 @@ class TableDiff extends AbstractDiff
      */
     protected function processEqualOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans)
     {
-        $targetOldRows = array_values(array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld));
-        $targetNewRows = array_values(array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew));
+        $targetOldRows = array_values(
+            array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld)
+        );
+        $targetNewRows = array_values(
+            array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew)
+        );
 
         foreach ($targetNewRows as $index => $newRow) {
             if (!isset($targetOldRows[$index])) {
@@ -382,12 +394,13 @@ class TableDiff extends AbstractDiff
      * @param array         $appliedRowSpans
      * @param bool          $forceExpansion
      *
-     * @return \DOMNode
+     * @return array
      */
     protected function diffRows($oldRow, $newRow, array &$appliedRowSpans, $forceExpansion = false)
     {
         // create tr dom element
         $rowToClone = $newRow ?: $oldRow;
+        /* @var $diffRow \DOMElement */
         $diffRow = $this->diffDom->importNode($rowToClone->getDomNode()->cloneNode(false), false);
 
         $oldCells = $oldRow ? $oldRow->getCells() : array();
@@ -397,7 +410,9 @@ class TableDiff extends AbstractDiff
 
         $extraRow = null;
 
+        /* @var $expandCells \DOMElement[] */
         $expandCells = array();
+        /* @var $cellsWithMultipleRows \DOMElement[] */
         $cellsWithMultipleRows = array();
 
         $newCellCount = count($newCells);
@@ -425,6 +440,7 @@ class TableDiff extends AbstractDiff
 
             if ($oldCell && $newCell->getColspan() != $oldCell->getColspan()) {
                 if (null === $extraRow) {
+                    /* @var $extraRow \DOMElement */
                     $extraRow = $this->diffDom->importNode($rowToClone->getDomNode()->cloneNode(false), false);
                 }
 
@@ -475,14 +491,17 @@ class TableDiff extends AbstractDiff
 
         if ($extraRow) {
             foreach ($expandCells as $expandCell) {
-                $expandCell->setAttribute('rowspan', $expandCell->getAttribute('rowspan') + 1);
+                $rowspan = $expandCell->getAttribute('rowspan') ?: 1;
+                $expandCell->setAttribute('rowspan', 1 + $rowspan);
             }
         }
 
         if ($extraRow || $forceExpansion) {
             foreach ($appliedRowSpans as $rowSpanCells) {
+                /* @var $rowSpanCells \DOMElement[] */
                 foreach ($rowSpanCells as $extendCell) {
-                    $extendCell->setAttribute('rowspan', $extendCell->getAttribute('rowspan') + 1);
+                    $rowspan = $extendCell->getAttribute('rowspan') ?: 1;
+                    $extendCell->setAttribute('rowspan', 1 + $rowspan);
                 }
             }
         }
@@ -513,6 +532,7 @@ class TableDiff extends AbstractDiff
             $oldNode = $oldCell->getDomNode();
             $newNode = $newCell->getDomNode();
 
+            /* @var $clone \DOMElement */
             $clone = $newNode->cloneNode(false);
 
             $oldRowspan = $oldNode->getAttribute('rowspan') ?: 1;

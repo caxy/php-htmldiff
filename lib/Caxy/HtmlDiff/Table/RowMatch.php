@@ -29,17 +29,18 @@ class RowMatch
     protected $endInOld;
 
     /**
-     * @var int|null
+     * @var float|null
      */
     protected $percentage;
 
     /**
      * RowMatch constructor.
      *
-     * @param $startInNew
-     * @param $startInOld
-     * @param $endInNew
-     * @param $endInOld
+     * @param int        $startInNew
+     * @param int        $startInOld
+     * @param int        $endInNew
+     * @param int        $endInOld
+     * @param float|null $percentage
      */
     public function __construct($startInNew = 0, $startInOld = 0, $endInNew = 0, $endInOld = 0, $percentage = null)
     {
@@ -129,6 +130,4 @@ class RowMatch
 
         return $this;
     }
-
-
 }
