@@ -590,8 +590,25 @@ class TableDiff extends AbstractDiff
 
     protected function buildTableDoms()
     {
-        $this->oldTable = $this->parseTableStructure(mb_convert_encoding($this->oldText, 'HTML-ENTITIES', 'UTF-8'));
-        $this->newTable = $this->parseTableStructure(mb_convert_encoding($this->newText, 'HTML-ENTITIES', 'UTF-8'));
+        $this->oldTable = $this->parseTableStructure($this->oldText);
+        $this->newTable = $this->parseTableStructure($this->newText);
+    }
+
+    /**
+     * @param string $text
+     *
+     * @return \DOMDocument
+     */
+    protected function createDocumentWithHtml($text)
+    {
+        $dom = new \DOMDocument();
+        $dom->loadHTML(mb_convert_encoding(
+            $this->purifier->purify(mb_convert_encoding($text, $this->encoding, mb_detect_encoding($text))),
+            'HTML-ENTITIES',
+            $this->encoding
+        ));
+
+        return $dom;
     }
 
     /**
@@ -601,8 +618,7 @@ class TableDiff extends AbstractDiff
      */
     protected function parseTableStructure($text)
     {
-        $dom = new \DOMDocument();
-        $dom->loadHTML($text);
+        $dom = $this->createDocumentWithHtml($text);
 
         $tableNode = $dom->getElementsByTagName('table')->item(0);
 
@@ -692,8 +708,7 @@ class TableDiff extends AbstractDiff
             $html = '<span class="empty"></span>';
         }
 
-        $doc = new \DOMDocument();
-        $doc->loadHTML(mb_convert_encoding($this->purifier->purify($html), 'HTML-ENTITIES', 'UTF-8'));
+        $doc = $this->createDocumentWithHtml($html);
         $fragment = $node->ownerDocument->createDocumentFragment();
         $root = $doc->getElementsByTagName('body')->item(0);
         foreach ($root->childNodes as $child) {

@@ -81,6 +81,8 @@ abstract class AbstractDiff
      */
     public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
     {
+        mb_substitute_character(0x20);
+
         if ($specialCaseTags === null) {
             $specialCaseTags = static::$defaultSpecialCaseTags;
         }

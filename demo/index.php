@@ -40,9 +40,16 @@ if ($input) {
         $diff->setMatchThreshold($data['matchThreshold']);
     }
     $diff->setUseTableDiffing($useTableDiffing);
-    $diff->build();
+    $diffOutput = $diff->build();
+    $diffOutput = mb_convert_encoding($diffOutput, 'UTF-8');
 
-    echo json_encode(array('diff' => $diff->getDifference(), 'debug' => $debugOutput));
+    $jsonOutput = json_encode(array('diff' => $diffOutput, 'debug' => $debugOutput));
+
+    if (false === $jsonOutput) {
+        throw new \Exception('Failed to encode JSON: '.json_last_error_msg());
+    }
+
+    echo $jsonOutput;
 } else {
     header('Content-Type: text/html');
     echo file_get_contents('demo.html');
