@@ -2,17 +2,28 @@
 
 namespace Caxy\HtmlDiff\Table;
 
+/**
+ * Class Table
+ * @package Caxy\HtmlDiff\Table
+ */
 class Table extends AbstractTableElement
 {
+    /**
+     * @var array
+     */
     protected $rows = array();
 
-    protected $domNode;
-
+    /**
+     * @return array
+     */
     public function getRows()
     {
         return $this->rows;
     }
 
+    /**
+     * @param TableRow $row
+     */
     public function addRow(TableRow $row)
     {
         $this->rows[] = $row;
@@ -22,6 +33,9 @@ class Table extends AbstractTableElement
         }
     }
 
+    /**
+     * @param TableRow $row
+     */
     public function removeRow(TableRow $row)
     {
         $key = array_search($row, $this->rows, true);
@@ -34,11 +48,20 @@ class Table extends AbstractTableElement
         }
     }
 
+    /**
+     * @param int $index
+     *
+     * @return null|TableRow
+     */
     public function getRow($index)
     {
         return isset($this->rows[$index]) ? $this->rows[$index] : null;
     }
 
+    /**
+     * @param array    $rows
+     * @param null|int $position
+     */
     public function insertRows($rows, $position = null)
     {
         if ($position === null) {
@@ -48,6 +71,11 @@ class Table extends AbstractTableElement
         }
     }
 
+    /**
+     * @param TablePosition $position
+     *
+     * @return null|TableCell
+     */
     public function getCellByPosition(TablePosition $position)
     {
         $row = $this->getRow($position->getRow());
@@ -55,6 +83,12 @@ class Table extends AbstractTableElement
         return $row ? $row->getCell($position->getCell()) : null;
     }
 
+    /**
+     * @param TablePosition $position
+     * @param int           $offset
+     *
+     * @return TablePosition|null
+     */
     public function getPositionBefore(TablePosition $position, $offset = 1)
     {
         if ($position->getCell() > ($offset - 1)) {
@@ -91,6 +125,12 @@ class Table extends AbstractTableElement
         return null;
     }
 
+    /**
+     * @param TablePosition $position
+     * @param int           $offset
+     *
+     * @return TablePosition|null
+     */
     public function getPositionAfter(TablePosition $position, $offset = 1)
     {
         $cellsToMove = $offset;

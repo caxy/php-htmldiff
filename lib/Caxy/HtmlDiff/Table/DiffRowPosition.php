@@ -2,22 +2,39 @@
 
 namespace Caxy\HtmlDiff\Table;
 
+/**
+ * Class DiffRowPosition
+ * @package Caxy\HtmlDiff\Table
+ */
 class DiffRowPosition
 {
+    /**
+     * @var int
+     */
     protected $indexInOld;
 
+    /**
+     * @var int
+     */
     protected $indexInNew;
 
+    /**
+     * @var int
+     */
     protected $columnInOld;
 
+    /**
+     * @var int
+     */
     protected $columnInNew;
 
     /**
      * DiffRowPosition constructor.
-     * @param $indexInOld
-     * @param $indexInNew
-     * @param $columnInOld
-     * @param $columnInNew
+     *
+     * @param int $indexInOld
+     * @param int $indexInNew
+     * @param int $columnInOld
+     * @param int $columnInNew
      */
     public function __construct($indexInOld = 0, $indexInNew = 0, $columnInOld = 0, $columnInNew = 0)
     {
@@ -37,11 +54,13 @@ class DiffRowPosition
 
     /**
      * @param int $indexInOld
+     *
      * @return DiffRowPosition
      */
     public function setIndexInOld($indexInOld)
     {
         $this->indexInOld = $indexInOld;
+
         return $this;
     }
 
@@ -55,11 +74,13 @@ class DiffRowPosition
 
     /**
      * @param int $indexInNew
+     *
      * @return DiffRowPosition
      */
     public function setIndexInNew($indexInNew)
     {
         $this->indexInNew = $indexInNew;
+
         return $this;
     }
 
@@ -73,11 +94,13 @@ class DiffRowPosition
 
     /**
      * @param int $columnInOld
+     *
      * @return DiffRowPosition
      */
     public function setColumnInOld($columnInOld)
     {
         $this->columnInOld = $columnInOld;
+
         return $this;
     }
 
@@ -91,14 +114,21 @@ class DiffRowPosition
 
     /**
      * @param int $columnInNew
+     *
      * @return DiffRowPosition
      */
     public function setColumnInNew($columnInNew)
     {
         $this->columnInNew = $columnInNew;
+
         return $this;
     }
 
+    /**
+     * @param int $increment
+     *
+     * @return int
+     */
     public function incrementColumnInNew($increment = 1)
     {
         $this->columnInNew += $increment;
@@ -106,6 +136,11 @@ class DiffRowPosition
         return $this->columnInNew;
     }
 
+    /**
+     * @param int $increment
+     *
+     * @return int
+     */
     public function incrementColumnInOld($increment = 1)
     {
         $this->columnInOld += $increment;
@@ -113,6 +148,11 @@ class DiffRowPosition
         return $this->columnInOld;
     }
 
+    /**
+     * @param int $increment
+     *
+     * @return int
+     */
     public function incrementIndexInNew($increment = 1)
     {
         $this->indexInNew += $increment;
@@ -120,6 +160,11 @@ class DiffRowPosition
         return $this->indexInNew;
     }
 
+    /**
+     * @param int $increment
+     *
+     * @return int
+     */
     public function incrementIndexInOld($increment = 1)
     {
         $this->indexInOld += $increment;
@@ -127,6 +172,12 @@ class DiffRowPosition
         return $this->indexInOld;
     }
 
+    /**
+     * @param string $type
+     * @param int    $increment
+     *
+     * @return int
+     */
     public function incrementIndex($type, $increment = 1)
     {
         if ($type === 'new') {
@@ -136,6 +187,12 @@ class DiffRowPosition
         return $this->incrementIndexInOld($increment);
     }
 
+    /**
+     * @param string $type
+     * @param int    $increment
+     *
+     * @return int
+     */
     public function incrementColumn($type, $increment = 1)
     {
         if ($type === 'new') {
@@ -145,6 +202,11 @@ class DiffRowPosition
         return $this->incrementColumnInOld($increment);
     }
 
+    /**
+     * @param string $type
+     *
+     * @return bool
+     */
     public function isColumnLessThanOther($type)
     {
         if ($type === 'new') {
@@ -154,6 +216,11 @@ class DiffRowPosition
         return $this->getColumnInOld() < $this->getColumnInNew();
     }
 
+    /**
+     * @param string $type
+     *
+     * @return int
+     */
     public function getColumn($type)
     {
         if ($type === 'new') {
@@ -163,6 +230,11 @@ class DiffRowPosition
         return $this->getColumnInOld();
     }
 
+    /**
+     * @param string $type
+     *
+     * @return int
+     */
     public function getIndex($type)
     {
         if ($type === 'new') {
@@ -172,11 +244,17 @@ class DiffRowPosition
         return $this->getIndexInOld();
     }
 
+    /**
+     * @return bool
+     */
     public function areColumnsEqual()
     {
         return $this->getColumnInOld() === $this->getColumnInNew();
     }
 
+    /**
+     * @return null|string
+     */
     public function getLesserColumnType()
     {
         if ($this->isColumnLessThanOther('new')) {

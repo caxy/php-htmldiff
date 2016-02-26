@@ -2,6 +2,10 @@
 
 namespace Caxy\HtmlDiff\Table;
 
+/**
+ * Class TableRow
+ * @package Caxy\HtmlDiff\Table
+ */
 class TableRow extends AbstractTableElement
 {
     /**
@@ -13,12 +17,20 @@ class TableRow extends AbstractTableElement
      * @var array
      */
     protected $cells = array();
-    
+
+    /**
+     * @return Table
+     */
     public function getTable()
     {
         return $this->table;
     }
 
+    /**
+     * @param Table|null $table
+     *
+     * @return $this
+     */
     public function setTable(Table $table = null)
     {
         $this->table = $table;
@@ -30,11 +42,19 @@ class TableRow extends AbstractTableElement
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function getCells()
     {
         return $this->cells;
     }
 
+    /**
+     * @param TableCell $cell
+     *
+     * @return $this
+     */
     public function addCell(TableCell $cell)
     {
         $this->cells[] = $cell;
@@ -46,6 +66,9 @@ class TableRow extends AbstractTableElement
         return $this;
     }
 
+    /**
+     * @param TableCell $cell
+     */
     public function removeCell(TableCell $cell)
     {
         $key = array_search($cell, $this->cells, true);
@@ -59,7 +82,7 @@ class TableRow extends AbstractTableElement
     }
 
     /**
-     * @param $index
+     * @param int $index
      *
      * @return TableCell|null
      */
@@ -69,8 +92,8 @@ class TableRow extends AbstractTableElement
     }
 
     /**
-     * @param array $cells
-     * @param null  $position
+     * @param array    $cells
+     * @param null|int $position
      */
     public function insertCells($cells, $position = null)
     {

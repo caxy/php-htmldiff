@@ -52,14 +52,25 @@ class TableDiff extends AbstractDiff
      */
     protected $purifier;
 
-    public function __construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs)
+    /**
+     * TableDiff constructor.
+     *
+     * @param string     $oldText
+     * @param string     $newText
+     * @param string     $encoding
+     * @param array|null $specialCaseTags
+     * @param bool|null  $groupDiffs
+     */
+    public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
     {
         parent::__construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs);
 
-        $config = \HTMLPurifier_Config::createDefault();
-        $this->purifier = new \HTMLPurifier($config);
+        $this->purifier = new \HTMLPurifier(\HTMLPurifier_Config::createDefault());
     }
 
+    /**
+     * @return string
+     */
     public function build()
     {
         $this->buildTableDoms();
@@ -143,10 +154,22 @@ class TableDiff extends AbstractDiff
             }
 
             if ($action !== 'equal') {
-                $operations[] = new Operation($action, $indexInOld, $match->getStartInOld(), $indexInNew, $match->getStartInNew());
+                $operations[] = new Operation(
+                    $action,
+                    $indexInOld,
+                    $match->getStartInOld(),
+                    $indexInNew,
+                    $match->getStartInNew()
+                );
             }
 
-            $operations[] = new Operation('equal', $match->getStartInOld(), $match->getEndInOld(), $match->getStartInNew(), $match->getEndInNew());
+            $operations[] = new Operation(
+                'equal',
+                $match->getStartInOld(),
+                $match->getEndInOld(),
+                $match->getStartInNew(),
+                $match->getEndInNew()
+            );
 
             $indexInOld = $match->getEndInOld();
             $indexInNew = $match->getEndInNew();
@@ -176,6 +199,12 @@ class TableDiff extends AbstractDiff
         }
     }
 
+    /**
+     * @param Operation $operation
+     * @param array     $newRows
+     * @param array     $appliedRowSpans
+     * @param bool      $forceExpansion
+     */
     protected function processInsertOperation(Operation $operation, $newRows, &$appliedRowSpans, $forceExpansion = false)
     {
         $targetRows = array_slice($newRows, $operation->startInNew, $operation->endInNew - $operation->startInNew);
@@ -184,6 +213,12 @@ class TableDiff extends AbstractDiff
         }
     }
 
+    /**
+     * @param Operation $operation
+     * @param array     $oldRows
+     * @param array     $appliedRowSpans
+     * @param bool      $forceExpansion
+     */
     protected function processDeleteOperation(Operation $operation, $oldRows, &$appliedRowSpans, $forceExpansion = false)
     {
         $targetRows = array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld);
@@ -192,6 +227,12 @@ class TableDiff extends AbstractDiff
         }
     }
 
+    /**
+     * @param Operation $operation
+     * @param array     $oldRows
+     * @param array     $newRows
+     * @param array     $appliedRowSpans
+     */
     protected function processEqualOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans)
     {
         $targetOldRows = array_values(array_slice($oldRows, $operation->startInOld, $operation->endInOld - $operation->startInOld));
@@ -206,12 +247,24 @@ class TableDiff extends AbstractDiff
         }
     }
 
+    /**
+     * @param Operation $operation
+     * @param array     $oldRows
+     * @param array     $newRows
+     * @param array     $appliedRowSpans
+     */
     protected function processReplaceOperation(Operation $operation, $oldRows, $newRows, &$appliedRowSpans)
     {
         $this->processDeleteOperation($operation, $oldRows, $appliedRowSpans, true);
         $this->processInsertOperation($operation, $newRows, $appliedRowSpans, true);
     }
 
+    /**
+     * @param array $oldMatchData
+     * @param array $newMatchData
+     *
+     * @return array
+     */
     protected function getRowMatches($oldMatchData, $newMatchData)
     {
         $matches = array();
@@ -226,6 +279,14 @@ class TableDiff extends AbstractDiff
         return $matches;
     }
 
+    /**
+     * @param array $newMatchData
+     * @param int   $startInOld
+     * @param int   $endInOld
+     * @param int   $startInNew
+     * @param int   $endInNew
+     * @param array $matches
+     */
     protected function findRowMatches($newMatchData, $startInOld, $endInOld, $startInNew, $endInNew, &$matches)
     {
         $match = $this->findRowMatch($newMatchData, $startInOld, $endInOld, $startInNew, $endInNew);
@@ -248,11 +309,27 @@ class TableDiff extends AbstractDiff
             if ($match->getEndInOld() < $endInOld &&
                 $match->getEndInNew() < $endInNew
             ) {
-                $this->findRowMatches($newMatchData, $match->getEndInOld(), $endInOld, $match->getEndInNew(), $endInNew, $matches);
+                $this->findRowMatches(
+                    $newMatchData,
+                    $match->getEndInOld(),
+                    $endInOld,
+                    $match->getEndInNew(),
+                    $endInNew,
+                    $matches
+                );
             }
         }
     }
 
+    /**
+     * @param array $newMatchData
+     * @param int   $startInOld
+     * @param int   $endInOld
+     * @param int   $startInNew
+     * @param int   $endInNew
+     *
+     * @return RowMatch|null
+     */
     protected function findRowMatch($newMatchData, $startInOld, $endInOld, $startInNew, $endInNew)
     {
         $bestMatch = null;
@@ -287,7 +364,13 @@ class TableDiff extends AbstractDiff
         }
 
         if ($bestMatch !== null) {
-            return new RowMatch($bestMatch['newIndex'], $bestMatch['oldIndex'], $bestMatch['newIndex'] + 1, $bestMatch['oldIndex'] + 1, $bestMatch['percentage']);
+            return new RowMatch(
+                $bestMatch['newIndex'],
+                $bestMatch['oldIndex'],
+                $bestMatch['newIndex'] + 1,
+                $bestMatch['oldIndex'] + 1,
+                $bestMatch['percentage']
+            );
         }
 
         return null;
@@ -444,6 +527,13 @@ class TableDiff extends AbstractDiff
         return $this->diffDom->importNode($clone);
     }
 
+    /**
+     * @param TableCell|null $oldCell
+     * @param TableCell|null $newCell
+     * @param bool           $usingExtraRow
+     *
+     * @return \DOMElement
+     */
     protected function diffCells($oldCell, $newCell, $usingExtraRow = false)
     {
         $diffCell = $this->getNewCellNode($oldCell, $newCell);
@@ -484,6 +574,11 @@ class TableDiff extends AbstractDiff
         $this->newTable = $this->parseTableStructure(mb_convert_encoding($this->newText, 'HTML-ENTITIES', 'UTF-8'));
     }
 
+    /**
+     * @param string $text
+     *
+     * @return Table
+     */
     protected function parseTableStructure($text)
     {
         $dom = new \DOMDocument();
@@ -498,6 +593,10 @@ class TableDiff extends AbstractDiff
         return $table;
     }
 
+    /**
+     * @param Table         $table
+     * @param \DOMNode|null $node
+     */
     protected function parseTable(Table $table, \DOMNode $node = null)
     {
         if ($node === null) {
@@ -516,6 +615,9 @@ class TableDiff extends AbstractDiff
         }
     }
 
+    /**
+     * @param TableRow $row
+     */
     protected function parseTableRow(TableRow $row)
     {
         $node = $row->getDomNode();
@@ -528,6 +630,11 @@ class TableDiff extends AbstractDiff
         }
     }
 
+    /**
+     * @param \DOMNode $node
+     *
+     * @return string
+     */
     protected function getInnerHtml($node)
     {
         $innerHtml = '';
@@ -540,15 +647,24 @@ class TableDiff extends AbstractDiff
         return $innerHtml;
     }
 
+    /**
+     * @param \DOMNode $node
+     *
+     * @return string
+     */
     protected function htmlFromNode($node)
     {
         $domDocument = new \DOMDocument();
         $newNode = $domDocument->importNode($node, true);
         $domDocument->appendChild($newNode);
 
-        return trim($domDocument->saveHTML());
+        return $domDocument->saveHTML();
     }
 
+    /**
+     * @param \DOMNode $node
+     * @param string   $html
+     */
     protected function setInnerHtml($node, $html)
     {
         // DOMDocument::loadHTML does not allow empty strings.
@@ -567,6 +683,9 @@ class TableDiff extends AbstractDiff
         $node->appendChild($fragment);
     }
 
+    /**
+     * @param Table $table
+     */
     protected function indexCellValues(Table $table)
     {
         foreach ($table->getRows() as $rowIndex => $row) {
@@ -583,14 +702,12 @@ class TableDiff extends AbstractDiff
     }
 
     /**
-     * @param        $tableRow
-     * @param        $currentColumn
-     * @param        $targetColumn
-     * @param        $currentCell
-     * @param        $cellsWithMultipleRows
-     * @param        $diffRow
-     * @param        $currentIndex
-     * @param string $diffType
+     * @param TableRow        $tableRow
+     * @param DiffRowPosition $position
+     * @param array           $cellsWithMultipleRows
+     * @param \DOMNode        $diffRow
+     * @param string          $diffType
+     * @param bool            $usingExtraRow
      */
     protected function syncVirtualColumns(
         $tableRow,
@@ -656,10 +773,10 @@ class TableDiff extends AbstractDiff
     }
 
     /**
-     * @param      $oldRow
-     * @param      $newRow
-     * @param      $appliedRowSpans
-     * @param bool $forceExpansion
+     * @param TableRow|null $oldRow
+     * @param TableRow|null $newRow
+     * @param array         $appliedRowSpans
+     * @param bool          $forceExpansion
      */
     protected function diffAndAppendRows($oldRow, $newRow, &$appliedRowSpans, $forceExpansion = false)
     {
@@ -677,12 +794,21 @@ class TableDiff extends AbstractDiff
         }
     }
 
+    /**
+     * @param TableRow $oldRow
+     * @param TableRow $newRow
+     * @param int      $oldIndex
+     * @param int      $newIndex
+     *
+     * @return float|int
+     */
     protected function getMatchPercentage(TableRow $oldRow, TableRow $newRow, $oldIndex, $newIndex)
     {
         $firstCellWeight = 1.5;
         $indexDeltaWeight = 0.25 * (abs($oldIndex - $newIndex));
         $thresholdCount = 0;
-        $totalCount = (min(count($newRow->getCells()), count($oldRow->getCells())) + $firstCellWeight + $indexDeltaWeight) * 100;
+        $minCells = min(count($newRow->getCells()), count($oldRow->getCells()));
+        $totalCount = ($minCells + $firstCellWeight + $indexDeltaWeight) * 100;
         foreach ($newRow->getCells() as $newIndex => $newCell) {
             $oldCell = $oldRow->getCell($newIndex);
 
@@ -700,8 +826,6 @@ class TableDiff extends AbstractDiff
             }
         }
 
-        $matchPercentage = ($totalCount > 0) ? ($thresholdCount / $totalCount) : 0;
-
-        return $matchPercentage;
+        return ($totalCount > 0) ? ($thresholdCount / $totalCount) : 0;
     }
 }

@@ -2,6 +2,10 @@
 
 namespace Caxy\HtmlDiff\Table;
 
+/**
+ * Class RowMatch
+ * @package Caxy\HtmlDiff\Table
+ */
 class RowMatch
 {
     /**

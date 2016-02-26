@@ -2,6 +2,10 @@
 
 namespace Caxy\HtmlDiff\Table;
 
+/**
+ * Class TableCell
+ * @package Caxy\HtmlDiff\Table
+ */
 class TableCell extends AbstractTableElement
 {
     /**
@@ -9,11 +13,19 @@ class TableCell extends AbstractTableElement
      */
     protected $row;
 
+    /**
+     * @return TableRow
+     */
     public function getRow()
     {
         return $this->row;
     }
 
+    /**
+     * @param TableRow|null $row
+     *
+     * @return $this
+     */
     public function setRow(TableRow $row = null)
     {
         $this->row = $row;
@@ -25,11 +37,17 @@ class TableCell extends AbstractTableElement
         return $this;
     }
 
+    /**
+     * @return int
+     */
     public function getColspan()
     {
         return $this->getAttribute('colspan') ?: 1;
     }
 
+    /**
+     * @return int
+     */
     public function getRowspan()
     {
         return $this->getAttribute('rowspan') ?: 1;
