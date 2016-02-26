@@ -639,6 +639,10 @@ class TableDiff extends AbstractDiff
             $node = $table->getDomNode();
         }
 
+        if (!$node->childNodes) {
+            return;
+        }
+
         foreach ($node->childNodes as $child) {
             if ($child->nodeName === 'tr') {
                 $row = new TableRow($child);
