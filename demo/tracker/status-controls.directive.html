@@ -1,0 +1,15 @@
+<div class="row">
+    <div class="col-md-4">
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-primary" ng-click="vm.setStatusHandler({diff: vm.diff, status: 'approved'})">Accept</button>
+            <button type="button" class="btn btn-danger" ng-click="vm.setStatusHandler({diff: vm.diff, status: 'denied'})">Decline</button>
+            <button type="button" class="btn btn-warning" ng-click="vm.setStatusHandler({diff: vm.diff, status: 'skipped'})">Skip</button>
+            <button type="button" class="btn btn-secondary-outline" ng-click="vm.setStatusHandler({diff: vm.diff, status: 'ignored'})">Ignore</button>
+            <button type="button" class="btn btn-secondary" ng-show="vm.diff.hideSource" ng-click="vm.diff.hideSource = false">Show Source</button>
+            <button type="button" class="btn btn-secondary" ng-show="!vm.diff.hideSource" ng-click="vm.diff.hideSource = true">Hide Source</button>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <input type="text" class="form-control" ng-model="vm.diff.notes" placeholder="Notes..." />
+    </div>
+</div>

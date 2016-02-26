@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <base href="/">
+
+    <link rel="stylesheet" href="bower_components/tether/dist/css/tether.min.css">
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="bower_components/ng-ckeditor/ng-ckeditor.css">
+    <link rel="stylesheet" href="bower_components/angular-ui/build/angular-ui.min.css">
+    <link rel="stylesheet" href="bower_components/AngularJS-Toaster/toaster.min.css">
+    <link rel="stylesheet" href="bower_components/angular-bootstrap/ui-bootstrap-csp.css">
+
+    <link type="text/css" href="styles/styles.css" rel="stylesheet">
+    <link type="text/css" href="codes.css" rel="stylesheet">
+</head>
+<body ng-controller="ShellController as vm">
+<!-- Main Navigation -->
+<nav class="navbar navbar-fixed-top navbar-dark bg-inverse">
+    <a class="navbar-brand" href="#">caxy/php-htmldiff</a>
+    <ul class="nav navbar-nav">
+        <li ui-sref-active="active" class="nav-item">
+            <a class="nav-link" ui-sref="demo">Demo</a>
+        </li>
+        <li ui-sref-active="active" class="nav-item">
+            <a class="nav-link" ui-sref="tracker">Tracker</a>
+        </li>
+    </ul>
+</nav>
+
+<!-- Main Content -->
+<section ui-view></section>
+
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/tether/dist/js/tether.min.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/angular-sanitize/angular-sanitize.min.js"></script>
+<script src="bower_components/clipboard/dist/clipboard.min.js"></script>
+<script src="bower_components/ckeditor/ckeditor.js"></script>
+<script src="bower_components/ng-ckeditor/ng-ckeditor.min.js"></script>
+<script src="bower_components/angular-ui/build/angular-ui.min.js"></script>
+<script src="bower_components/angular-animate/angular-animate.min.js"></script>
+<script src="bower_components/AngularJS-Toaster/toaster.min.js"></script>
+<script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+<script src="bower_components/angular-ui-router/release/angular-ui-router.min.js"></script>
+
+<script src="app.module.js"></script>
+<script src="main/demo.module.js"></script>
+<script src="tracker/tracker.module.js"></script>
+<script src="router-helper.provider.js"></script>
+<script src="config.js"></script>
+<script src="shell.controller.js"></script>
+<script src="main/demo.route.js"></script>
+<script src="main/demo.controller.js"></script>
+<script src="tracker/sse.service.js"></script>
+<script src="tracker/tracker.route.js"></script>
+<script src="tracker/tracker.controller.js"></script>
+<script src="tracker/status-controls.directive.js"></script>
+
+<script>
+    new Clipboard('.clipboard');
+</script>
+</body>
+</html>

@@ -1,11 +1,11 @@
 /* Difference Highlighting and Strike-through
 ------------------------------------------------ */
-ins {
+ins, ins li {
     color: #333333;
     background-color: #eaffea;
     text-decoration: none;
 }
-del {
+del, del li {
     color: #AA3333;
     background-color: #ffeaea;
     text-decoration: line-through;
