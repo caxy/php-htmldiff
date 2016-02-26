@@ -27,15 +27,29 @@ function addDebugOutput($value, $key = 'general')
 $input = file_get_contents('php://input');
 
 if ($input) {
+    header('Content-Type: application/json');
+
     $data = json_decode($input, true);
-    $diff = new HtmlDiff($data['oldText'], $data['newText'], 'UTF-8', array());
+
+    $oldText = $data['oldText'];
+    $newText = $data['newText'];
+    $useTableDiffing = isset($data['tableDiffing']) ? $data['tableDiffing'] : true;
+
+    $diff = new HtmlDiff($oldText, $newText, 'UTF-8', array());
     if (array_key_exists('matchThreshold', $data)) {
         $diff->setMatchThreshold($data['matchThreshold']);
     }
-    $diff->build();
+    $diff->setUseTableDiffing($useTableDiffing);
+    $diffOutput = $diff->build();
+    $diffOutput = mb_convert_encoding($diffOutput, 'UTF-8');
 
-    header('Content-Type: application/json');
-    echo json_encode(array('diff' => $diff->getDifference(), 'debug' => $debugOutput));
+    $jsonOutput = json_encode(array('diff' => $diffOutput, 'debug' => $debugOutput));
+
+    if (false === $jsonOutput) {
+        throw new \Exception('Failed to encode JSON: '.json_last_error_msg());
+    }
+
+    echo $jsonOutput;
 } else {
     header('Content-Type: text/html');
     echo file_get_contents('demo.html');

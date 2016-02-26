@@ -19,7 +19,8 @@
         "issues": "https://github.com/caxy/php-htmldiff/issues"
     },
     "require": {
-        "php": ">=5.3.3"
+        "php": ">=5.3.3",
+        "ezyang/htmlpurifier": "^4.7"
     },
     "autoload": {
         "psr-0": { "Caxy\\HtmlDiff": "lib/" }
