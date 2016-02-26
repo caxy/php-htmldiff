@@ -70,6 +70,16 @@ abstract class AbstractTableElement
     }
 
     /**
+     * @param \DOMDocument $domDocument
+     *
+     * @return \DOMElement
+     */
+    public function cloneNode(\DOMDocument $domDocument)
+    {
+        return $domDocument->importNode($this->getDomNode()->cloneNode(false), false);
+    }
+
+    /**
      * @param \DOMElement $node
      *
      * @return string

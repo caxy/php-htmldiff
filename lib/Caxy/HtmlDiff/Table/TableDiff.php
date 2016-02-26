@@ -87,7 +87,7 @@ class TableDiff extends AbstractDiff
     protected function diffTableContent()
     {
         $this->diffDom = new \DOMDocument();
-        $this->diffTable = $this->diffDom->importNode($this->newTable->getDomNode()->cloneNode(false), false);
+        $this->diffTable = $this->newTable->cloneNode($this->diffDom);
         $this->diffDom->appendChild($this->diffTable);
 
         $oldRows = $this->oldTable->getRows();
@@ -426,7 +426,7 @@ class TableDiff extends AbstractDiff
                     $row = $oldRow;
                     $targetRow = $diffRow;
                 }
-                if ($row && (!$type === 'old' || isset($oldCells[$position->getIndexInOld()]))) {
+                if ($row && $targetRow && (!$type === 'old' || isset($oldCells[$position->getIndexInOld()]))) {
                     $this->syncVirtualColumns($row, $position, $cellsWithMultipleRows, $targetRow, $type, true);
 
                     continue;

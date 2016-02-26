@@ -30,7 +30,7 @@ class TableCell extends AbstractTableElement
     {
         $this->row = $row;
 
-        if (!in_array($this, $row->getCells())) {
+        if (null !== $row && !in_array($this, $row->getCells())) {
             $row->addCell($this);
         }
 
@@ -42,7 +42,7 @@ class TableCell extends AbstractTableElement
      */
     public function getColspan()
     {
-        return $this->getAttribute('colspan') ?: 1;
+        return (int)$this->getAttribute('colspan') ?: 1;
     }
 
     /**
@@ -50,6 +50,6 @@ class TableCell extends AbstractTableElement
      */
     public function getRowspan()
     {
-        return $this->getAttribute('rowspan') ?: 1;
+        return (int)$this->getAttribute('rowspan') ?: 1;
     }
 }

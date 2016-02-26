@@ -59,8 +59,8 @@ class Table extends AbstractTableElement
     }
 
     /**
-     * @param array    $rows
-     * @param null|int $position
+     * @param TableRow[] $rows
+     * @param null|int   $position
      */
     public function insertRows($rows, $position = null)
     {

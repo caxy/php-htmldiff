@@ -35,7 +35,7 @@ class TableRow extends AbstractTableElement
     {
         $this->table = $table;
 
-        if (!in_array($this, $table->getRows())) {
+        if ($table && !in_array($this, $table->getRows())) {
             $table->addRow($this);
         }
 
@@ -92,8 +92,8 @@ class TableRow extends AbstractTableElement
     }
 
     /**
-     * @param array    $cells
-     * @param null|int $position
+     * @param TableCell[] $cells
+     * @param null|int    $position
      */
     public function insertCells($cells, $position = null)
     {
