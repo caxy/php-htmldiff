@@ -4,6 +4,7 @@ namespace Caxy\HtmlDiff\Table;
 
 use Caxy\HtmlDiff\AbstractDiff;
 use Caxy\HtmlDiff\HtmlDiff;
+use Caxy\HtmlDiff\HtmlDiffConfig;
 use Caxy\HtmlDiff\Operation;
 
 /**
@@ -51,6 +52,24 @@ class TableDiff extends AbstractDiff
      * @var \HTMLPurifier
      */
     protected $purifier;
+
+    /**
+     * @param string              $oldText
+     * @param string              $newText
+     * @param HtmlDiffConfig|null $config
+     *
+     * @return self
+     */
+    public static function create($oldText, $newText, HtmlDiffConfig $config = null)
+    {
+        $diff = new self($oldText, $newText);
+
+        if (null !== $config) {
+            $diff->setConfig($config);
+        }
+
+        return $diff;
+    }
 
     /**
      * TableDiff constructor.
@@ -561,14 +580,11 @@ class TableDiff extends AbstractDiff
         $oldContent = $oldCell ? $this->getInnerHtml($oldCell->getDomNode()) : '';
         $newContent = $newCell ? $this->getInnerHtml($newCell->getDomNode()) : '';
 
-        $htmlDiff = new HtmlDiff(
+        $htmlDiff = HtmlDiff::create(
             mb_convert_encoding($oldContent, 'UTF-8', 'HTML-ENTITIES'),
             mb_convert_encoding($newContent, 'UTF-8', 'HTML-ENTITIES'),
-            $this->encoding,
-            $this->specialCaseTags,
-            $this->groupDiffs
+            $this->config
         );
-        $htmlDiff->setMatchThreshold($this->matchThreshold);
         $diff = $htmlDiff->build();
 
         $this->setInnerHtml($diffCell, $diff);
@@ -603,9 +619,9 @@ class TableDiff extends AbstractDiff
     {
         $dom = new \DOMDocument();
         $dom->loadHTML(mb_convert_encoding(
-            $this->purifier->purify(mb_convert_encoding($text, $this->encoding, mb_detect_encoding($text))),
+            $this->purifier->purify(mb_convert_encoding($text, $this->config->getEncoding(), mb_detect_encoding($text))),
             'HTML-ENTITIES',
-            $this->encoding
+            $this->config->getEncoding()
         ));
 
         return $dom;
@@ -855,7 +871,7 @@ class TableDiff extends AbstractDiff
                 $percentage = null;
                 similar_text($oldCell->getInnerHtml(), $newCell->getInnerHtml(), $percentage);
 
-                if ($percentage > ($this->matchThreshold * 0.50)) {
+                if ($percentage > ($this->config->getMatchThreshold() * 0.50)) {
                     $increment = $percentage;
                     if ($newIndex === 0 && $percentage > 95) {
                         $increment = $increment * $firstCellWeight;
