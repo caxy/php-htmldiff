@@ -9,6 +9,24 @@ class ListDiffNew extends AbstractDiff
 {
     protected static $listTypes = array('ul', 'ol', 'dl');
 
+    /**
+     * @param string              $oldText
+     * @param string              $newText
+     * @param HtmlDiffConfig|null $config
+     *
+     * @return self
+     */
+    public static function create($oldText, $newText, HtmlDiffConfig $config = null)
+    {
+        $diff = new self($oldText, $newText);
+
+        if (null !== $config) {
+            $diff->setConfig($config);
+        }
+
+        return $diff;
+    }
+
     public function build()
     {
         $this->splitInputsToWords();
@@ -101,7 +119,7 @@ class ListDiffNew extends AbstractDiff
 
                     $replacement = false;
 
-                    if ($nextOldListIndex !== null && $oldMatchData[$nextOldListIndex][$newIndex] > $matchPercentage && $oldMatchData[$nextOldListIndex][$newIndex] > $this->matchThreshold) {
+                    if ($nextOldListIndex !== null && $oldMatchData[$nextOldListIndex][$newIndex] > $matchPercentage && $oldMatchData[$nextOldListIndex][$newIndex] > $this->config->getMatchThreshold()) {
                         // Following list item in old is better match, use that.
                         $diffOutput .= sprintf('%s', $oldListItems[$oldListIndex]->getHtml('removed', 'del'));
 
@@ -111,9 +129,13 @@ class ListDiffNew extends AbstractDiff
                         $replacement = true;
                     }
 
-                    if ($matchPercentage > $this->matchThreshold || $currentIndexInNew === $currentIndexInOld) {
+                    if ($matchPercentage > $this->config->getMatchThreshold() || $currentIndexInNew === $currentIndexInOld) {
                         // Diff the two lists.
-                        $htmlDiff = new HtmlDiff($oldListItems[$oldListIndex]->getInnerHtml(), $newListItem->getInnerHtml(), $this->encoding, $this->specialCaseTags, $this->groupDiffs);
+                        $htmlDiff = HtmlDiff::create(
+                            $oldListItems[$oldListIndex]->getInnerHtml(),
+                            $newListItem->getInnerHtml(),
+                            $this->config
+                        );
                         $diffContent = $htmlDiff->build();
 
                         $diffOutput .= sprintf('%s%s%s', $newListItem->getStartTagWithDiffClass($replacement ? 'replacement' : 'normal'), $diffContent, $newListItem->getEndTag());

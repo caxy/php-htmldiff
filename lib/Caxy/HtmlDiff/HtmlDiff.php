@@ -23,10 +23,6 @@ class HtmlDiff extends AbstractDiff
      */
     protected $newTables;
     /**
-     * @var bool
-     */
-    protected $insertSpaceInReplace = false;
-    /**
      * @var array
      */
     protected $newIsolatedDiffTags;
@@ -34,35 +30,35 @@ class HtmlDiff extends AbstractDiff
      * @var array
      */
     protected $oldIsolatedDiffTags;
+
     /**
-     * @var array
+     * @param string              $oldText
+     * @param string              $newText
+     * @param HtmlDiffConfig|null $config
+     *
+     * @return self
      */
-    protected $isolatedDiffTags = array (
-        'ol' => '[[REPLACE_ORDERED_LIST]]',
-        'ul' => '[[REPLACE_UNORDERED_LIST]]',
-        'sub' => '[[REPLACE_SUB_SCRIPT]]',
-        'sup' => '[[REPLACE_SUPER_SCRIPT]]',
-        'dl' => '[[REPLACE_DEFINITION_LIST]]',
-        'table' => '[[REPLACE_TABLE]]',
-        'strong' => '[[REPLACE_STRONG]]',
-        'b' => '[[REPLACE_B]]',
-        'em' => '[[REPLACE_EM]]',
-        'i' => '[[REPLACE_I]]',
-        'a' => '[[REPLACE_A]]',
-    );
-    /**
-     * @var bool
-     */
-    protected $useTableDiffing = true;
+    public static function create($oldText, $newText, HtmlDiffConfig $config = null)
+    {
+        $diff = new self($oldText, $newText);
+
+        if (null !== $config) {
+            $diff->setConfig($config);
+        }
+
+        return $diff;
+    }
 
     /**
      * @param $bool
      *
      * @return $this
+     *
+     * @deprecated since 0.1.0
      */
     public function setUseTableDiffing($bool)
     {
-        $this->useTableDiffing = $bool;
+        $this->config->setUseTableDiffing($bool);
 
         return $this;
     }
@@ -70,20 +66,24 @@ class HtmlDiff extends AbstractDiff
     /**
      * @param  boolean  $boolean
      * @return HtmlDiff
+     *
+     * @deprecated since 0.1.0
      */
     public function setInsertSpaceInReplace($boolean)
     {
-        $this->insertSpaceInReplace = $boolean;
+        $this->config->setInsertSpaceInReplace($boolean);
 
         return $this;
     }
 
     /**
      * @return boolean
+     *
+     * @deprecated since 0.1.0
      */
     public function getInsertSpaceInReplace()
     {
-        return $this->insertSpaceInReplace;
+        return $this->config->isInsertSpaceInReplace();
     }
 
     /**
@@ -155,7 +155,7 @@ class HtmlDiff extends AbstractDiff
         $offset = 0;
         foreach ($isolatedDiffTagIndicies as $isolatedDiffTagIndex) {
             $start = $isolatedDiffTagIndex['start'] - $offset;
-            $placeholderString = $this->isolatedDiffTags[$isolatedDiffTagIndex['tagType']];
+            $placeholderString = $this->config->getIsolatedDiffTagPlaceholder($isolatedDiffTagIndex['tagType']);
             $isolatedDiffTagScript[$start] = array_splice($words, $start, $isolatedDiffTagIndex['length'], $placeholderString);
             $offset += $isolatedDiffTagIndex['length'] - 1;
         }
@@ -173,8 +173,8 @@ class HtmlDiff extends AbstractDiff
     protected function isOpeningIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
         $tagsToMatch = $currentIsolatedDiffTag !== null
-            ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag])
-            : $this->isolatedDiffTags;
+            ? array($currentIsolatedDiffTag => $this->config->getIsolatedDiffTagPlaceholder($currentIsolatedDiffTag))
+            : $this->config->getIsolatedDiffTags();
         foreach ($tagsToMatch as $key => $value) {
             if (preg_match("#<".$key."[^>]*>\\s*#iU", $item)) {
                 return $key;
@@ -193,8 +193,8 @@ class HtmlDiff extends AbstractDiff
     protected function isClosingIsolatedDiffTag($item, $currentIsolatedDiffTag = null)
     {
         $tagsToMatch = $currentIsolatedDiffTag !== null
-            ? array($currentIsolatedDiffTag => $this->isolatedDiffTags[$currentIsolatedDiffTag])
-            : $this->isolatedDiffTags;
+            ? array($currentIsolatedDiffTag => $this->config->getIsolatedDiffTagPlaceholder($currentIsolatedDiffTag))
+            : $this->config->getIsolatedDiffTags();
         foreach ($tagsToMatch as $key => $value) {
             if (preg_match("#</".$key."[^>]*>\\s*#iU", $item)) {
                 return $key;
@@ -245,7 +245,7 @@ class HtmlDiff extends AbstractDiff
         $text = array();
         foreach ($this->newWords as $pos => $s) {
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
-                if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                if ($this->config->isIsolatedDiffTagPlaceholder($s) && isset($this->newIsolatedDiffTags[$pos])) {
                     foreach ($this->newIsolatedDiffTags[$pos] as $word) {
                         $text[] = $word;
                     }
@@ -266,7 +266,7 @@ class HtmlDiff extends AbstractDiff
         $text = array();
         foreach ($this->oldWords as $pos => $s) {
             if ($pos >= $operation->startInOld && $pos < $operation->endInOld) {
-                if (in_array($s, $this->isolatedDiffTags) && isset($this->oldIsolatedDiffTags[$pos])) {
+                if ($this->config->isIsolatedDiffTagPlaceholder($s) && isset($this->oldIsolatedDiffTags[$pos])) {
                     foreach ($this->oldIsolatedDiffTags[$pos] as $word) {
                         $text[] = $word;
                     }
@@ -293,7 +293,7 @@ class HtmlDiff extends AbstractDiff
 
         if ($this->isListPlaceholder($placeholder)) {
             return $this->diffList($oldText, $newText);
-        } elseif ($this->useTableDiffing && $this->isTablePlaceholder($placeholder)) {
+        } elseif ($this->config->isUseTableDiffing() && $this->isTablePlaceholder($placeholder)) {
             return $this->diffTables($oldText, $newText);
         } elseif ($this->isLinkPlaceholder($placeholder)) {
             return $this->diffLinks($oldText, $newText);
@@ -326,7 +326,7 @@ class HtmlDiff extends AbstractDiff
             $newText = preg_replace($pattern, '', $newText);
         }
 
-        $diff = new HtmlDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
+        $diff = HtmlDiff::create($oldText, $newText, $this->config);
 
         return $wrapStart . $diff->build() . $wrapEnd;
     }
@@ -339,8 +339,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function diffList($oldText, $newText)
     {
-        $diff = new ListDiffNew($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
-        $diff->setMatchThreshold($this->matchThreshold);
+        $diff = ListDiffNew::create($oldText, $newText, $this->config);
 
         return $diff->build();
     }
@@ -353,8 +352,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function diffTables($oldText, $newText)
     {
-        $diff = new TableDiff($oldText, $newText, $this->encoding, $this->specialCaseTags, $this->groupDiffs);
-        $diff->setMatchThreshold($this->matchThreshold);
+        $diff = TableDiff::create($oldText, $newText, $this->config);
 
         return $diff->build();
     }
@@ -390,7 +388,7 @@ class HtmlDiff extends AbstractDiff
         foreach ($this->newWords as $pos => $s) {
 
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
-                if (in_array($s, $this->isolatedDiffTags) && isset($this->newIsolatedDiffTags[$pos])) {
+                if ($this->config->isIsolatedDiffTagPlaceholder($s) && isset($this->newIsolatedDiffTags[$pos])) {
 
                     $result[] = $this->diffIsolatedPlaceholder($operation, $pos, $s);
                 } else {
@@ -452,8 +450,8 @@ class HtmlDiff extends AbstractDiff
 
         $criteria = array();
         foreach ($types as $type) {
-            if (isset($this->isolatedDiffTags[$type])) {
-                $criteria[] = $this->isolatedDiffTags[$type];
+            if ($this->config->isIsolatedDiffTag($type)) {
+                $criteria[] = $this->config->getIsolatedDiffTagPlaceholder($type);
             } else {
                 $criteria[] = $type;
             }
@@ -469,9 +467,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function isTablePlaceholder($text)
     {
-        return in_array($text, array(
-            $this->isolatedDiffTags['table'],
-        ), true);
+        return $this->isPlaceholderType($text, 'table');
     }
 
     /**
@@ -509,7 +505,7 @@ class HtmlDiff extends AbstractDiff
                 $this->content .= $text;
             } else {
                 $firstOrDefault = false;
-                foreach ($this->specialCaseOpeningTags as $x) {
+                foreach ($this->config->getSpecialCaseOpeningTags() as $x) {
                     if ( preg_match( $x, $words[ 0 ] ) ) {
                         $firstOrDefault = $x;
                         break;
@@ -520,7 +516,7 @@ class HtmlDiff extends AbstractDiff
                     if ($tag == "del") {
                         unset( $words[ 0 ] );
                     }
-                } elseif ( array_search( $words[ 0 ], $this->specialCaseClosingTags ) !== false ) {
+                } elseif ( array_search( $words[ 0 ], $this->config->getSpecialCaseClosingTags()) !== false ) {
                     $specialCaseTagInjection = "</ins>";
                     $specialCaseTagInjectionIsBefore = true;
                     if ($tag == "del") {

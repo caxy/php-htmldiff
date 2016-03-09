@@ -10,16 +10,27 @@ abstract class AbstractDiff
 {
     /**
      * @var array
+     *
+     * @deprecated since 0.1.0
      */
     public static $defaultSpecialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
     /**
      * @var array
+     *
+     * @deprecated since 0.1.0
      */
     public static $defaultSpecialCaseChars = array('.', ',', '(', ')', '\'');
     /**
      * @var bool
+     *
+     * @deprecated since 0.1.0
      */
     public static $defaultGroupDiffs = true;
+
+    /**
+     * @var HtmlDiffConfig
+     */
+    protected $config;
 
     /**
      * @var string
@@ -41,34 +52,6 @@ abstract class AbstractDiff
      * @var array
      */
     protected $newWords = array();
-    /**
-     * @var string
-     */
-    protected $encoding;
-    /**
-     * @var array
-     */
-    protected $specialCaseOpeningTags = array();
-    /**
-     * @var array
-     */
-    protected $specialCaseClosingTags = array();
-    /**
-     * @var array|null
-     */
-    protected $specialCaseTags;
-    /**
-     * @var array|null
-     */
-    protected $specialCaseChars;
-    /**
-     * @var bool|null
-     */
-    protected $groupDiffs;
-    /**
-     * @var int
-     */
-    protected $matchThreshold = 80;
 
     /**
      * AbstractDiff constructor.
@@ -83,138 +66,143 @@ abstract class AbstractDiff
     {
         mb_substitute_character(0x20);
 
-        if ($specialCaseTags === null) {
-            $specialCaseTags = static::$defaultSpecialCaseTags;
+        $this->config = HtmlDiffConfig::create()->setEncoding($encoding);
+
+        if ($specialCaseTags !== null) {
+            $this->config->setSpecialCaseTags($specialCaseTags);
         }
 
-        if ($groupDiffs === null) {
-            $groupDiffs = static::$defaultGroupDiffs;
+        if ($groupDiffs !== null) {
+            $this->config->setGroupDiffs($groupDiffs);
         }
 
         $this->oldText = $this->purifyHtml(trim($oldText));
         $this->newText = $this->purifyHtml(trim($newText));
-        $this->encoding = $encoding;
         $this->content = '';
-        $this->groupDiffs = $groupDiffs;
-        $this->setSpecialCaseTags($specialCaseTags);
-        $this->setSpecialCaseChars(static::$defaultSpecialCaseChars);
+    }
+
+    /**
+     * @return HtmlDiffConfig
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
+    /**
+     * @param HtmlDiffConfig $config
+     *
+     * @return AbstractDiff
+     */
+    public function setConfig(HtmlDiffConfig $config)
+    {
+        $this->config = $config;
+
+        return $this;
     }
 
     /**
      * @return int
+     *
+     * @deprecated since 0.1.0
      */
     public function getMatchThreshold()
     {
-        return $this->matchThreshold;
+        return $this->config->getMatchThreshold();
     }
 
     /**
      * @param int $matchThreshold
      *
      * @return AbstractDiff
+     *
+     * @deprecated since 0.1.0
      */
     public function setMatchThreshold($matchThreshold)
     {
-        $this->matchThreshold = $matchThreshold;
+        $this->config->setMatchThreshold($matchThreshold);
 
         return $this;
     }
 
     /**
      * @param array $chars
+     *
+     * @deprecated since 0.1.0
      */
     public function setSpecialCaseChars(array $chars)
     {
-        $this->specialCaseChars = $chars;
+        $this->config->setSpecialCaseChars($chars);
     }
 
     /**
      * @return array|null
+     *
+     * @deprecated since 0.1.0
      */
     public function getSpecialCaseChars()
     {
-        return $this->specialCaseChars;
+        return $this->config->getSpecialCaseChars();
     }
 
     /**
      * @param string $char
+     *
+     * @deprecated since 0.1.0
      */
     public function addSpecialCaseChar($char)
     {
-        if (!in_array($char, $this->specialCaseChars)) {
-            $this->specialCaseChars[] = $char;
-        }
+        $this->config->addSpecialCaseChar($char);
     }
 
     /**
      * @param string $char
+     *
+     * @deprecated since 0.1.0
      */
     public function removeSpecialCaseChar($char)
     {
-        $key = array_search($char, $this->specialCaseChars);
-        if ($key !== false) {
-            unset($this->specialCaseChars[$key]);
-        }
+        $this->config->removeSpecialCaseChar($char);
     }
 
     /**
      * @param array $tags
+     *
+     * @deprecated since 0.1.0
      */
     public function setSpecialCaseTags(array $tags = array())
     {
-        $this->specialCaseTags = $tags;
-
-        foreach ($this->specialCaseTags as $tag) {
-            $this->addSpecialCaseTag($tag);
-        }
+        $this->config->setSpecialCaseChars($tags);
     }
 
     /**
      * @param string $tag
+     *
+     * @deprecated since 0.1.0
      */
     public function addSpecialCaseTag($tag)
     {
-        if (!in_array($tag, $this->specialCaseTags)) {
-            $this->specialCaseTags[] = $tag;
-        }
-
-        $opening = $this->getOpeningTag($tag);
-        $closing = $this->getClosingTag($tag);
-
-        if (!in_array($opening, $this->specialCaseOpeningTags)) {
-            $this->specialCaseOpeningTags[] = $opening;
-        }
-        if (!in_array($closing, $this->specialCaseClosingTags)) {
-            $this->specialCaseClosingTags[] = $closing;
-        }
+        $this->config->addSpecialCaseTag($tag);
     }
 
     /**
      * @param string $tag
+     *
+     * @deprecated since 0.1.0
      */
     public function removeSpecialCaseTag($tag)
     {
-        if (($key = array_search($tag, $this->specialCaseTags)) !== false) {
-            unset($this->specialCaseTags[$key]);
-
-            $opening = $this->getOpeningTag($tag);
-            $closing = $this->getClosingTag($tag);
-
-            if (($key = array_search($opening, $this->specialCaseOpeningTags)) !== false) {
-                unset($this->specialCaseOpeningTags[$key]);
-            }
-            if (($key = array_search($closing, $this->specialCaseClosingTags)) !== false) {
-                unset($this->specialCaseClosingTags[$key]);
-            }
-        }
+        $this->config->removeSpecialCaseTag($tag);
     }
 
     /**
      * @return array|null
+     *
+     * @deprecated since 0.1.0
      */
     public function getSpecialCaseTags()
     {
-        return $this->specialCaseTags;
+        return $this->config->getSpecialCaseTags();
     }
 
     /**
@@ -245,20 +233,24 @@ abstract class AbstractDiff
      * @param bool $boolean
      *
      * @return $this
+     *
+     * @deprecated since 0.1.0
      */
     public function setGroupDiffs($boolean)
     {
-        $this->groupDiffs = $boolean;
+        $this->config->setGroupDiffs($boolean);
 
         return $this;
     }
 
     /**
      * @return bool
+     *
+     * @deprecated since 0.1.0
      */
     public function isGroupDiffs()
     {
-        return $this->groupDiffs;
+        return $this->config->isGroupDiffs();
     }
 
     /**
@@ -335,7 +327,7 @@ abstract class AbstractDiff
      */
     protected function isPartOfWord($text)
     {
-        return ctype_alnum(str_replace($this->specialCaseChars, '', $text));
+        return ctype_alnum(str_replace($this->config->getSpecialCaseChars(), '', $text));
     }
 
     /**
@@ -366,7 +358,7 @@ abstract class AbstractDiff
                 } else {
                     if (
                         (ctype_alnum($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
-                        (in_array($character, $this->specialCaseChars) && isset($characterString[$i+1]) && $this->isPartOfWord($characterString[$i+1]))
+                        (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i+1]) && $this->isPartOfWord($characterString[$i+1]))
                     ) {
                         $current_word .= $character;
                     } else {
