@@ -26,6 +26,9 @@
         "phpunit/phpunit": "^4.8",
         "doctrine/cache": "^1.6"
     },
+    "suggest": {
+        "doctrine/cache": "Used for caching the calculated diffs using a Doctrine Cache Provider"
+    },
     "autoload": {
         "psr-0": { "Caxy\\HtmlDiff": "lib/" }
     },
