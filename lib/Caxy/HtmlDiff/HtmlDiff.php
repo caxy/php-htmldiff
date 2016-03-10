@@ -91,6 +91,12 @@ class HtmlDiff extends AbstractDiff
      */
     public function build()
     {
+        if ($this->hasDiffCache() && $this->getDiffCache()->contains($this->oldText, $this->newText)) {
+            $this->content = $this->getDiffCache()->fetch($this->oldText, $this->newText);
+
+            return $this->content;
+        }
+
         $this->splitInputsToWords();
         $this->replaceIsolatedDiffTags();
         $this->indexNewWords();
@@ -98,6 +104,10 @@ class HtmlDiff extends AbstractDiff
         $operations = $this->operations();
         foreach ($operations as $item) {
             $this->performOperation( $item );
+        }
+
+        if ($this->hasDiffCache()) {
+            $this->getDiffCache()->save($this->oldText, $this->newText, $this->content);
         }
 
         return $this->content;

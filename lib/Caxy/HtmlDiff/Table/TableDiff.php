@@ -92,6 +92,12 @@ class TableDiff extends AbstractDiff
      */
     public function build()
     {
+        if ($this->hasDiffCache() && $this->getDiffCache()->contains($this->oldText, $this->newText)) {
+            $this->content = $this->getDiffCache()->fetch($this->oldText, $this->newText);
+
+            return $this->content;
+        }
+
         $this->buildTableDoms();
 
         $this->diffDom = new \DOMDocument();
@@ -99,6 +105,10 @@ class TableDiff extends AbstractDiff
         $this->indexCellValues($this->newTable);
 
         $this->diffTableContent();
+
+        if ($this->hasDiffCache()) {
+            $this->getDiffCache()->save($this->oldText, $this->newText, $this->content);
+        }
 
         return $this->content;
     }

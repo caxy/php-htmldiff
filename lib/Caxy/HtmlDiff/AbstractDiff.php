@@ -54,6 +54,11 @@ abstract class AbstractDiff
     protected $newWords = array();
 
     /**
+     * @var DiffCache[]
+     */
+    private $diffCaches = array();
+
+    /**
      * AbstractDiff constructor.
      *
      * @param string     $oldText
@@ -79,6 +84,37 @@ abstract class AbstractDiff
         $this->oldText = $this->purifyHtml(trim($oldText));
         $this->newText = $this->purifyHtml(trim($newText));
         $this->content = '';
+    }
+
+    /**
+     * @return bool|string
+     */
+    abstract public function build();
+
+    /**
+     * @return DiffCache|null
+     */
+    protected function getDiffCache()
+    {
+        if (!$this->hasDiffCache()) {
+            return null;
+        }
+
+        $hash = spl_object_hash($this->getConfig()->getCacheProvider());
+
+        if (!array_key_exists($hash, $this->diffCaches)) {
+            $this->diffCaches[$hash] = new DiffCache($this->getConfig()->getCacheProvider());
+        }
+
+        return $this->diffCaches[$hash];
+    }
+
+    /**
+     * @return bool
+     */
+    protected function hasDiffCache()
+    {
+        return null !== $this->getConfig()->getCacheProvider();
     }
 
     /**

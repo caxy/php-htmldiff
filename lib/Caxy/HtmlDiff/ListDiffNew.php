@@ -29,12 +29,24 @@ class ListDiffNew extends AbstractDiff
 
     public function build()
     {
+        if ($this->hasDiffCache() && $this->getDiffCache()->contains($this->oldText, $this->newText)) {
+            $this->content = $this->getDiffCache()->fetch($this->oldText, $this->newText);
+
+            return $this->content;
+        }
+
         $this->splitInputsToWords();
 
-        return $this->diffLists(
+        $this->content = $this->diffLists(
             $this->buildDiffList($this->oldWords),
             $this->buildDiffList($this->newWords)
         );
+
+        if ($this->hasDiffCache()) {
+            $this->getDiffCache()->save($this->oldText, $this->newText, $this->content);
+        }
+
+        return $this->content;
     }
 
     protected function diffLists(DiffList $oldList, DiffList $newList)
