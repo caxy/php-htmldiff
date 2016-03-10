@@ -69,6 +69,11 @@ class HtmlDiffConfig
     protected $useTableDiffing = true;
 
     /**
+     * @var null|\Doctrine\Common\Cache\Cache
+     */
+    protected $cacheProvider;
+
+    /**
      * @return HtmlDiffConfig
      */
     public static function create()
@@ -414,6 +419,26 @@ class HtmlDiffConfig
         $this->useTableDiffing = $useTableDiffing;
 
         return $this;
+    }
+
+    /**
+     * @param null|\Doctrine\Common\Cache\Cache $cacheProvider
+     *
+     * @return $this
+     */
+    public function setCacheProvider(\Doctrine\Common\Cache\Cache $cacheProvider = null)
+    {
+        $this->cacheProvider = $cacheProvider;
+
+        return $this;
+    }
+
+    /**
+     * @return null|\Doctrine\Common\Cache\Cache
+     */
+    public function getCacheProvider()
+    {
+        return $this->cacheProvider;
     }
 
     /**

@@ -82,6 +82,43 @@ abstract class AbstractDiff
     }
 
     /**
+     * @return bool|string
+     */
+    abstract public function build();
+
+    public function getCachedDiff($oldText, $newText)
+    {
+        if (!$this->hasCachedDiff($oldText, $newText)) {
+            return false;
+        }
+
+        return $this->getConfig()->getCacheProvider()->fetch($this->getHashKey($oldText, $newText));
+    }
+
+    public function setCachedDiff($oldText, $newText, $text)
+    {
+        if (null === $this->getConfig()->getCacheProvider()) {
+            return false;
+        }
+
+        return $this->getConfig()->getCacheProvider()->save($this->getHashKey($oldText, $newText), $text);
+    }
+
+    public function hasCachedDiff($oldText, $newText)
+    {
+        if (null === $this->getConfig()->getCacheProvider()) {
+            return false;
+        }
+
+        return $this->getConfig()->getCacheProvider()->contains($this->getHashKey($oldText, $newText));
+    }
+
+    protected function getHashKey($oldText, $newText)
+    {
+        return sprintf('%s_%s', md5($oldText), md5($newText));
+    }
+
+    /**
      * @return HtmlDiffConfig
      */
     public function getConfig()
