@@ -54,6 +54,11 @@ abstract class AbstractDiff
     protected $newWords = array();
 
     /**
+     * @var DiffCache[]
+     */
+    private $diffCaches = array();
+
+    /**
      * AbstractDiff constructor.
      *
      * @param string     $oldText
@@ -86,36 +91,30 @@ abstract class AbstractDiff
      */
     abstract public function build();
 
-    public function getCachedDiff($oldText, $newText)
+    /**
+     * @return DiffCache|null
+     */
+    protected function getDiffCache()
     {
-        if (!$this->hasCachedDiff($oldText, $newText)) {
-            return false;
+        if (!$this->hasDiffCache()) {
+            return null;
         }
 
-        return $this->getConfig()->getCacheProvider()->fetch($this->getHashKey($oldText, $newText));
-    }
+        $hash = spl_object_hash($this->getConfig()->getCacheProvider());
 
-    public function setCachedDiff($oldText, $newText, $text)
-    {
-        if (null === $this->getConfig()->getCacheProvider()) {
-            return false;
+        if (!array_key_exists($hash, $this->diffCaches)) {
+            $this->diffCaches[$hash] = new DiffCache($this->getConfig()->getCacheProvider());
         }
 
-        return $this->getConfig()->getCacheProvider()->save($this->getHashKey($oldText, $newText), $text);
+        return $this->diffCaches[$hash];
     }
 
-    public function hasCachedDiff($oldText, $newText)
+    /**
+     * @return bool
+     */
+    protected function hasDiffCache()
     {
-        if (null === $this->getConfig()->getCacheProvider()) {
-            return false;
-        }
-
-        return $this->getConfig()->getCacheProvider()->contains($this->getHashKey($oldText, $newText));
-    }
-
-    protected function getHashKey($oldText, $newText)
-    {
-        return sprintf('%s_%s', md5($oldText), md5($newText));
+        return null !== $this->getConfig()->getCacheProvider();
     }
 
     /**
