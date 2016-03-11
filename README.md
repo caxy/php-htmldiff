@@ -1,6 +1,9 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master)
 [![Build Status](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/build.png?b=master)](https://scrutinizer-ci.com/g/caxy/php-htmldiff/build-status/master)
 [![Code Coverage](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master)
+[![Packagist](https://img.shields.io/packagist/dt/caxy/php-htmldiff.svg)](https://packagist.org/packages/caxy/php-htmldiff)
+[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/caxy/php-htmldiff.svg)](http://isitmaintained.com/project/caxy/php-htmldiff "Average time to resolve an issue")
+[![Percentage of issues still open](http://isitmaintained.com/badge/open/caxy/php-htmldiff.svg)](http://isitmaintained.com/project/caxy/php-htmldiff "Percentage of issues still open")
 
 php-htmldiff
 =======
