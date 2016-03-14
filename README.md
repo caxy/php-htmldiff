@@ -46,8 +46,9 @@ $content = $htmlDiff->build();
 The configuration for HtmlDiff is contained in the `Caxy\HtmlDiff\HtmlDiffConfig` class.
 
 There are two ways to set the configuration:
+
 1. [Configure an Existing HtmlDiff Object](#configure-an-existing-htmldiff-object)
-2. [Create and Use an HtmlDiffConfig Object](#create-and-use-an-htmldiffconfig-object)
+2. [Create and Use a HtmlDiffConfig Object](#create-and-use-a-htmldiffconfig-object)
 
 #### Configure an Existing HtmlDiff Object
 
@@ -74,7 +75,7 @@ $content = $htmlDiff->build();
 
 ```
 
-#### Create and Use an HtmlDiffConfig Object
+#### Create and Use a HtmlDiffConfig Object
 
 You can also set the configuration by creating an instance of
 `Caxy\HtmlDiff\HtmlDiffConfig` and using it when creating a new `HtmlDiff`
