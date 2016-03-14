@@ -1,91 +1,197 @@
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master)
-[![Build Status](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/build.png?b=master)](https://scrutinizer-ci.com/g/caxy/php-htmldiff/build-status/master)
-[![Code Coverage](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master)
-[![Packagist](https://img.shields.io/packagist/dt/caxy/php-htmldiff.svg)](https://packagist.org/packages/caxy/php-htmldiff)
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/caxy/php-htmldiff.svg)](http://isitmaintained.com/project/caxy/php-htmldiff "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/caxy/php-htmldiff.svg)](http://isitmaintained.com/project/caxy/php-htmldiff "Percentage of issues still open")
-
 php-htmldiff
-=======
-*A library for comparing two HTML files/snippets and highlighting the differences using simple HTML.*
+============
 
-This HTML Diff implementation is a PHP port of the ruby implementation found at https://github.com/myobie/htmldiff.
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/quality-score.png?b=master)][badge_score]
+[![Build Status](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/build.png?b=master)][badge_status]
+[![Code Coverage](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/coverage.png?b=master)][badge_coverage]
+[![Packagist](https://img.shields.io/packagist/dt/caxy/php-htmldiff.svg)][badge_packagist]
+[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/caxy/php-htmldiff.svg)][badge_resolve]
+[![Percentage of issues still open](http://isitmaintained.com/badge/open/caxy/php-htmldiff.svg)][badge_issues]
 
-This is also available in C# at https://github.com/Rohland/htmldiff.net.
+php-htmldiff is a library for comparing two HTML files/snippets and highlighting the differences using simple HTML.
 
-License
--------
-php-htmldiff is available under [GNU General Public License, version 2] (http://www.gnu.org/licenses/gpl-2.0.html).
+This HTML Diff implementation was forked from [rashid2538/php-htmldiff][upstream] and has been modified with new features,
+bug fixes, and enhancements to the original code.
 
-Differences from rashid2538/php-htmldiff
-========================================
-## Code Styling and Clean-up
-* Added namespaces, split up classes to their own files, some code styling changes
+For more information on these modifications, read the [differences from rashid2538/php-htmldiff][differences] or view the [CHANGELOG][changelog].
 
-## Enhancements
-* Allow the specialCaseOpeningTags and specialCaseClosingTags properties to be modified by passing an array into the constructor or using set/add/remove functions
-* Updated the demo to accept input and diff via AJAX
-* Added static properties for the default config variables
+## Installation
 
-## Bug Fixes
-* Fixed an index out of range bug (may have been fixed on the original repo since): https://github.com/caxy/php-htmldiff/commit/c9ba1fab6777cd47427477f8d747293bb01ef1e8
-* Check for empty oldText or newText before processing del or ins in processReplaceOperation function
+The recommended way to install php-htmldiff is through [Composer][composer].
+Require the [caxy/php-htmldiff][badge_packagist] package by running following command:
 
-## New Features
-#### Isolated Diffing of certain HTML elements
-This is the one of the largest changes from the original repository.
+```sh
+composer require caxy/php-htmldiff
+```
 
-See the release notes for tag 0.0.6 for more information: https://github.com/caxy/php-htmldiff/releases/tag/0.0.6
+This will resolve the latest stable version.
 
-#### List Diffing
-This is the latest new feature (as of last week-ish), and may need some tweaks still. It is similar to the Isolated Diffing feature, but specifically for HTML lists.
+Otherwise, install the library and setup the autoloader yourself.
 
-More information is to come on this, and there will definitely be some tweaks and configuration options added for this feature. Currently there is no easy way to enable/disable the feature, so if you're having issues with it I suggest using the 0.0.6 or earlier release.
+### Working with Symfony
 
-#### New option to group together diffed words by not matching on whitespace-only. Option is enabled by default.
-This was a specific requirement for an application we use this library for. The original library would replace single words at a time, but enabling this feature will group replacements instead. See example below.
+If you are using Symfony, you can use the [caxy/HtmlDiffBundle][htmldiffbundle] to make life easy!
 
-Old Text
-> testing some text here and there
+## Usage
 
-New Text
-> testing other words here and there
+```php
+use Caxy\HtmlDiff\HtmlDiff;
 
-With $groupDiffs = false (original functionality)
-> testing <del>some</del><ins>other</ins> <del>text</del><ins>words</ins> here and there
+$htmlDiff = new HtmlDiff($oldHtml, $newHtml);
+$content = $htmlDiff->build();
+```
 
-With $groupDiffs = true (new feature)
-> testing <del>some text</del><ins>other words</ins> here and there
+## Configuration
 
-#### Change diffing to strike through entire words/numbers if they contain periods or commas within the word
-This change introduced a new property `$specialCaseChars`, which defaults to the following characters: `.` `,` `(` `)` `'`
+The configuration for HtmlDiff is contained in the `Caxy\HtmlDiff\HtmlDiffConfig` class.
 
-This feature can be "disabled" by simply setting the $specialCaseChars to an empty array i.e. `$diff->setSpecialCaseChars(array())`
+There are two ways to set the configuration:
+1. [Configure an Existing HtmlDiff Object](#configure-an-existing-htmldiff-object)
+2. [Create and Use an HtmlDiffConfig Object](#create-and-use-an-htmldiffconfig-object)
 
-In the original library, special characters are treated as their own "words" even if they are in the middle of a word. This causes weird things to happen when diffing numbers that have a comma or a period in the middle of the number.
+#### Configure an Existing HtmlDiff Object
 
-For example, diffing `10,000.50` against `11,100.75` gives you:
+When a new `HtmlDiff` object is created, it creates a `HtmlDiffConfig` object with the default configuration.
+You can change the configuration using setters on the object:
 
-Original Functionality:
-> <del class="diffmod">10</del><ins class="diffmod">11</ins>,<del class="diffmod">000</del><ins class="diffmod">100</ins>.<del class="diffmod">50</del><ins class="diffmod">75</ins>
+```php
+use Caxy\HtmlDiff\HtmlDiff;
 
-This is very difficult to read, so the new feature allows you to add `.` and `,` to the $specialCaseChars array in order to get output that looks like:
-> <del class="diffmod">10,000.50</del><ins class="diffmod">11,100.75</ins>
+// ...
 
-Note: It will *not* treat the specialCaseChars as part of the word if it is at the beginning or end of the word, so normal periods or commas at the end of words will still be diffed like the original.
+$htmlDiff = new HtmlDiff($oldHtml, $newHtml);
 
-#### Added option to insert a space between `<del>` and `<ins>` tags. Disabled by default.
-This was a requirement for one our applications that uses this library.
+// Set some of the configuration options.
+$htmlDiff->getConfig()
+    ->setMatchThreshold(80)
+    ->setInsertSpaceInReplace(true)
+;
 
-New property `$insertSpaceInReplace` was added, and setting it to true will simply add a space between the `<del>` and `<ins>` tags in replace operations, which was requested for easier reading.
+// Calculate the differences using the configuration and get the html diff.
+$content = $htmlDiff->build();
 
-Enable it by calling `$diff->setInsertSpaceInReplace(true);`
+// ...
 
-Original Functionality
-> <del>Old</del><ins>New</ins>
+```
 
-New Functionality
-> <del>Old</del> <ins>New</ins>
+#### Create and Use an HtmlDiffConfig Object
 
-## Upcoming Features (someday)
-* Table Diffing (similar to the list diffing updates) - this feature was started a while back, but put on hold.
+You can also set the configuration by creating an instance of
+`Caxy\HtmlDiff\HtmlDiffConfig` and using it when creating a new `HtmlDiff`
+object using `HtmlDiff::create`.
+
+This is useful when creating more than one instance of `HtmlDiff`:
+
+```php
+use Caxy\HtmlDiff\HtmlDiff;
+use Caxy\HtmlDiff\HtmlDiffConfig;
+
+// ...
+
+$config = new HtmlDiffConfig();
+$config
+    ->setMatchThreshold(95)
+    ->setInsertSpaceInReplace(true)
+;
+
+// Create an HtmlDiff object with the custom configuration.
+$firstHtmlDiff = HtmlDiff::create($oldHtml, $newHtml, $config);
+$firstContent = $firstHtmlDiff->build();
+
+$secondHtmlDiff = HtmlDiff::create($oldHtml2, $newHtml2, $config);
+$secondHtmlDiff->getConfig()->setMatchThreshold(50);
+
+$secondContent = $secondHtmlDiff->build();
+
+// ...
+```
+
+#### Full Configuration with Defaults:
+
+```php
+
+$config = new HtmlDiffConfig();
+$config
+    // Percentage required for list items to be considered a match.
+    ->setMatchThreshold(80)
+    
+    // Set the encoding of the text to be diffed.
+    ->setEncoding('UTF-8')
+    
+    // If true, a space will be added between the <del> and <ins> tags of text that was replaced.
+    ->setInsertSpaceInReplace(false)
+    
+    // Option to disable the new Table Diffing feature and treat tables as regular text.
+    ->setUseTableDiffing(true)
+    
+    // Pass an instance of \Doctrine\Common\Cache\Cache to cache the calculated diffs.
+    ->setCacheProvider(null)
+    
+    // Group consecutive deletions and insertions instead of showing a deletion and insertion for each word individually. 
+    ->setGroupDiffs(true)
+    
+    // List of characters to consider part of a single word when in the middle of text.
+    ->setSpecialCaseChars(array('.', ',', '(', ')', '\''))
+    
+    // List of tags to treat as special case tags.
+    ->setSpecialCaseTags(array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p'))
+    
+    // List of tags (and their replacement strings) to be diffed in isolation.
+    ->setIsolatedDiffTags(array(
+        'ol'     => '[[REPLACE_ORDERED_LIST]]',
+        'ul'     => '[[REPLACE_UNORDERED_LIST]]',
+        'sub'    => '[[REPLACE_SUB_SCRIPT]]',
+        'sup'    => '[[REPLACE_SUPER_SCRIPT]]',
+        'dl'     => '[[REPLACE_DEFINITION_LIST]]',
+        'table'  => '[[REPLACE_TABLE]]',
+        'strong' => '[[REPLACE_STRONG]]',
+        'b'      => '[[REPLACE_B]]',
+        'em'     => '[[REPLACE_EM]]',
+        'i'      => '[[REPLACE_I]]',
+        'a'      => '[[REPLACE_A]]',
+    ))
+;
+
+```
+
+## Contributing
+
+See [CONTRIBUTING][contributing] file.
+
+## Contributor Code of Conduct
+
+Please note that this project is released with a [Contributor Code of
+Conduct][contributor_covenant]. By participating in this project
+you agree to abide by its terms. See [CODE_OF_CONDUCT][code_of_conduct] file.
+
+## Credits
+
+* [rashid2538][] for the port to PHP and the base for our project: [rashid2538/php-htmldiff][upstream]
+* [willdurand][] for an excellent post on [open sourcing libraries][].
+Much of this documentation is based off of the examples in the post.
+
+Did we miss anyone? If we did, let us know or put in a pull request!
+
+## License
+
+php-htmldiff is available under [GNU General Public License, version 2][gnu]. See the [LICENSE][license] file for details.
+
+[badge_score]: https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master
+[badge_status]: https://scrutinizer-ci.com/g/caxy/php-htmldiff/build-status/master
+[badge_coverage]: https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master
+[badge_packagist]: https://packagist.org/packages/caxy/php-htmldiff
+[badge_resolve]: http://isitmaintained.com/project/caxy/php-htmldiff "Average time to resolve an issue"
+[badge_issues]: http://isitmaintained.com/project/caxy/php-htmldiff "Percentage of issues still open"
+[upstream]: https://github.com/rashid2538/php-htmldiff
+[htmldiffbundle]: https://github.com/caxy/HtmlDiffBundle
+[differences]: https://github.com/caxy/php-htmldiff/blob/master/doc/differences.rst
+[changelog]: https://github.com/caxy/php-htmldiff/blob/master/CHANGELOG.md
+[contributing]: https://github.com/caxy/php-htmldiff/blob/master/CONTRIBUTING.md
+[gnu]: http://www.gnu.org/licenses/gpl-2.0.html
+[license]: https://github.com/caxy/php-htmldiff/blob/master/LICENSE
+[code_of_conduct]: https://github.com/caxy/php-htmldiff/blob/master/CODE_OF_CONDUCT.md
+[composer]: http://getcomposer.org/
+[contributor_covenant]: http://contributor-covenant.org/
+[rashid2538]: https://github.com/rashid2538
+[willdurand]: https://github.com/willdurand
+[open sourcing libraries]: http://williamdurand.fr/2013/07/04/on-open-sourcing-libraries/
