@@ -34,8 +34,6 @@ If you are using Symfony, you can use the [caxy/HtmlDiffBundle][htmldiffbundle] 
 
 ## Usage
 
-(WIP)
-
 ```php
 use Caxy\HtmlDiff\HtmlDiff;
 
@@ -45,7 +43,116 @@ $content = $htmlDiff->build();
 
 ## Configuration
 
-WIP
+The configuration for HtmlDiff is contained in the `Caxy\HtmlDiff\HtmlDiffConfig` class.
+
+There are two ways to set the configuration:
+1. [Configure an Existing HtmlDiff Object](#configure-an-existing-htmldiff-object)
+2. [Create and Use an HtmlDiffConfig Object](#create-and-use-an-htmldiffconfig-object)
+
+#### Configure an Existing HtmlDiff Object
+
+When a new `HtmlDiff` object is created, it creates a `HtmlDiffConfig` object with the default configuration.
+You can change the configuration using setters on the object:
+
+```php
+use Caxy\HtmlDiff\HtmlDiff;
+
+// ...
+
+$htmlDiff = new HtmlDiff($oldHtml, $newHtml);
+
+// Set some of the configuration options.
+$htmlDiff->getConfig()
+    ->setMatchThreshold(80)
+    ->setInsertSpaceInReplace(true)
+;
+
+// Calculate the differences using the configuration and get the html diff.
+$content = $htmlDiff->build();
+
+// ...
+
+```
+
+#### Create and Use an HtmlDiffConfig Object
+
+You can also set the configuration by creating an instance of
+`Caxy\HtmlDiff\HtmlDiffConfig` and using it when creating a new `HtmlDiff`
+object using `HtmlDiff::create`.
+
+This is useful when creating more than one instance of `HtmlDiff`:
+
+```php
+use Caxy\HtmlDiff\HtmlDiff;
+use Caxy\HtmlDiff\HtmlDiffConfig;
+
+// ...
+
+$config = new HtmlDiffConfig();
+$config
+    ->setMatchThreshold(95)
+    ->setInsertSpaceInReplace(true)
+;
+
+// Create an HtmlDiff object with the custom configuration.
+$firstHtmlDiff = HtmlDiff::create($oldHtml, $newHtml, $config);
+$firstContent = $firstHtmlDiff->build();
+
+$secondHtmlDiff = HtmlDiff::create($oldHtml2, $newHtml2, $config);
+$secondHtmlDiff->getConfig()->setMatchThreshold(50);
+
+$secondContent = $secondHtmlDiff->build();
+
+// ...
+```
+
+#### Full Configuration with Defaults:
+
+```php
+
+$config = new HtmlDiffConfig();
+$config
+    // Percentage required for list items to be considered a match.
+    ->setMatchThreshold(80)
+    
+    // Set the encoding of the text to be diffed.
+    ->setEncoding('UTF-8')
+    
+    // If true, a space will be added between the <del> and <ins> tags of text that was replaced.
+    ->setInsertSpaceInReplace(false)
+    
+    // Option to disable the new Table Diffing feature and treat tables as regular text.
+    ->setUseTableDiffing(true)
+    
+    // Pass an instance of \Doctrine\Common\Cache\Cache to cache the calculated diffs.
+    ->setCacheProvider(null)
+    
+    // Group consecutive deletions and insertions instead of showing a deletion and insertion for each word individually. 
+    ->setGroupDiffs(true)
+    
+    // List of characters to consider part of a single word when in the middle of text.
+    ->setSpecialCaseChars(array('.', ',', '(', ')', '\''))
+    
+    // List of tags to treat as special case tags.
+    ->setSpecialCaseTags(array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p'))
+    
+    // List of tags (and their replacement strings) to be diffed in isolation.
+    ->setIsolatedDiffTags(array(
+        'ol'     => '[[REPLACE_ORDERED_LIST]]',
+        'ul'     => '[[REPLACE_UNORDERED_LIST]]',
+        'sub'    => '[[REPLACE_SUB_SCRIPT]]',
+        'sup'    => '[[REPLACE_SUPER_SCRIPT]]',
+        'dl'     => '[[REPLACE_DEFINITION_LIST]]',
+        'table'  => '[[REPLACE_TABLE]]',
+        'strong' => '[[REPLACE_STRONG]]',
+        'b'      => '[[REPLACE_B]]',
+        'em'     => '[[REPLACE_EM]]',
+        'i'      => '[[REPLACE_I]]',
+        'a'      => '[[REPLACE_A]]',
+    ))
+;
+
+```
 
 ## Contributing
 
