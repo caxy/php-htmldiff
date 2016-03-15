@@ -74,6 +74,11 @@ class HtmlDiffConfig
     protected $cacheProvider;
 
     /**
+     * @var null|String
+     */
+    protected $purifierCacheLocation = null;
+
+    /**
      * @return HtmlDiffConfig
      */
     public static function create()
@@ -439,6 +444,26 @@ class HtmlDiffConfig
     public function getCacheProvider()
     {
         return $this->cacheProvider;
+    }
+
+    /**
+     * @param null|string
+     *
+     * @return $this
+     */
+    public function setPurifierCacheLocation($purifierCacheLocation = null)
+    {
+        $this->purifierCacheLocation = $purifierCacheLocation;
+
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getPurifierCacheLocation()
+    {
+        return $this->purifierCacheLocation;
     }
 
     /**
