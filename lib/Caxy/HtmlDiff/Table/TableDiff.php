@@ -87,13 +87,12 @@ class TableDiff extends AbstractDiff
         $newText,
         $encoding = 'UTF-8',
         $specialCaseTags = null,
-        $groupDiffs = null,
-        $defaultPurifierSerializerCache = null
+        $groupDiffs = null
     )
     {
         parent::__construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs);
 
-        $this->initPurifier($defaultPurifierSerializerCache);
+        $this->initPurifier();
     }
 
     /**
@@ -101,10 +100,11 @@ class TableDiff extends AbstractDiff
      * @param  null|string $defaultPurifierSerializerCache
      * @return void
      */
-    protected function initPurifier($defaultPurifierSerializerCache)
+    protected function initPurifier($defaultPurifierSerializerCache = null)
     {
         $HTMLPurifierConfig = \HTMLPurifier_Config::createDefault();
-        // Cache for the serializer defaults to inside the HTMLPurifier library
+        // Cache.SerializerPath defaults to Null and sets
+        // the location to inside the vendor HTMLPurifier library
         // under the DefinitionCache/Serializer folder.
         $HTMLPurifierConfig->set('Cache.SerializerPath', $defaultPurifierSerializerCache);
         $this->purifier = new \HTMLPurifier($HTMLPurifierConfig);

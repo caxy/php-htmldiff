@@ -74,7 +74,7 @@ class HtmlDiffConfig
     protected $cacheProvider;
 
     /**
-     * @var null|String
+     * @var null|string
      */
     protected $purifierCacheLocation = null;
 
