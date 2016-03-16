@@ -128,6 +128,9 @@ $config
     // Pass an instance of \Doctrine\Common\Cache\Cache to cache the calculated diffs.
     ->setCacheProvider(null)
     
+    // Set the cache directory that HTMLPurifier should use.
+    ->setPurifierCacheLocation(null)
+    
     // Group consecutive deletions and insertions instead of showing a deletion and insertion for each word individually. 
     ->setGroupDiffs(true)
     
