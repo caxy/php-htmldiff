@@ -66,6 +66,8 @@ class TableDiff extends AbstractDiff
 
         if (null !== $config) {
             $diff->setConfig($config);
+
+            $this->initPurifier($config->getPurifierCacheLocation());
         }
 
         return $diff;
@@ -80,11 +82,34 @@ class TableDiff extends AbstractDiff
      * @param array|null $specialCaseTags
      * @param bool|null  $groupDiffs
      */
-    public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
+    public function __construct(
+        $oldText,
+        $newText,
+        $encoding = 'UTF-8',
+        $specialCaseTags = null,
+        $groupDiffs = null
+    )
     {
         parent::__construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs);
 
-        $this->purifier = new \HTMLPurifier(\HTMLPurifier_Config::createDefault());
+        $this->initPurifier();
+    }
+
+    /**
+     * Initializes HTMLPurifier with cache location
+     * @param  null|string $defaultPurifierSerializerCache
+     * @return void
+     */
+    protected function initPurifier($defaultPurifierSerializerCache = null)
+    {
+        $HTMLPurifierConfig = \HTMLPurifier_Config::createDefault();
+        // Cache.SerializerPath defaults to Null and sets
+        // the location to inside the vendor HTMLPurifier library
+        // under the DefinitionCache/Serializer folder.
+        if (!is_null($defaultPurifierSerializerCache)) {
+            $HTMLPurifierConfig->set('Cache.SerializerPath', $defaultPurifierSerializerCache);
+        }
+        $this->purifier = new \HTMLPurifier($HTMLPurifierConfig);
     }
 
     /**
