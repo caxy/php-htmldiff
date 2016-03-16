@@ -106,7 +106,9 @@ class TableDiff extends AbstractDiff
         // Cache.SerializerPath defaults to Null and sets
         // the location to inside the vendor HTMLPurifier library
         // under the DefinitionCache/Serializer folder.
-        $HTMLPurifierConfig->set('Cache.SerializerPath', $defaultPurifierSerializerCache);
+        if (!is_null($defaultPurifierSerializerCache)) {
+            $HTMLPurifierConfig->set('Cache.SerializerPath', $defaultPurifierSerializerCache);
+        }
         $this->purifier = new \HTMLPurifier($HTMLPurifierConfig);
     }
 
