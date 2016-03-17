@@ -48,6 +48,7 @@ class HtmlDiffConfig
         'em'     => '[[REPLACE_EM]]',
         'i'      => '[[REPLACE_I]]',
         'a'      => '[[REPLACE_A]]',
+        'img'    => '[[REPLACE_IMG]]',
     );
 
     /**
