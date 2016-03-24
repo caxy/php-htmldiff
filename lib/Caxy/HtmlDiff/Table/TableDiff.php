@@ -67,7 +67,7 @@ class TableDiff extends AbstractDiff
         if (null !== $config) {
             $diff->setConfig($config);
 
-            $this->initPurifier($config->getPurifierCacheLocation());
+            $diff->initPurifier($config->getPurifierCacheLocation());
         }
 
         return $diff;
@@ -100,7 +100,7 @@ class TableDiff extends AbstractDiff
      * @param  null|string $defaultPurifierSerializerCache
      * @return void
      */
-    protected function initPurifier($defaultPurifierSerializerCache = null)
+    public function initPurifier($defaultPurifierSerializerCache = null)
     {
         $HTMLPurifierConfig = \HTMLPurifier_Config::createDefault();
         // Cache.SerializerPath defaults to Null and sets
