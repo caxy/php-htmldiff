@@ -86,6 +86,11 @@ class HtmlDiff extends AbstractDiff
         return $this->config->isInsertSpaceInReplace();
     }
 
+    public function clearContent()
+    {
+      $this->content = '';
+    }
+
     /**
      * @return string
      */
