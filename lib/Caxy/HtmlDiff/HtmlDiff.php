@@ -422,7 +422,7 @@ class HtmlDiff extends AbstractDiff
                 }
             }
         }
-        $this->content .= implode( "", $result );
+        $this->content .= implode( " ", $result );
     }
 
     /**
