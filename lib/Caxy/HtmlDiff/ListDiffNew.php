@@ -121,8 +121,8 @@ class ListDiffNew extends AbstractDiff
 
                     if (false !== $otherMatchBetter && $newCount > $oldCount && $difference > 0) {
                         $diffOutput .= sprintf('%s', $newListItem->getHtml('normal new', 'ins'));
-                        $currentIndexInNew++;
-                        $difference--;
+                        ++$currentIndexInNew;
+                        --$difference;
 
                         continue;
                     }
@@ -135,7 +135,7 @@ class ListDiffNew extends AbstractDiff
                         // Following list item in old is better match, use that.
                         $diffOutput .= sprintf('%s', $oldListItems[$oldListIndex]->getHtml('removed', 'del'));
 
-                        $currentIndexInOld++;
+                        ++$currentIndexInOld;
                         $oldListIndex = $nextOldListIndex;
                         $matchPercentage = $oldMatchData[$oldListIndex];
                         $replacement = true;
@@ -151,17 +151,16 @@ class ListDiffNew extends AbstractDiff
                         $diffContent = $htmlDiff->build();
 
                         $diffOutput .= sprintf('%s%s%s', $newListItem->getStartTagWithDiffClass($replacement ? 'replacement' : 'normal'), $diffContent, $newListItem->getEndTag());
-
                     } else {
                         $diffOutput .= sprintf('%s', $oldListItems[$oldListIndex]->getHtml('removed', 'del'));
                         $diffOutput .= sprintf('%s', $newListItem->getHtml('replacement', 'ins'));
                     }
-                    $currentIndexInOld++;
+                    ++$currentIndexInOld;
                 } else {
                     $diffOutput .= sprintf('%s', $newListItem->getHtml('normal new', 'ins'));
                 }
 
-                $currentIndexInNew++;
+                ++$currentIndexInNew;
             }
         }
 
@@ -169,7 +168,7 @@ class ListDiffNew extends AbstractDiff
         while (array_key_exists($currentIndexInOld, $oldListIndices)) {
             $oldListIndex = $oldListIndices[$currentIndexInOld];
             $diffOutput .= sprintf('%s', $oldListItems[$oldListIndex]->getHtml('removed', 'del'));
-            $currentIndexInOld++;
+            ++$currentIndexInOld;
         }
 
         return sprintf('%s%s%s', $newList->getStartTagWithDiffClass(), $diffOutput, $newList->getEndTag());
@@ -202,7 +201,7 @@ class ListDiffNew extends AbstractDiff
                     $listStartTag = $word;
                 }
 
-                $openLists++;
+                ++$openLists;
             } elseif ($this->isClosingListTag($word, $listType)) {
                 if ($openLists > 1) {
                     if ($openListItems > 0) {
@@ -214,7 +213,7 @@ class ListDiffNew extends AbstractDiff
                     $listEndTag = $word;
                 }
 
-                $openLists--;
+                --$openLists;
             } elseif ($this->isOpeningListItemTag($word, $listItemType)) {
                 if ($openListItems === 0) {
                     // New top-level list item
@@ -225,7 +224,7 @@ class ListDiffNew extends AbstractDiff
                     $currentListItem[] = $word;
                 }
 
-                $openListItems++;
+                ++$openListItems;
             } elseif ($this->isClosingListItemTag($word, $listItemType)) {
                 if ($openListItems === 1) {
                     $listItemEnd = $word;
@@ -236,7 +235,7 @@ class ListDiffNew extends AbstractDiff
                     $currentListItem[] = $word;
                 }
 
-                $openListItems--;
+                --$openListItems;
             } else {
                 if ($openListItems > 0) {
                     $currentListItem[] = $word;
@@ -253,27 +252,28 @@ class ListDiffNew extends AbstractDiff
 
     protected function isOpeningListTag($word, $type = null)
     {
-        $filter = $type !== null ? array('<' . $type) : array('<ul', '<ol', '<dl');
+        $filter = $type !== null ? array('<'.$type) : array('<ul', '<ol', '<dl');
+
         return in_array(substr($word, 0, 3), $filter);
     }
 
     protected function isClosingListTag($word, $type = null)
     {
-        $filter = $type !== null ? array('</' . $type) : array('</ul', '</ol', '</dl');
+        $filter = $type !== null ? array('</'.$type) : array('</ul', '</ol', '</dl');
 
         return in_array(substr($word, 0, 4), $filter);
     }
 
     protected function isOpeningListItemTag($word, $type = null)
     {
-        $filter = $type !== null ? array('<' . $type) : array('<li', '<dd', '<dt');
+        $filter = $type !== null ? array('<'.$type) : array('<li', '<dd', '<dt');
 
         return in_array(substr($word, 0, 3), $filter);
     }
 
     protected function isClosingListItemTag($word, $type = null)
     {
-        $filter = $type !== null ? array('</' . $type) : array('</li', '</dd', '</dt');
+        $filter = $type !== null ? array('</'.$type) : array('</li', '</dd', '</dt');
 
         return in_array(substr($word, 0, 4), $filter);
     }

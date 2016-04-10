@@ -3,8 +3,7 @@
 namespace Caxy\HtmlDiff\Table;
 
 /**
- * Class TablePosition
- * @package Caxy\HtmlDiff\Table
+ * Class TablePosition.
  */
 class TablePosition
 {

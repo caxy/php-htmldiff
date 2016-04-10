@@ -3,8 +3,7 @@
 namespace Caxy\HtmlDiff\Table;
 
 /**
- * Class Table
- * @package Caxy\HtmlDiff\Table
+ * Class Table.
  */
 class Table extends AbstractTableElement
 {
@@ -101,11 +100,11 @@ class Table extends AbstractTableElement
 
             while ($cellsToMove > 0 && $newRow >= 0) {
                 if ($cellsToMove > $newCell) {
-                    $newRow--;
+                    --$newRow;
                     if ($newRow < 0) {
-                        return null;
+                        return;
                     }
-                    
+
                     $cellsToMove = $cellsToMove - ($newCell + 1);
                     $cellCount = count($this->getRow($newRow)->getCells());
                     $newCell = $cellCount - 1;
@@ -115,14 +114,14 @@ class Table extends AbstractTableElement
                 }
             }
         } else {
-            return null;
+            return;
         }
 
         if ($newRow >= 0 && $newCell >= 0) {
             return new TablePosition($newRow, $newCell);
         }
 
-        return null;
+        return;
     }
 
     /**
@@ -143,7 +142,7 @@ class Table extends AbstractTableElement
             $cellsLeft = $cellCount - $newCell - 1;
 
             if ($cellsToMove > $cellsLeft) {
-                $newRow++;
+                ++$newRow;
                 $cellsToMove -= $cellsLeft - 1;
                 $newCell = 0;
             } else {
@@ -156,6 +155,6 @@ class Table extends AbstractTableElement
             return new TablePosition($newRow, $newCell);
         }
 
-        return null;
+        return;
     }
 }

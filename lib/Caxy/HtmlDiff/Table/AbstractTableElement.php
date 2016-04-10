@@ -3,8 +3,7 @@
 namespace Caxy\HtmlDiff\Table;
 
 /**
- * Class AbstractTableElement
- * @package Caxy\HtmlDiff\Table
+ * Class AbstractTableElement.
  */
 abstract class AbstractTableElement
 {
@@ -89,6 +88,7 @@ abstract class AbstractTableElement
         $domDocument = new \DOMDocument();
         $newNode = $domDocument->importNode($node, true);
         $domDocument->appendChild($newNode);
+
         return trim($domDocument->saveHTML());
     }
 }

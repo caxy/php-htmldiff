@@ -5,8 +5,7 @@ namespace Caxy\HtmlDiff;
 use Caxy\HtmlDiff\Table\TableDiff;
 
 /**
- * Class HtmlDiff
- * @package Caxy\HtmlDiff
+ * Class HtmlDiff.
  */
 class HtmlDiff extends AbstractDiff
 {
@@ -64,7 +63,8 @@ class HtmlDiff extends AbstractDiff
     }
 
     /**
-     * @param  boolean  $boolean
+     * @param bool $boolean
+     *
      * @return HtmlDiff
      *
      * @deprecated since 0.1.0
@@ -77,7 +77,7 @@ class HtmlDiff extends AbstractDiff
     }
 
     /**
-     * @return boolean
+     * @return bool
      *
      * @deprecated since 0.1.0
      */
@@ -103,7 +103,7 @@ class HtmlDiff extends AbstractDiff
 
         $operations = $this->operations();
         foreach ($operations as $item) {
-            $this->performOperation( $item );
+            $this->performOperation($item);
         }
 
         if ($this->hasDiffCache()) {
@@ -117,13 +117,13 @@ class HtmlDiff extends AbstractDiff
     {
         $this->wordIndices = array();
         foreach ($this->newWords as $i => $word) {
-            if ( $this->isTag( $word ) ) {
-                $word = $this->stripTagAttributes( $word );
+            if ($this->isTag($word)) {
+                $word = $this->stripTagAttributes($word);
             }
-            if ( isset( $this->wordIndices[ $word ] ) ) {
+            if (isset($this->wordIndices[ $word ])) {
                 $this->wordIndices[ $word ][] = $i;
             } else {
-                $this->wordIndices[ $word ] = array( $i );
+                $this->wordIndices[ $word ] = array($i);
             }
         }
     }
@@ -151,8 +151,8 @@ class HtmlDiff extends AbstractDiff
                 if ($this->isSelfClosingTag($word) || stripos($word, '<img') !== false) {
                     if ($openIsolatedDiffTags === 0) {
                         $isolatedDiffTagIndices[] = array(
-                            'start'   => $index,
-                            'length'  => 1,
+                            'start' => $index,
+                            'length' => 1,
                             'tagType' => $openIsolatedDiffTag,
                         );
                         $currentIsolatedDiffTag = null;
@@ -161,13 +161,13 @@ class HtmlDiff extends AbstractDiff
                     if ($openIsolatedDiffTags === 0) {
                         $isolatedDiffTagStart = $index;
                     }
-                    $openIsolatedDiffTags++;
+                    ++$openIsolatedDiffTags;
                     $currentIsolatedDiffTag = $openIsolatedDiffTag;
                 }
             } elseif ($openIsolatedDiffTags > 0 && $this->isClosingIsolatedDiffTag($word, $currentIsolatedDiffTag)) {
-                $openIsolatedDiffTags--;
+                --$openIsolatedDiffTags;
                 if ($openIsolatedDiffTags == 0) {
-                    $isolatedDiffTagIndices[] = array ('start' => $isolatedDiffTagStart, 'length' => $index - $isolatedDiffTagStart + 1, 'tagType' => $currentIsolatedDiffTag);
+                    $isolatedDiffTagIndices[] = array('start' => $isolatedDiffTagStart, 'length' => $index - $isolatedDiffTagStart + 1, 'tagType' => $currentIsolatedDiffTag);
                     $currentIsolatedDiffTag = null;
                 }
             }
@@ -182,7 +182,6 @@ class HtmlDiff extends AbstractDiff
         }
 
         return $isolatedDiffTagScript;
-
     }
 
     /**
@@ -239,16 +238,16 @@ class HtmlDiff extends AbstractDiff
     {
         switch ($operation->action) {
             case 'equal' :
-            $this->processEqualOperation( $operation );
+            $this->processEqualOperation($operation);
             break;
             case 'delete' :
-            $this->processDeleteOperation( $operation, "diffdel" );
+            $this->processDeleteOperation($operation, 'diffdel');
             break;
             case 'insert' :
-            $this->processInsertOperation( $operation, "diffins");
+            $this->processInsertOperation($operation, 'diffins');
             break;
             case 'replace':
-            $this->processReplaceOperation( $operation );
+            $this->processReplaceOperation($operation);
             break;
             default:
             break;
@@ -260,8 +259,8 @@ class HtmlDiff extends AbstractDiff
      */
     protected function processReplaceOperation($operation)
     {
-        $this->processDeleteOperation( $operation, "diffmod" );
-        $this->processInsertOperation( $operation, "diffmod" );
+        $this->processDeleteOperation($operation, 'diffmod');
+        $this->processInsertOperation($operation, 'diffmod');
     }
 
     /**
@@ -282,7 +281,7 @@ class HtmlDiff extends AbstractDiff
                 }
             }
         }
-        $this->insertTag( "ins", $cssClass, $text );
+        $this->insertTag('ins', $cssClass, $text);
     }
 
     /**
@@ -303,7 +302,7 @@ class HtmlDiff extends AbstractDiff
                 }
             }
         }
-        $this->insertTag( "del", $cssClass, $text );
+        $this->insertTag('del', $cssClass, $text);
     }
 
     /**
@@ -316,8 +315,8 @@ class HtmlDiff extends AbstractDiff
      */
     protected function diffIsolatedPlaceholder($operation, $pos, $placeholder, $stripWrappingTags = true)
     {
-        $oldText = implode("", $this->findIsolatedDiffTagsInOld($operation, $pos));
-        $newText = implode("", $this->newIsolatedDiffTags[$pos]);
+        $oldText = implode('', $this->findIsolatedDiffTagsInOld($operation, $pos));
+        $newText = implode('', $this->newIsolatedDiffTags[$pos]);
 
         if ($this->isListPlaceholder($placeholder)) {
             return $this->diffList($oldText, $newText);
@@ -356,9 +355,9 @@ class HtmlDiff extends AbstractDiff
             $newText = preg_replace($pattern, '', $newText);
         }
 
-        $diff = HtmlDiff::create($oldText, $newText, $this->config);
+        $diff = self::create($oldText, $newText, $this->config);
 
-        return $wrapStart . $diff->build() . $wrapEnd;
+        return $wrapStart.$diff->build().$wrapEnd;
     }
 
     /**
@@ -412,17 +411,15 @@ class HtmlDiff extends AbstractDiff
     {
         $result = array();
         foreach ($this->newWords as $pos => $s) {
-
             if ($pos >= $operation->startInNew && $pos < $operation->endInNew) {
                 if ($this->config->isIsolatedDiffTagPlaceholder($s) && isset($this->newIsolatedDiffTags[$pos])) {
-
                     $result[] = $this->diffIsolatedPlaceholder($operation, $pos, $s);
                 } else {
                     $result[] = $s;
                 }
             }
         }
-        $this->content .= implode( "", $result );
+        $this->content .= implode('', $result);
     }
 
     /**
@@ -438,7 +435,7 @@ class HtmlDiff extends AbstractDiff
             return htmlspecialchars_decode($matches[2]);
         }
 
-        return null;
+        return;
     }
 
     /**
@@ -527,56 +524,56 @@ class HtmlDiff extends AbstractDiff
     protected function insertTag($tag, $cssClass, &$words)
     {
         while (true) {
-            if ( count( $words ) == 0 ) {
+            if (count($words) == 0) {
                 break;
             }
 
-            $nonTags = $this->extractConsecutiveWords( $words, 'noTag' );
+            $nonTags = $this->extractConsecutiveWords($words, 'noTag');
 
             $specialCaseTagInjection = '';
             $specialCaseTagInjectionIsBefore = false;
 
-            if ( count( $nonTags ) != 0 ) {
-                $text = $this->wrapText( implode( "", $nonTags ), $tag, $cssClass );
+            if (count($nonTags) != 0) {
+                $text = $this->wrapText(implode('', $nonTags), $tag, $cssClass);
                 $this->content .= $text;
             } else {
                 $firstOrDefault = false;
                 foreach ($this->config->getSpecialCaseOpeningTags() as $x) {
-                    if ( preg_match( $x, $words[ 0 ] ) ) {
+                    if (preg_match($x, $words[ 0 ])) {
                         $firstOrDefault = $x;
                         break;
                     }
                 }
                 if ($firstOrDefault) {
                     $specialCaseTagInjection = '<ins class="mod">';
-                    if ($tag == "del") {
-                        unset( $words[ 0 ] );
+                    if ($tag == 'del') {
+                        unset($words[ 0 ]);
                     }
-                } elseif ( array_search( $words[ 0 ], $this->config->getSpecialCaseClosingTags()) !== false ) {
-                    $specialCaseTagInjection = "</ins>";
+                } elseif (array_search($words[ 0 ], $this->config->getSpecialCaseClosingTags()) !== false) {
+                    $specialCaseTagInjection = '</ins>';
                     $specialCaseTagInjectionIsBefore = true;
-                    if ($tag == "del") {
-                        unset( $words[ 0 ] );
+                    if ($tag == 'del') {
+                        unset($words[ 0 ]);
                     }
                 }
             }
-            if ( count( $words ) == 0 && count( $specialCaseTagInjection ) == 0 ) {
+            if (count($words) == 0 && count($specialCaseTagInjection) == 0) {
                 break;
             }
             if ($specialCaseTagInjectionIsBefore) {
-                $this->content .= $specialCaseTagInjection . implode( "", $this->extractConsecutiveWords( $words, 'tag' ) );
+                $this->content .= $specialCaseTagInjection.implode('', $this->extractConsecutiveWords($words, 'tag'));
             } else {
-                $workTag = $this->extractConsecutiveWords( $words, 'tag' );
-                if ( isset( $workTag[ 0 ] ) && $this->isOpeningTag( $workTag[ 0 ] ) && !$this->isClosingTag( $workTag[ 0 ] ) ) {
-                    if ( strpos( $workTag[ 0 ], 'class=' ) ) {
-                        $workTag[ 0 ] = str_replace( 'class="', 'class="diffmod ', $workTag[ 0 ] );
-                        $workTag[ 0 ] = str_replace( "class='", 'class="diffmod ', $workTag[ 0 ] );
+                $workTag = $this->extractConsecutiveWords($words, 'tag');
+                if (isset($workTag[ 0 ]) && $this->isOpeningTag($workTag[ 0 ]) && !$this->isClosingTag($workTag[ 0 ])) {
+                    if (strpos($workTag[ 0 ], 'class=')) {
+                        $workTag[ 0 ] = str_replace('class="', 'class="diffmod ', $workTag[ 0 ]);
+                        $workTag[ 0 ] = str_replace("class='", 'class="diffmod ', $workTag[ 0 ]);
                     } else {
-                        $workTag[ 0 ] = str_replace( ">", ' class="diffmod">', $workTag[ 0 ] );
+                        $workTag[ 0 ] = str_replace('>', ' class="diffmod">', $workTag[ 0 ]);
                     }
                 }
 
-                $appendContent = implode( "", $workTag ) . $specialCaseTagInjection;
+                $appendContent = implode('', $workTag).$specialCaseTagInjection;
                 if (isset($workTag[0]) && false !== stripos($workTag[0], '<img')) {
                     $appendContent = $this->wrapText($appendContent, $tag, $cssClass);
                 }
@@ -593,7 +590,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function checkCondition($word, $condition)
     {
-        return $condition == 'tag' ? $this->isTag( $word ) : !$this->isTag( $word );
+        return $condition == 'tag' ? $this->isTag($word) : !$this->isTag($word);
     }
 
     /**
@@ -605,7 +602,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function wrapText($text, $tagName, $cssClass)
     {
-        return sprintf( '<%1$s class="%2$s">%3$s</%1$s>', $tagName, $cssClass, $text );
+        return sprintf('<%1$s class="%2$s">%3$s</%1$s>', $tagName, $cssClass, $text);
     }
 
     /**
@@ -619,7 +616,7 @@ class HtmlDiff extends AbstractDiff
         $indexOfFirstTag = null;
         $words = array_values($words);
         foreach ($words as $i => $word) {
-            if ( !$this->checkCondition( $word, $condition ) ) {
+            if (!$this->checkCondition($word, $condition)) {
                 $indexOfFirstTag = $i;
                 break;
             }
@@ -632,18 +629,18 @@ class HtmlDiff extends AbstractDiff
                 }
             }
             if ($indexOfFirstTag > 0) {
-                array_splice( $words, 0, $indexOfFirstTag );
+                array_splice($words, 0, $indexOfFirstTag);
             }
 
             return $items;
         } else {
             $items = array();
             foreach ($words as $pos => $s) {
-                if ( $pos >= 0 && $pos <= count( $words ) ) {
+                if ($pos >= 0 && $pos <= count($words)) {
                     $items[] = $s;
                 }
             }
-            array_splice( $words, 0, count( $words ) );
+            array_splice($words, 0, count($words));
 
             return $items;
         }
@@ -656,7 +653,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function isTag($item)
     {
-        return $this->isOpeningTag( $item ) || $this->isClosingTag( $item );
+        return $this->isOpeningTag($item) || $this->isClosingTag($item);
     }
 
     /**
@@ -666,7 +663,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function isOpeningTag($item)
     {
-        return preg_match( "#<[^>]+>\\s*#iU", $item );
+        return preg_match('#<[^>]+>\\s*#iU', $item);
     }
 
     /**
@@ -676,7 +673,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function isClosingTag($item)
     {
-        return preg_match( "#</[^>]+>\\s*#iU", $item );
+        return preg_match('#</[^>]+>\\s*#iU', $item);
     }
 
     /**
@@ -688,10 +685,10 @@ class HtmlDiff extends AbstractDiff
         $positionInNew = 0;
         $operations = array();
         $matches = $this->matchingBlocks();
-        $matches[] = new Match( count( $this->oldWords ), count( $this->newWords ), 0 );
+        $matches[] = new Match(count($this->oldWords), count($this->newWords), 0);
         foreach ($matches as $i => $match) {
-            $matchStartsAtCurrentPositionInOld = ( $positionInOld == $match->startInOld );
-            $matchStartsAtCurrentPositionInNew = ( $positionInNew == $match->startInNew );
+            $matchStartsAtCurrentPositionInOld = ($positionInOld == $match->startInOld);
+            $matchStartsAtCurrentPositionInNew = ($positionInNew == $match->startInNew);
             $action = 'none';
 
             if ($matchStartsAtCurrentPositionInOld == false && $matchStartsAtCurrentPositionInNew == false) {
@@ -704,10 +701,10 @@ class HtmlDiff extends AbstractDiff
                 $action = 'none';
             }
             if ($action != 'none') {
-                $operations[] = new Operation( $action, $positionInOld, $match->startInOld, $positionInNew, $match->startInNew );
+                $operations[] = new Operation($action, $positionInOld, $match->startInOld, $positionInNew, $match->startInNew);
             }
-            if ( count( $match ) != 0 ) {
-                $operations[] = new Operation( 'equal', $match->startInOld, $match->endInOld(), $match->startInNew, $match->endInNew() );
+            if (count($match) != 0) {
+                $operations[] = new Operation('equal', $match->startInOld, $match->endInOld(), $match->startInNew, $match->endInNew());
             }
             $positionInOld = $match->endInOld();
             $positionInNew = $match->endInNew();
@@ -722,7 +719,7 @@ class HtmlDiff extends AbstractDiff
     protected function matchingBlocks()
     {
         $matchingBlocks = array();
-        $this->findMatchingBlocks( 0, count( $this->oldWords ), 0, count( $this->newWords ), $matchingBlocks );
+        $this->findMatchingBlocks(0, count($this->oldWords), 0, count($this->newWords), $matchingBlocks);
 
         return $matchingBlocks;
     }
@@ -736,14 +733,14 @@ class HtmlDiff extends AbstractDiff
      */
     protected function findMatchingBlocks($startInOld, $endInOld, $startInNew, $endInNew, &$matchingBlocks)
     {
-        $match = $this->findMatch( $startInOld, $endInOld, $startInNew, $endInNew );
+        $match = $this->findMatch($startInOld, $endInOld, $startInNew, $endInNew);
         if ($match !== null) {
             if ($startInOld < $match->startInOld && $startInNew < $match->startInNew) {
-                $this->findMatchingBlocks( $startInOld, $match->startInOld, $startInNew, $match->startInNew, $matchingBlocks );
+                $this->findMatchingBlocks($startInOld, $match->startInOld, $startInNew, $match->startInNew, $matchingBlocks);
             }
             $matchingBlocks[] = $match;
-            if ( $match->endInOld() < $endInOld && $match->endInNew() < $endInNew ) {
-                $this->findMatchingBlocks( $match->endInOld(), $endInOld, $match->endInNew(), $endInNew, $matchingBlocks );
+            if ($match->endInOld() < $endInOld && $match->endInNew() < $endInNew) {
+                $this->findMatchingBlocks($match->endInOld(), $endInOld, $match->endInNew(), $endInNew, $matchingBlocks);
             }
         }
     }
@@ -755,9 +752,9 @@ class HtmlDiff extends AbstractDiff
      */
     protected function stripTagAttributes($word)
     {
-        $word = explode( ' ', trim( $word, '<>' ) );
+        $word = explode(' ', trim($word, '<>'));
 
-        return '<' . $word[ 0 ] . '>';
+        return '<'.$word[ 0 ].'>';
     }
 
     /**
@@ -774,13 +771,13 @@ class HtmlDiff extends AbstractDiff
         $bestMatchInNew = $startInNew;
         $bestMatchSize = 0;
         $matchLengthAt = array();
-        for ($indexInOld = $startInOld; $indexInOld < $endInOld; $indexInOld++) {
+        for ($indexInOld = $startInOld; $indexInOld < $endInOld; ++$indexInOld) {
             $newMatchLengthAt = array();
             $index = $this->oldWords[ $indexInOld ];
-            if ( $this->isTag( $index ) ) {
-                $index = $this->stripTagAttributes( $index );
+            if ($this->isTag($index)) {
+                $index = $this->stripTagAttributes($index);
             }
-            if ( !isset( $this->wordIndices[ $index ] ) ) {
+            if (!isset($this->wordIndices[ $index ])) {
                 $matchLengthAt = $newMatchLengthAt;
                 continue;
             }
@@ -791,7 +788,7 @@ class HtmlDiff extends AbstractDiff
                 if ($indexInNew >= $endInNew) {
                     break;
                 }
-                $newMatchLength = ( isset( $matchLengthAt[ $indexInNew - 1 ] ) ? $matchLengthAt[ $indexInNew - 1 ] : 0 ) + 1;
+                $newMatchLength = (isset($matchLengthAt[ $indexInNew - 1 ]) ? $matchLengthAt[ $indexInNew - 1 ] : 0) + 1;
                 $newMatchLengthAt[ $indexInNew ] = $newMatchLength;
                 if ($newMatchLength > $bestMatchSize ||
                     (
@@ -821,6 +818,6 @@ class HtmlDiff extends AbstractDiff
             return new Match($bestMatchInOld, $bestMatchInNew, $bestMatchSize);
         }
 
-        return null;
+        return;
     }
 }

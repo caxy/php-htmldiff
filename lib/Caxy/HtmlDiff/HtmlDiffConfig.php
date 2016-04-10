@@ -3,8 +3,7 @@
 namespace Caxy\HtmlDiff;
 
 /**
- * Class HtmlDiffConfig
- * @package Caxy\HtmlDiff
+ * Class HtmlDiffConfig.
  */
 class HtmlDiffConfig
 {
@@ -37,18 +36,18 @@ class HtmlDiffConfig
      * @var array
      */
     protected $isolatedDiffTags = array(
-        'ol'     => '[[REPLACE_ORDERED_LIST]]',
-        'ul'     => '[[REPLACE_UNORDERED_LIST]]',
-        'sub'    => '[[REPLACE_SUB_SCRIPT]]',
-        'sup'    => '[[REPLACE_SUPER_SCRIPT]]',
-        'dl'     => '[[REPLACE_DEFINITION_LIST]]',
-        'table'  => '[[REPLACE_TABLE]]',
+        'ol' => '[[REPLACE_ORDERED_LIST]]',
+        'ul' => '[[REPLACE_UNORDERED_LIST]]',
+        'sub' => '[[REPLACE_SUB_SCRIPT]]',
+        'sup' => '[[REPLACE_SUPER_SCRIPT]]',
+        'dl' => '[[REPLACE_DEFINITION_LIST]]',
+        'table' => '[[REPLACE_TABLE]]',
         'strong' => '[[REPLACE_STRONG]]',
-        'b'      => '[[REPLACE_B]]',
-        'em'     => '[[REPLACE_EM]]',
-        'i'      => '[[REPLACE_I]]',
-        'a'      => '[[REPLACE_A]]',
-        'img'    => '[[REPLACE_IMG]]',
+        'b' => '[[REPLACE_B]]',
+        'em' => '[[REPLACE_EM]]',
+        'i' => '[[REPLACE_I]]',
+        'a' => '[[REPLACE_A]]',
+        'img' => '[[REPLACE_IMG]]',
     );
 
     /**
@@ -234,9 +233,8 @@ class HtmlDiffConfig
         return $this->specialCaseTags;
     }
 
-
     /**
-     * @return boolean
+     * @return bool
      */
     public function isGroupDiffs()
     {
@@ -244,7 +242,7 @@ class HtmlDiffConfig
     }
 
     /**
-     * @param boolean $groupDiffs
+     * @param bool $groupDiffs
      *
      * @return HtmlDiffConfig
      */
@@ -276,7 +274,7 @@ class HtmlDiffConfig
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function isInsertSpaceInReplace()
     {
@@ -284,7 +282,7 @@ class HtmlDiffConfig
     }
 
     /**
-     * @param boolean $insertSpaceInReplace
+     * @param bool $insertSpaceInReplace
      *
      * @return HtmlDiffConfig
      */
@@ -408,7 +406,7 @@ class HtmlDiffConfig
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function isUseTableDiffing()
     {
@@ -416,7 +414,7 @@ class HtmlDiffConfig
     }
 
     /**
-     * @param boolean $useTableDiffing
+     * @param bool $useTableDiffing
      *
      * @return HtmlDiffConfig
      */
@@ -474,7 +472,7 @@ class HtmlDiffConfig
      */
     protected function getOpeningTag($tag)
     {
-        return "/<".$tag."[^>]*/i";
+        return '/<'.$tag.'[^>]*/i';
     }
 
     /**
@@ -484,6 +482,6 @@ class HtmlDiffConfig
      */
     protected function getClosingTag($tag)
     {
-        return "</".$tag.">";
+        return '</'.$tag.'>';
     }
 }
