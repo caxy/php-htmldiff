@@ -265,6 +265,16 @@ abstract class AbstractDiff
     }
 
     /**
+     * Clears the diff content.
+     *
+     * @return void
+     */
+    public function clearContent()
+    {
+        $this->content = null;
+    }
+
+    /**
      * @param bool $boolean
      *
      * @return $this
