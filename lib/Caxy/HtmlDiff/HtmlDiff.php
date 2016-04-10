@@ -368,7 +368,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function diffList($oldText, $newText)
     {
-        $diff = ListDiffNew::create($oldText, $newText, $this->config);
+        $diff = ListDiff::create($oldText, $newText, $this->config);
 
         return $diff->build();
     }

@@ -5,7 +5,7 @@ namespace Caxy\HtmlDiff;
 use Caxy\HtmlDiff\ListDiff\DiffList;
 use Caxy\HtmlDiff\ListDiff\DiffListItem;
 
-class ListDiffNew extends AbstractDiff
+class ListDiff extends AbstractDiff
 {
     protected static $listTypes = array('ul', 'ol', 'dl');
 
@@ -14,7 +14,7 @@ class ListDiffNew extends AbstractDiff
      * @param string              $newText
      * @param HtmlDiffConfig|null $config
      *
-     * @return self
+     * @return ListDiff
      */
     public static function create($oldText, $newText, HtmlDiffConfig $config = null)
     {
