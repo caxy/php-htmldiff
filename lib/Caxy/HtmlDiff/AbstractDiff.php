@@ -81,8 +81,8 @@ abstract class AbstractDiff
             $this->config->setGroupDiffs($groupDiffs);
         }
 
-        $this->oldText = $this->purifyHtml(trim($oldText));
-        $this->newText = $this->purifyHtml(trim($newText));
+        $this->oldText = $this->purifyHtml($oldText);
+        $this->newText = $this->purifyHtml($newText);
         $this->content = '';
     }
 
