@@ -109,6 +109,7 @@ class DiffListItem
     {
         $startWrap = $wrapTag ? sprintf('<%s>', $wrapTag) : '';
         $endWrap = $wrapTag ? sprintf('</%s>', $wrapTag) : '';
+
         return sprintf('%s%s%s%s%s', $this->getStartTagWithDiffClass($class), $startWrap, $this->getInnerHtml(), $endWrap, $this->endTag);
     }
 

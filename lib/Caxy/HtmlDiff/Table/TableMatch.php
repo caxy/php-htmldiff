@@ -3,8 +3,7 @@
 namespace Caxy\HtmlDiff\Table;
 
 /**
- * Class TableMatch
- * @package Caxy\HtmlDiff\Table
+ * Class TableMatch.
  */
 class TableMatch
 {

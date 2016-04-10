@@ -5,8 +5,7 @@ namespace Caxy\HtmlDiff;
 use Doctrine\Common\Cache\Cache;
 
 /**
- * Class DiffCache
- * @package Caxy\HtmlDiff
+ * Class DiffCache.
  */
 class DiffCache
 {

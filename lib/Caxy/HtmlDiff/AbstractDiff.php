@@ -3,8 +3,7 @@
 namespace Caxy\HtmlDiff;
 
 /**
- * Class AbstractDiff
- * @package Caxy\HtmlDiff
+ * Class AbstractDiff.
  */
 abstract class AbstractDiff
 {
@@ -97,7 +96,7 @@ abstract class AbstractDiff
     protected function getDiffCache()
     {
         if (!$this->hasDiffCache()) {
-            return null;
+            return;
         }
 
         $hash = spl_object_hash($this->getConfig()->getCacheProvider());
@@ -296,7 +295,7 @@ abstract class AbstractDiff
      */
     protected function getOpeningTag($tag)
     {
-        return "/<".$tag."[^>]*/i";
+        return '/<'.$tag.'[^>]*/i';
     }
 
     /**
@@ -306,7 +305,7 @@ abstract class AbstractDiff
      */
     protected function getClosingTag($tag)
     {
-        return "</".$tag.">";
+        return '</'.$tag.'>';
     }
 
     /**
@@ -318,13 +317,13 @@ abstract class AbstractDiff
      */
     protected function getStringBetween($str, $start, $end)
     {
-        $expStr = explode( $start, $str, 2 );
-        if ( count( $expStr ) > 1 ) {
-            $expStr = explode( $end, $expStr[ 1 ] );
-            if ( count( $expStr ) > 1 ) {
-                array_pop( $expStr );
+        $expStr = explode($start, $str, 2);
+        if (count($expStr) > 1) {
+            $expStr = explode($end, $expStr[ 1 ]);
+            if (count($expStr) > 1) {
+                array_pop($expStr);
 
-                return implode( $end, $expStr );
+                return implode($end, $expStr);
             }
         }
 
@@ -338,13 +337,13 @@ abstract class AbstractDiff
      */
     protected function purifyHtml($html)
     {
-        if ( class_exists( 'Tidy' ) && false ) {
-            $config = array( 'output-xhtml'   => true, 'indent' => false );
+        if (class_exists('Tidy') && false) {
+            $config = array('output-xhtml' => true, 'indent' => false);
             $tidy = new tidy();
-            $tidy->parseString( $html, $config, 'utf8' );
+            $tidy->parseString($html, $config, 'utf8');
             $html = (string) $tidy;
 
-            return $this->getStringBetween( $html, '<body>' );
+            return $this->getStringBetween($html, '<body>');
         }
 
         return $html;
@@ -352,8 +351,8 @@ abstract class AbstractDiff
 
     protected function splitInputsToWords()
     {
-        $this->oldWords = $this->convertHtmlToListOfWords( $this->explode( $this->oldText ) );
-        $this->newWords = $this->convertHtmlToListOfWords( $this->explode( $this->newText ) );
+        $this->oldWords = $this->convertHtmlToListOfWords($this->explode($this->oldText));
+        $this->newWords = $this->convertHtmlToListOfWords($this->explode($this->newText));
     }
 
     /**
@@ -379,11 +378,11 @@ abstract class AbstractDiff
         foreach ($characterString as $i => $character) {
             switch ($mode) {
                 case 'character':
-                if ( $this->isStartOfTag( $character ) ) {
+                if ($this->isStartOfTag($character)) {
                     if ($current_word != '') {
                         $words[] = $current_word;
                     }
-                    $current_word = "<";
+                    $current_word = '<';
                     $mode = 'tag';
                 } elseif (preg_match("/\s/", $character)) {
                     if ($current_word !== '') {
@@ -394,7 +393,7 @@ abstract class AbstractDiff
                 } else {
                     if (
                         (ctype_alnum($character) && (strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
-                        (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i+1]) && $this->isPartOfWord($characterString[$i+1]))
+                        (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
                     ) {
                         $current_word .= $character;
                     } else {
@@ -404,12 +403,12 @@ abstract class AbstractDiff
                 }
                 break;
                 case 'tag' :
-                if ( $this->isEndOfTag( $character ) ) {
-                    $current_word .= ">";
+                if ($this->isEndOfTag($character)) {
+                    $current_word .= '>';
                     $words[] = $current_word;
-                    $current_word = "";
+                    $current_word = '';
 
-                    if ( !preg_match('[^\s]', $character ) ) {
+                    if (!preg_match('[^\s]', $character)) {
                         $mode = 'whitespace';
                     } else {
                         $mode = 'character';
@@ -419,13 +418,13 @@ abstract class AbstractDiff
                 }
                 break;
                 case 'whitespace':
-                if ( $this->isStartOfTag( $character ) ) {
+                if ($this->isStartOfTag($character)) {
                     if ($current_word !== '') {
                         $words[] = $current_word;
                     }
-                    $current_word = "<";
+                    $current_word = '<';
                     $mode = 'tag';
-                } elseif ( preg_match( "/\s/", $character ) ) {
+                } elseif (preg_match("/\s/", $character)) {
                     $current_word .= $character;
                     $current_word = preg_replace('/\s+/S', ' ', $current_word);
                 } else {
@@ -454,7 +453,7 @@ abstract class AbstractDiff
      */
     protected function isStartOfTag($val)
     {
-        return $val == "<";
+        return $val == '<';
     }
 
     /**
@@ -464,7 +463,7 @@ abstract class AbstractDiff
      */
     protected function isEndOfTag($val)
     {
-        return $val == ">";
+        return $val == '>';
     }
 
     /**
@@ -474,7 +473,7 @@ abstract class AbstractDiff
      */
     protected function isWhiteSpace($value)
     {
-        return !preg_match( '[^\s]', $value );
+        return !preg_match('[^\s]', $value);
     }
 
     /**
@@ -485,6 +484,6 @@ abstract class AbstractDiff
     protected function explode($value)
     {
         // as suggested by @onassar
-        return preg_split( '//u', $value );
+        return preg_split('//u', $value);
     }
 }

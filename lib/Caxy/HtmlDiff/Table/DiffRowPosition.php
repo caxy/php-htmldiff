@@ -3,8 +3,7 @@
 namespace Caxy\HtmlDiff\Table;
 
 /**
- * Class DiffRowPosition
- * @package Caxy\HtmlDiff\Table
+ * Class DiffRowPosition.
  */
 class DiffRowPosition
 {
@@ -263,6 +262,6 @@ class DiffRowPosition
             return 'old';
         }
 
-        return null;
+        return;
     }
 }

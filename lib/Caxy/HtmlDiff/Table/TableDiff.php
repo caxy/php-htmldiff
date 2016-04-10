@@ -8,8 +8,7 @@ use Caxy\HtmlDiff\HtmlDiffConfig;
 use Caxy\HtmlDiff\Operation;
 
 /**
- * Class TableDiff
- * @package Caxy\HtmlDiff\Table
+ * Class TableDiff.
  */
 class TableDiff extends AbstractDiff
 {
@@ -88,17 +87,16 @@ class TableDiff extends AbstractDiff
         $encoding = 'UTF-8',
         $specialCaseTags = null,
         $groupDiffs = null
-    )
-    {
+    ) {
         parent::__construct($oldText, $newText, $encoding, $specialCaseTags, $groupDiffs);
 
         $this->initPurifier();
     }
 
     /**
-     * Initializes HTMLPurifier with cache location
-     * @param  null|string $defaultPurifierSerializerCache
-     * @return void
+     * Initializes HTMLPurifier with cache location.
+     *
+     * @param null|string $defaultPurifierSerializerCache
      */
     public function initPurifier($defaultPurifierSerializerCache = null)
     {
@@ -439,7 +437,7 @@ class TableDiff extends AbstractDiff
             );
         }
 
-        return null;
+        return;
     }
 
     /**

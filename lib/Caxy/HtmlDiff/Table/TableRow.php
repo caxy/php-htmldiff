@@ -3,8 +3,7 @@
 namespace Caxy\HtmlDiff\Table;
 
 /**
- * Class TableRow
- * @package Caxy\HtmlDiff\Table
+ * Class TableRow.
  */
 class TableRow extends AbstractTableElement
 {
