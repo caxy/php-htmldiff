@@ -131,25 +131,14 @@ class ListDiff extends AbstractDiff
 
                     // is there a better old list item match coming up?
                     if ($oldCount > $newCount) {
-                        $nextMatchBetter = true;
-                        while ($nextMatchBetter && $difference > 0) {
-                            $nextMatchBetter = false;
-                            foreach ($newMatchData[$newIndex] as $index => $percentage) {
-                                if ($index > $oldListIndex &&
-                                    $percentage > $matchPercentage &&
-                                    $percentage > $this->config->getMatchThreshold()
-                                ) {
-                                    $diffOutput .= sprintf('%s', $oldListItems[$oldListIndex]->getHtml('removed', 'del'));
+                        while ($difference > 0 && $this->hasBetterMatch($newMatchData[$newIndex], $oldListIndex)) {
+                            $diffOutput .= sprintf('%s', $oldListItems[$oldListIndex]->getHtml('removed', 'del'));
 
-                                    ++$currentIndexInOld;
-                                    --$difference;
-                                    $oldListIndex = array_key_exists($currentIndexInOld, $oldListIndices) ? $oldListIndices[$currentIndexInOld] : null;
-                                    $matchPercentage = $oldMatchData[$oldListIndex][$newIndex];
-                                    $replacement = true;
-                                    $nextMatchBetter = true;
-                                    break;
-                                }
-                            }
+                            ++$currentIndexInOld;
+                            --$difference;
+                            $oldListIndex = array_key_exists($currentIndexInOld, $oldListIndices) ? $oldListIndices[$currentIndexInOld] : null;
+                            $matchPercentage = $oldMatchData[$oldListIndex][$newIndex];
+                            $replacement = true;
                         }
                     }
 
@@ -196,6 +185,27 @@ class ListDiff extends AbstractDiff
         }
 
         return sprintf('%s%s%s', $newList->getStartTagWithDiffClass(), $diffOutput, $newList->getEndTag());
+    }
+
+    /**
+     * @param array $matchData
+     * @param int   $currentIndex
+     *
+     * @return bool
+     */
+    protected function hasBetterMatch(array $matchData, $currentIndex)
+    {
+        $matchPercentage = $matchData[$currentIndex];
+        foreach ($matchData as $index => $percentage) {
+            if ($index > $currentIndex &&
+                $percentage > $matchPercentage &&
+                $percentage > $this->config->getMatchThreshold()
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function buildDiffList($words)
