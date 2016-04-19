@@ -127,9 +127,33 @@ class ListDiff extends AbstractDiff
                         continue;
                     }
 
-                    $nextOldListIndex = array_key_exists($currentIndexInOld + 1, $oldListIndices) ? $oldListIndices[$currentIndexInOld + 1] : null;
-
                     $replacement = false;
+
+                    // is there a better old list item match coming up?
+                    if ($oldCount > $newCount) {
+                        $nextMatchBetter = true;
+                        while ($nextMatchBetter && $difference > 0) {
+                            $nextMatchBetter = false;
+                            foreach ($newMatchData[$newIndex] as $index => $percentage) {
+                                if ($index > $oldListIndex &&
+                                    $percentage > $matchPercentage &&
+                                    $percentage > $this->config->getMatchThreshold()
+                                ) {
+                                    $diffOutput .= sprintf('%s', $oldListItems[$oldListIndex]->getHtml('removed', 'del'));
+
+                                    ++$currentIndexInOld;
+                                    --$difference;
+                                    $oldListIndex = array_key_exists($currentIndexInOld, $oldListIndices) ? $oldListIndices[$currentIndexInOld] : null;
+                                    $matchPercentage = $oldMatchData[$oldListIndex][$newIndex];
+                                    $replacement = true;
+                                    $nextMatchBetter = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    $nextOldListIndex = array_key_exists($currentIndexInOld + 1, $oldListIndices) ? $oldListIndices[$currentIndexInOld + 1] : null;
 
                     if ($nextOldListIndex !== null && $oldMatchData[$nextOldListIndex][$newIndex] > $matchPercentage && $oldMatchData[$nextOldListIndex][$newIndex] > $this->config->getMatchThreshold()) {
                         // Following list item in old is better match, use that.
@@ -137,7 +161,7 @@ class ListDiff extends AbstractDiff
 
                         ++$currentIndexInOld;
                         $oldListIndex = $nextOldListIndex;
-                        $matchPercentage = $oldMatchData[$oldListIndex];
+                        $matchPercentage = $oldMatchData[$oldListIndex][$newIndex];
                         $replacement = true;
                     }
 
