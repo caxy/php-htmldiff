@@ -127,9 +127,22 @@ class ListDiff extends AbstractDiff
                         continue;
                     }
 
-                    $nextOldListIndex = array_key_exists($currentIndexInOld + 1, $oldListIndices) ? $oldListIndices[$currentIndexInOld + 1] : null;
-
                     $replacement = false;
+
+                    // is there a better old list item match coming up?
+                    if ($oldCount > $newCount) {
+                        while ($difference > 0 && $this->hasBetterMatch($newMatchData[$newIndex], $oldListIndex)) {
+                            $diffOutput .= sprintf('%s', $oldListItems[$oldListIndex]->getHtml('removed', 'del'));
+
+                            ++$currentIndexInOld;
+                            --$difference;
+                            $oldListIndex = array_key_exists($currentIndexInOld, $oldListIndices) ? $oldListIndices[$currentIndexInOld] : null;
+                            $matchPercentage = $oldMatchData[$oldListIndex][$newIndex];
+                            $replacement = true;
+                        }
+                    }
+
+                    $nextOldListIndex = array_key_exists($currentIndexInOld + 1, $oldListIndices) ? $oldListIndices[$currentIndexInOld + 1] : null;
 
                     if ($nextOldListIndex !== null && $oldMatchData[$nextOldListIndex][$newIndex] > $matchPercentage && $oldMatchData[$nextOldListIndex][$newIndex] > $this->config->getMatchThreshold()) {
                         // Following list item in old is better match, use that.
@@ -137,7 +150,7 @@ class ListDiff extends AbstractDiff
 
                         ++$currentIndexInOld;
                         $oldListIndex = $nextOldListIndex;
-                        $matchPercentage = $oldMatchData[$oldListIndex];
+                        $matchPercentage = $oldMatchData[$oldListIndex][$newIndex];
                         $replacement = true;
                     }
 
@@ -172,6 +185,27 @@ class ListDiff extends AbstractDiff
         }
 
         return sprintf('%s%s%s', $newList->getStartTagWithDiffClass(), $diffOutput, $newList->getEndTag());
+    }
+
+    /**
+     * @param array $matchData
+     * @param int   $currentIndex
+     *
+     * @return bool
+     */
+    protected function hasBetterMatch(array $matchData, $currentIndex)
+    {
+        $matchPercentage = $matchData[$currentIndex];
+        foreach ($matchData as $index => $percentage) {
+            if ($index > $currentIndex &&
+                $percentage > $matchPercentage &&
+                $percentage > $this->config->getMatchThreshold()
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function buildDiffList($words)
