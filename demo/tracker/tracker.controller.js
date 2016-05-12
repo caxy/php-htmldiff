@@ -110,12 +110,7 @@
                 .then(success);
 
             function success(data) {
-                angular.forEach(data, function(stat) {
-                    if (!stat._id) {
-                        stat._id = 'none';
-                    }
-                    vm.stats[stat._id] = stat.count;
-                });
+                vm.stats = data;
 
                 return vm.stats;
             }

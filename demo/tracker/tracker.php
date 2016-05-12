@@ -108,7 +108,15 @@ switch ($requestJson['action']) {
             ['$sort' => ['count' => -1]]
         ]);
 
-        $response = (array) $cursor;
+        $response = [];
+        foreach ($cursor as $stat) {
+            $status = $stat['_id'] ?: 'none';
+            if (array_key_exists($status, $response)) {
+                $response[$status] += $stat['count'];
+            } else {
+                $response[$status] = $stat['count'];
+            }
+        }
         break;
 
     case 'favorite':
