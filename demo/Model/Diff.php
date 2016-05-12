@@ -12,6 +12,7 @@ class Diff implements Persistable
     const STATUS_DENIED = 'denied';
     const STATUS_SKIPPED = 'skipped';
     const STATUS_IGNORED = 'ignored';
+    const STATUS_NONE = 'none';
 
     public static $statuses = array(
         self::STATUS_CHANGED,
@@ -297,7 +298,7 @@ class Diff implements Persistable
             'oldContent' => $this->oldContent,
             'legislativeOverride' => $this->legislativeOverride,
             'diffHash' => $this->diffHash,
-            'status' => $this->status,
+            'status' => $this->status ?: self::STATUS_NONE,
             'prevStatus' => $this->prevStatus,
             'diffContent' => $this->diffContent,
             'favorite' => $this->favorite,

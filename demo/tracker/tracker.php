@@ -52,7 +52,7 @@ switch ($requestJson['action']) {
         $filterStatuses = isset($requestJson['status_filter']) && $requestJson['status_filter'];
         $criteria = [];
         if ($filterStatuses) {
-            $criteria['$or'] = [['status' => null], ['status' => Diff::STATUS_CHANGED]];
+            $criteria['$or'] = [['status' => null], ['status' => Diff::STATUS_CHANGED], ['status' => Diff::STATUS_NONE]];
         }
 
         $options = [

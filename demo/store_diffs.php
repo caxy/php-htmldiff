@@ -25,6 +25,7 @@ foreach ($demoStorage as $demoIndex => $tableDiff) {
         $diff->setNewContent($tableDiff['new']);
         $diff->setOldContent($tableDiff['old']);
         $diff->setLegislativeOverride(!empty($tableDiff['override']) ? $tableDiff['override'] : null);
+        $diff->setStatus(Diff::STATUS_NONE);
 
         $diffs[] = $diff;
     }
