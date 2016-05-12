@@ -15,7 +15,8 @@
             'denied': 'danger',
             'skipped': 'warning',
             'none': 'default',
-            'ignored': 'default'
+            'ignored': 'default',
+            'changed': 'info'
         };
 
         vm.loading = true;
