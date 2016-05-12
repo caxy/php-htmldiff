@@ -34,7 +34,7 @@
             <ul class="nav nav-sidebar">
                 <li ng-repeat="diff in vm.diffs track by diff._id" ng-class="{active: diff.active}">
                     <a ng-click="vm.getDiff(diff)" href="#">
-                        {{ diff.proposalObjectId }}*
+                        {{ diff.proposalObjectId }}<span class="text-muted" ng-show="diff.favorite">*</span>
                     </a>
                 </li>
             </ul>
