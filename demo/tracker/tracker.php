@@ -49,10 +49,21 @@ switch ($requestJson['action']) {
         break;
 
     case 'cget':
-        $filterStatuses = isset($requestJson['status_filter']) && $requestJson['status_filter'];
+        $filterStatuses = !empty($requestJson['status_filter']);
         $criteria = [];
         if ($filterStatuses) {
-            $criteria['$or'] = [['status' => null], ['status' => Diff::STATUS_CHANGED], ['status' => Diff::STATUS_NONE]];
+            $statuses = $requestJson['status_filter'];
+            if (!is_array($statuses)) {
+                $statuses = array($statuses);
+            }
+            if (in_array(Diff::STATUS_NONE, $statuses, true)) {
+                $statuses[] = null;
+            }
+            $statusCriteria = [];
+            foreach ($statuses as $status) {
+                $statusCriteria[] = ['status' => $status];
+            }
+            $criteria['$or'] = $statusCriteria;
         }
 
         $options = [
@@ -67,17 +78,12 @@ switch ($requestJson['action']) {
         }
         $diffs = $collection->find($criteria, $options);
 
-        $response = [];
+        $response = ['result' => [], 'totalCount' => $collection->count($criteria)];
         foreach ($diffs as $diff) {
-//            processDiff($diff);
-
             $serialized = $diff->bsonSerialize();
             $serialized['_id'] = (string) $serialized['_id'];
-//            $update = $serialized;
-//            unset($update['_id']);
-//            $collection->updateOne(['_id' => $diff->getId()], ['$set' => $update]);
 
-            $response[] = $serialized;
+            $response['result'][] = $serialized;
         }
         break;
 
@@ -108,14 +114,21 @@ switch ($requestJson['action']) {
             ['$sort' => ['count' => -1]]
         ]);
 
-        $response = [];
-        foreach ($cursor as $stat) {
-            $status = $stat['_id'] ?: 'none';
-            if (array_key_exists($status, $response)) {
-                $response[$status] += $stat['count'];
-            } else {
-                $response[$status] = $stat['count'];
+        if ($cursor instanceof Traversable) {
+            $response = [];
+            foreach ($cursor as $stat) {
+                if (!is_array($stat)) {
+                    $stat = (array) $stat;
+                }
+                $status = $stat['_id'] ?: 'none';
+                if (array_key_exists($status, $response)) {
+                    $response[$status] += $stat['count'];
+                } else {
+                    $response[$status] = $stat['count'];
+                }
             }
+        } else {
+            $response = (array) $cursor;
         }
         break;
 

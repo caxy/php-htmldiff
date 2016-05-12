@@ -5,9 +5,9 @@
         .module('app.tracker')
         .controller('TrackerController', TrackerController);
 
-    TrackerController.$inject = ['$q', '$http', '$sce', '$timeout', 'sseService', '$scope'];
+    TrackerController.$inject = ['$q', '$http', '$sce', '$timeout', 'sseService', '$scope', 'statuses'];
     
-    function TrackerController($q, $http, $sce, $timeout, sseService, $scope) {
+    function TrackerController($q, $http, $sce, $timeout, sseService, $scope, statuses) {
         var vm = this;
 
         vm.statusClassMap = {
@@ -32,6 +32,11 @@
         vm.offset = 0;
         vm.limit = 25;
         vm.canLoadMore = false;
+        vm.statusFilter = [
+            statuses.STATUS_NONE,
+            statuses.STATUS_CHANGED
+        ];
+        vm.totalCount = 0;
 
         vm.trustHtml = trustHtml;
         vm.setStatus = setStatus;
@@ -41,6 +46,7 @@
         vm.loadMore = loadMore;
         vm.setFavorite = setFavorite;
         vm.setStatus = setStatus;
+        vm.toggleFilter = toggleFilter;
 
         activate();
 
@@ -57,11 +63,15 @@
         }
 
         function cgetDiffs() {
-            return apiCall('cget', {limit: vm.limit, offset: vm.offset, status_filter: 1})
+            var requestData = {limit: vm.limit, offset: vm.offset};
+            if (vm.statusFilter && vm.statusFilter.length > 0) {
+                requestData.status_filter = vm.statusFilter;
+            }
+            return apiCall('cget', requestData)
                 .then(success);
 
             function success(data) {
-                if (data.length <= 0) {
+                if (data.result.length <= 0) {
                     vm.canLoadMore = false;
 
                     return data;
@@ -69,8 +79,13 @@
 
                 vm.canLoadMore = true;
 
-                Array.prototype.push.apply(vm.diffs, data);
-                vm.offset += data.length;
+                Array.prototype.push.apply(vm.diffs, data.result);
+                vm.offset += data.result.length;
+                if ((vm.offset + 1) >= data.totalCount) {
+                    vm.canLoadMore = false;
+                }
+
+                vm.totalCount = data.totalCount;
 
                 if (!vm.currentDiff) {
                     getDiff(vm.diffs[vm.index]);
@@ -78,6 +93,27 @@
 
                 return vm.diffs;
             }
+        }
+
+        function toggleFilter(status) {
+            if (vm.statusFilter.indexOf(status) >= 0) {
+                vm.statusFilter.splice(vm.statusFilter.indexOf(status), 1);
+            } else {
+                vm.statusFilter.push(status);
+            }
+
+            vm.index = 0;
+            vm.offset = 0;
+            vm.totalCount = 0;
+            vm.diffs = [];
+            vm.canLoadMore = true;
+
+            return cgetDiffs()
+                .then(function(data) {
+                    if (vm.diffs.length > 0) {
+                        getDiff(vm.diffs[vm.index]);
+                    }
+                });
         }
 
         function loadMore() {
@@ -117,8 +153,22 @@
             }
         }
 
+        function checkCanLoadMore() {
+            vm.canLoadMore = vm.diffs.length < vm.totalCount;
+
+            return vm.canLoadMore;
+        }
+
         function setStatus(diff, status) {
-            vm.diffs.splice(vm.diffs.indexOf(diff), 1);
+            if (diff.status === status) {
+                return;
+            }
+
+            var removeDiff = vm.statusFilter.indexOf(status) < 0;
+
+            if (removeDiff) {
+                vm.diffs.splice(vm.diffs.indexOf(diff), 1);
+            }
 
             return apiCall('putStatus', {
                 '_id': diff._id,
@@ -142,16 +192,23 @@
                     vm.stats[prevStatus]--;
                 }
 
-                if (vm.diffs.length > 0 && vm.index in vm.diffs) {
+                // if diff was removed, then decrement offset and load next. If next isn't loaded yet, then load it.
+                // if diff was not removed, increment the index and load next. If next isn't loaded yet, then load it.
+
+                if (removeDiff) {
                     vm.offset--;
-                    getDiff(vm.diffs[vm.index]);
+                    vm.totalCount--;
+                    checkCanLoadMore();
                 } else {
-                    vm.index = 0;
-                    vm.offset = 0;
-                    loadMore()
-                        .then(function() {
-                            getDiff(vm.diffs[vm.index]);
-                        });
+                    vm.index++;
+                }
+
+                if (vm.diffs.length > 0 && vm.index in vm.diffs) {
+                    getDiff(vm.diffs[vm.index]);
+                } else if (vm.canLoadMore) {
+                    loadMore().then(function() {
+                        getDiff(vm.diffs[vm.index]);
+                    });
                 }
 
                 return data;

@@ -2,30 +2,47 @@
     <div class="row">
         <!-- Sidebar -->
         <div class="col-sm-2 col-md-1 sidebar">
-            <h5>Stats</h5>
+            <h5 class="sidebar-text-offset">Stats</h5>
             <div class="stats m-b-1">
-                <span class="label label-{{ vm.statusClassMap[status] }}" ng-repeat="(status, count) in vm.stats">
-                        {{ status|uppercase }}: {{ count }}
-                </span>
+                <a ng-click="vm.toggleFilter(status)" class="label label-{{ vm.statusClassMap[status] }} text-capitalize" ng-repeat="(status, count) in vm.stats">
+                    {{ status }}: {{ count }}
+                </a>
             </div>
+
             <hr>
-            <h5>Diffs</h5>
+
+            <h5 class="sidebar-text-offset">Diffs</h5>
+            <div ng-show="vm.statusFilter.length">
+                <p class="sidebar-text-offset m-b-0"><small class="text-muted">Filtering By</small></p>
+                <ul class="list-unstyled">
+                    <li ng-repeat="status in vm.statusFilter">
+                        <span class="label label-{{ vm.statusClassMap[status] }} text-capitalize">
+                            {{ status }}
+                        </span>
+                        <button ng-click="vm.toggleFilter(status)" type="button" class="close" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <p class="sidebar-text-offset">
+                <small class="text-muted">
+                    Showing {{ vm.diffs.length }} of {{ vm.totalCount }}
+                </small>
+            </p>
+            <!-- List of Diffs -->
             <ul class="nav nav-sidebar">
                 <li ng-repeat="diff in vm.diffs track by diff._id" ng-class="{active: diff.active}">
-                    <a ng-click="vm.getDiff(diff)" href="#">{{ diff.proposalObjectId }}<span ng-show="diff.favorite">*</span></a>
+                    <a ng-click="vm.getDiff(diff)" href="#">
+                        {{ diff.proposalObjectId }}*
+                    </a>
                 </li>
             </ul>
-            <button type="button" class="btn btn-sm btn-secondary" ng-click="vm.loadMore()">Load More</button>
+            <button type="button" class="btn btn-sm btn-secondary m-b-3" ng-click="vm.loadMore()">Load More</button>
         </div><!-- /.sidebar -->
 
         <!-- Page Content -->
         <div class="col-sm-10 col-sm-offset-2 col-md-11 col-md-offset-1 main">
-            <h1 class="page-header">Tracker</h1>
-
-            <!--<button type="button" class="btn btn-sm btn-secondary" ng-click="vm.reload()">-->
-                <!--<i class="fa fa-refresh"></i>-->
-            <!--</button>-->
-
             <!--<button type="button" class="btn btn-sm btn-info" ng-click="vm.reindex()">Re-Index Tracker Data</button>-->
             <h3 ng-show="vm.loading">Loading ...</h3>
             <!--<div ng-show="vm.reindexing">-->
@@ -33,48 +50,51 @@
                 <!--<progress class="progress progress-striped progress-animated" max="100" value="{{vm.progressValue}}">{{ vm.progressValue }}%</progress>-->
             <!--</div>-->
 
-            <div ng-show="vm.error">
-                ERRORS
-                {{ vm.errorDescription }}
-            </div>
-
             <div class="card">
                 <div class="card-header">
-                    <div class="row">
-                        <div class="col-md-3">
-                            ID: {{ vm.currentDiff.proposalObjectId }} ({{ vm.currentDiff.entityId }})
-                            <a href="#" class="label" ng-class="{'label-primary': !vm.currentDiff.favorite, 'label-danger': vm.currentDiff.favorite}" ng-click="vm.setFavorite(vm.currentDiff, vm.currentDiff.favorite ? false : true)">
-                                {{ vm.currentDiff.favorite ? 'Remove from Favorites' : 'Add to Favorites' }}
-                            </a>
-                        </div>
-                        <div class="col-md-2">
-                            Status:
-                            <span class="label label-{{ vm.statusClassMap[vm.currentDiff.status ? vm.currentDiff.status : 'none'] }}">
-                                {{(vm.currentDiff.status ? vm.currentDiff.status : 'none')|uppercase }}
-                            </span>
-                        </div>
-                        <div class="col-md-2" ng-show="vm.currentDiff.prevStatus && vm.currentDiff.prevStatus != 'none'">
-                            Previous Status:
-                            <span class="label label-{{ vm.statusClassMap[vm.currentDiff.prevStatus ? vm.currentDiff.prevStatus : 'none'] }}">
-                                {{ vm.currentDiff.prevStatus|uppercase }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="row p-t-1">
-                        <div class="col-md-12">
-                            <status-controls diff="vm.currentDiff" set-status-handler="vm.setStatus(diff, status)"></status-controls>
-                        </div>
+                    <h3 class="card-title">
+                        <i
+                            ng-click="vm.setFavorite(vm.currentDiff, !vm.currentDiff.favorite)"
+                            class="fa diff-favorite"
+                            ng-class="{'fa-star-o': !vm.currentDiff.favorite, 'fa-star': vm.currentDiff.favorite}"
+                            aria-hidden="true"
+                        ></i>
+                        Diff #{{ vm.currentDiff.proposalObjectId }}
+                    </h3>
+                    <p class="card-text">
+                        <span class="label label-{{ vm.statusClassMap[vm.currentDiff.status ? vm.currentDiff.status : 'none'] }} text-capitalize">
+                            {{(vm.currentDiff.status ? vm.currentDiff.status : 'none') }}
+                        </span>
+                    </p>
 
+                    <div ng-show="vm.currentDiff.prevStatus && vm.currentDiff.prevStatus != 'none'">
+                        Previous Status:
+                        <span class="label label-{{ vm.statusClassMap[vm.currentDiff.prevStatus ? vm.currentDiff.prevStatus : 'none'] }} text-capitalize">
+                            {{ vm.currentDiff.prevStatus }}
+                        </span>
                     </div>
                 </div>
+                <div ng-if="vm.error" class="card-block">
+                    ERRORS
+                    {{ vm.errorDescription }}
+                </div>
                 <div class="card-block">
+                    <status-controls diff="vm.currentDiff" set-status-handler="vm.setStatus(diff, status)"></status-controls>
+                </div>
+                <div class="card-block">
+                    <h4 class="card-title">HtmlDiff Output</h4>
                     <div ng-bind-html="vm.trustHtml(vm.currentDiff.diffContent)"></div>
                 </div>
                 <div class="card-block" ng-if="!vm.currentDiff.hideSource">
-                    <hr>
                     <div class="row">
-                        <div class="col-md-6" ng-bind-html="vm.trustHtml(vm.currentDiff.oldContent)"></div>
-                        <div class="col-md-6" ng-bind-html="vm.trustHtml(vm.currentDiff.newContent)"></div>
+                        <div class="col-md-6">
+                            <h4 class="card-title">Base Text</h4>
+                            <div ng-bind-html="vm.trustHtml(vm.currentDiff.oldContent)"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 class="card-title">New Text</h4>
+                            <div ng-bind-html="vm.trustHtml(vm.currentDiff.newContent)"></div>
+                        </div>
                     </div>
                 </div>
 

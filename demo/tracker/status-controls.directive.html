@@ -1,15 +1,29 @@
 <div class="row">
-    <div class="col-md-4">
-        <div class="btn-group btn-group-sm">
-            <button type="button" class="btn btn-primary" ng-click="vm.setStatusHandler({diff: vm.diff, status: 'approved'})">Accept</button>
-            <button type="button" class="btn btn-danger" ng-click="vm.setStatusHandler({diff: vm.diff, status: 'denied'})">Decline</button>
-            <button type="button" class="btn btn-warning" ng-click="vm.setStatusHandler({diff: vm.diff, status: 'skipped'})">Skip</button>
-            <button type="button" class="btn btn-secondary-outline" ng-click="vm.setStatusHandler({diff: vm.diff, status: 'ignored'})">Ignore</button>
-            <button type="button" class="btn btn-secondary" ng-show="vm.diff.hideSource" ng-click="vm.diff.hideSource = false">Show Source</button>
-            <button type="button" class="btn btn-secondary" ng-show="!vm.diff.hideSource" ng-click="vm.diff.hideSource = true">Hide Source</button>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <input type="text" class="form-control" ng-model="vm.diff.notes" placeholder="Notes..." />
+    <div class="col-md-12">
+        <button type="button" class="btn btn-sm btn-secondary"
+                ng-click="vm.setStatusHandler({diff: vm.diff, status: 'approved'})">
+            <i class="fa fa-thumbs-o-up" aria-hidden="true"></i> Accept
+        </button>
+        <button type="button" class="btn btn-sm btn-secondary"
+                ng-click="vm.setStatusHandler({diff: vm.diff, status: 'denied'})">
+            <i class="fa fa-thumbs-o-down" aria-hidden="true"></i> Decline
+        </button>
+        <button type="button" class="btn btn-sm btn-secondary"
+                ng-click="vm.setStatusHandler({diff: vm.diff, status: 'skipped'})">
+            <i class="fa fa-arrow-right" aria-hidden="true"></i> Skip
+        </button>
+        <button type="button" class="btn btn-sm btn-secondary"
+                ng-click="vm.setStatusHandler({diff: vm.diff, status: 'ignored'})">
+            <i class="fa fa-ban" aria-hidden="true"></i> Ignore
+        </button>
+        <button type="button" class="btn btn-sm btn-secondary" ng-show="vm.diff.hideSource"
+                ng-click="vm.diff.hideSource = false">
+            <i class="fa fa-eye" aria-hidden="true"></i> Show Source
+        </button>
+        <button type="button" class="btn btn-sm btn-secondary" ng-show="!vm.diff.hideSource"
+                ng-click="vm.diff.hideSource = true">
+            <i class="fa fa-eye-slash" aria-hidden="true"></i> Hide Source
+        </button>
+        <input type="text" class="form-control form-control-sm" ng-model="vm.diff.notes" placeholder="Notes..."/>
     </div>
 </div>
