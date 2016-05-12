@@ -164,7 +164,7 @@ function processDiff(Diff $diff)
     // check if diff changed
     if ($diffHash !== $diff->getDiffHash()) {
         $diff->setDiffContent($diffContent);
-        if ($diff->getStatus() !== null) {
+        if ($diff->getStatus() !== null && $diff->getStatus() !== Diff::STATUS_NONE) {
             if ($diff->getPrevStatus() !== Diff::STATUS_CHANGED) {
                 $diff->setPrevStatus($diff->getStatus());
             }

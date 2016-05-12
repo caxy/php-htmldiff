@@ -40,7 +40,7 @@
 
             <div
                     class="card"
-                    ng-class="{'card-info': vm.currentDiff.status == 'hashChanged', 'card-danger': vm.currentDiff.status == 'denied' }"
+                    ng-class="{'card-info': vm.currentDiff.status == 'changed', 'card-danger': vm.currentDiff.status == 'denied' }"
             >
                 <div class="card-header">
                     <div class="row">
@@ -51,10 +51,16 @@
                             </a>
                         </div>
                         <div class="col-md-2">
-                            Status: <span class="label label-{{ vm.statusClassMap[vm.currentDiff.status ? vm.currentDiff.status : 'none'] }}">{{ vm.currentDiff.status ? vm.currentDiff.status : 'None' }}</span>
+                            Status:
+                            <span class="label label-{{ vm.statusClassMap[vm.currentDiff.status ? vm.currentDiff.status : 'none'] }}">
+                                {{(vm.currentDiff.status ? vm.currentDiff.status : 'none')|uppercase }}
+                            </span>
                         </div>
-                        <div class="col-md-2" ng-show="vm.currentDiff.prevStatus">
-                            Previous Status: <span class="label label-{{ vm.statusClassMap[vm.currentDiff.prevStatus ? vm.currentDiff.prevStatus : 'none'] }}">{{ vm.currentDiff.prevStatus }}</span>
+                        <div class="col-md-2" ng-show="vm.currentDiff.prevStatus && vm.currentDiff.prevStatus != 'none'">
+                            Previous Status:
+                            <span class="label label-{{ vm.statusClassMap[vm.currentDiff.prevStatus ? vm.currentDiff.prevStatus : 'none'] }}">
+                                {{ vm.currentDiff.prevStatus|uppercase }}
+                            </span>
                         </div>
                     </div>
                     <div class="row p-t-1">
