@@ -37,13 +37,20 @@ switch ($requestJson['action']) {
             throw new \Exception('Not found.');
         }
 
-        processDiff($diff);
+        $updates = processDiff($diff);
 
         $serialized = $diff->bsonSerialize();
         $serialized['_id'] = (string) $serialized['_id'];
-        $update = $serialized;
-        unset($update['_id']);
-        $collection->updateOne(['_id' => $diff->getId()], ['$set' => $update]);
+
+        if (!empty($updates)) {
+            try {
+                $collection->updateOne(['_id' => $diff->getId()], ['$set' => $updates]);
+            } catch (\Exception $e) {
+                var_dump($e->getMessage());
+                var_dump($e->getTraceAsString());
+                throw $e;
+            }
+        }
 
         $response = $serialized;
         break;
@@ -166,23 +173,30 @@ exit();
 
 function processDiff(Diff $diff)
 {
+    $updates = [];
     $oldText = $diff->getOldContent();
     $newText = $diff->getNewContent();
 
     $htmldiff = new HtmlDiff($oldText, $newText, 'UTF-8', array());
-    $diffContent = $htmldiff->build();
+    $diffContent = mb_convert_encoding($htmldiff->build(), 'UTF-8');
 
     $diffHash = md5($diffContent);
 
     // check if diff changed
     if ($diffHash !== $diff->getDiffHash()) {
         $diff->setDiffContent($diffContent);
+        $updates['diffContent'] = $diffContent;
         if ($diff->getStatus() !== null && $diff->getStatus() !== Diff::STATUS_NONE) {
             if ($diff->getPrevStatus() !== Diff::STATUS_CHANGED) {
                 $diff->setPrevStatus($diff->getStatus());
+                $updates['prevStatus'] = $diff->getStatus();
             }
             $diff->setStatus(Diff::STATUS_CHANGED);
+            $updates['status'] = Diff::STATUS_CHANGED;
         }
         $diff->setDiffHash($diffHash);
+        $updates['diffHash'] = $diffHash;
     }
+
+    return $updates;
 }

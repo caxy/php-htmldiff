@@ -90,6 +90,7 @@ li.replacement + li.replacement:before,
 .diff-list > li.replacement:first-child:before{
     counter-increment: section;
 }
+ol.diff-list li.removed + li.replacement:before,
 ol.diff-list li.removed + li.replacement {
     counter-increment: none;
 }
