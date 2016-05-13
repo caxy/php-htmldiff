@@ -32,7 +32,11 @@
             </p>
             <!-- List of Diffs -->
             <ul class="nav nav-sidebar">
-                <li ng-repeat="diff in vm.diffs track by diff._id" ng-class="{active: diff.active}">
+                <li
+                    ng-repeat="diff in vm.diffs track by diff._id"
+                    class="status-{{ diff.status }}"
+                    ng-class="{active: diff.active}"
+                >
                     <a ng-click="vm.getDiff(diff)" href="#">
                         {{ diff.proposalObjectId }}<span class="text-muted" ng-show="diff.favorite">*</span>
                     </a>
