@@ -178,7 +178,7 @@ function processDiff(Diff $diff)
     $newText = $diff->getNewContent();
 
     $htmldiff = new HtmlDiff($oldText, $newText, 'UTF-8', array());
-    $diffContent = mb_convert_encoding($htmldiff->build(), 'UTF-8');
+    $diffContent = $htmldiff->build();
 
     $diffHash = md5($diffContent);
 
