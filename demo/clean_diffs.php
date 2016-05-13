@@ -12,18 +12,20 @@ $mongodb = new Client();
 $collection = $mongodb->tracker->diffs;
 
 $diffs = $collection->find(['$or' => [
+    ['$where' => 'this.oldContent == this.newContent'],
     ['oldContent' => null],
     ['newContent' => null],
     ['oldContent' => ''],
     ['newContent' => ''],
 ]]);
 
+$count = 0;
 foreach ($diffs as $diff) {
-    if (strlen($diff->getOldContent()) === 0 || strlen($diff->getNewContent()) === 0) {
-        echo "\nDeleted: ".$diff->getId();
-        $collection->deleteOne(['_id' => $diff->getId()]);
-    }
+    $count++;
+    $collection->deleteOne(['_id' => $diff->getId()]);
 }
+
+echo "<h1>Deleted $count diffs";
 
 exit();
 
