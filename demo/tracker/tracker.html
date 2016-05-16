@@ -47,13 +47,6 @@
 
         <!-- Page Content -->
         <div class="col-sm-10 col-sm-offset-2 col-md-11 col-md-offset-1 main">
-            <!--<button type="button" class="btn btn-sm btn-info" ng-click="vm.reindex()">Re-Index Tracker Data</button>-->
-            <h3 ng-show="vm.loading">Loading ...</h3>
-            <!--<div ng-show="vm.reindexing">-->
-                <!--<h3>Re-Indexing ... may take a bit...</h3>-->
-                <!--<progress class="progress progress-striped progress-animated" max="100" value="{{vm.progressValue}}">{{ vm.progressValue }}%</progress>-->
-            <!--</div>-->
-
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -84,6 +77,12 @@
                 </div>
                 <div class="card-block">
                     <status-controls diff="vm.currentDiff" set-status-handler="vm.setStatus(diff, status)"></status-controls>
+                    <!--<button type="button" class="btn btn-sm btn-info" ng-click="vm.reindex()">Re-Index Tracker Data</button>-->
+                    <h3 ng-show="vm.loading">Loading ...</h3>
+                    <!--<div ng-show="vm.reindexing">-->
+                    <!--<h3>Re-Indexing ... may take a bit...</h3>-->
+                    <!--<progress class="progress progress-striped progress-animated" max="100" value="{{vm.progressValue}}">{{ vm.progressValue }}%</progress>-->
+                    <!--</div>-->
                 </div>
                 <div class="card-block">
                     <h4 class="card-title">HtmlDiff Output</h4>
