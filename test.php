@@ -11,8 +11,37 @@ error_reporting(E_ALL);
 
 require __DIR__.'/vendor/autoload.php';
 
-$oldText = '<ul><li>first moved to last</li><li>test</li><li>not anywhere to be found</li><li>how about another</li><li>second one</li></ul>';
-$newText = '<ul><li>test</li><li>how about another</li></li><li>another</li><li>second one</li><li>first moved to last</li></ul>';
+$diffs = [
+    [
+        [
+            'first moved to last',
+            'test',
+            'not anywhere to be found',
+            'how about another',
+            'second one',
+        ],
+        [
+            'test',
+            'how about another',
+            'another',
+            'second one',
+            'first moved to last',
+        ],
+    ],
+    [
+        ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+        ['w', 'a', 'b', 'x', 'y', 'z', 'e'],
+    ]
+];
 
-$htmldiff = new ListDiffLines($oldText, $newText, 'UTF-8', array());
-$htmldiff->build();
+foreach ($diffs as $index => $diff) {
+    $texts = [];
+
+    foreach ($diff as $items) {
+        $texts[] = sprintf('<ul><li>%s</li></ul>', implode('</li><li>', $items));
+    }
+
+    echo "\n\nDiffing $index\n";
+    $htmldiff = new ListDiffLines($texts[0], $texts[1]);
+    echo "\n".$htmldiff->build();
+}
