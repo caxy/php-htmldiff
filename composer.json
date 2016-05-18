@@ -20,7 +20,8 @@
     },
     "require": {
         "php": ">=5.3.3",
-        "ezyang/htmlpurifier": "^4.7"
+        "ezyang/htmlpurifier": "^4.7",
+        "sunra/php-simple-html-dom-parser": "^1.5"
     },
     "require-dev": {
         "phpunit/phpunit": "~4.8",

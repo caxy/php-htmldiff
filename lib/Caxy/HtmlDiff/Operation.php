@@ -4,6 +4,10 @@ namespace Caxy\HtmlDiff;
 
 class Operation
 {
+    const ADDED = 'a';
+    const DELETED = 'd';
+    const CHANGED = 'c';
+
     public $action;
     public $startInOld;
     public $endInOld;
