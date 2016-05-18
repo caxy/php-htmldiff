@@ -2,26 +2,31 @@
 
 namespace Caxy\HtmlDiff;
 
+use Caxy\HtmlDiff\Strategy\ListItemMatchStrategy;
 use Sunra\PhpSimple\HtmlDomParser;
 
-class ListDiffLines extends ListDiff
+class ListDiffLines extends AbstractDiff
 {
     const CLASS_LIST_ITEM_ADDED = 'normal new';
     const CLASS_LIST_ITEM_DELETED = 'removed';
     const CLASS_LIST_ITEM_CHANGED = 'replacement';
     const CLASS_LIST_ITEM_NONE = 'normal';
 
-    protected static $containerTags = array('html', 'body', 'p', 'blockquote',
-        'h1', 'h2', 'h3', 'h4', 'h5', 'pre', 'div', 'ul', 'ol', 'li',
-        'table', 'tbody', 'tr', 'td', 'th', 'br', 'hr', 'code', 'dl',
-        'dt', 'dd', 'input', 'form', 'img', 'span', 'a');
-    protected static $styleTags = array('i', 'b', 'strong', 'em', 'font',
-        'big', 'del', 'tt', 'sub', 'sup', 'strike');
+    protected static $listTypes = array('ul', 'ol', 'dl');
 
+    /**
+     * List of tags that should be included when retrieving
+     * text from a single list item that will be used in
+     * matching logic (and only in matching logic).
+     *
+     * @see getRelevantNodeText()
+     *
+     * @var array
+     */
     protected static $listContentTags = array(
-        'h1', 'h2', 'h3', 'h4', 'h5', 'pre', 'div', 'br', 'hr', 'code', 'input',
-        'form', 'img', 'span', 'a', 'i', 'b', 'strong', 'em', 'font', 'big',
-        'del', 'tt', 'sub', 'sup', 'strike',
+        'h1','h2','h3','h4','h5','pre','div','br','hr','code',
+        'input','form','img','span','a','i','b','strong','em',
+        'font','big','del','tt','sub','sup','strike',
     );
 
     /**
@@ -47,73 +52,29 @@ class ListDiffLines extends ListDiff
         return $diff;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function build()
     {
-        $threshold = $this->config->getMatchThreshold();
+        if ($this->hasDiffCache() && $this->getDiffCache()->contains($this->oldText, $this->newText)) {
+            $this->content = $this->getDiffCache()->fetch($this->oldText, $this->newText);
 
-        $comparator = function($a, $b) use ($threshold) {
-            $percentage = null;
+            return $this->content;
+        }
 
-            // Strip tags and check similarity
-            $aStripped = strip_tags($a);
-            $bStripped = strip_tags($b);
-            similar_text($aStripped, $bStripped, $percentage);
-
-            if ($percentage >= $threshold) {
-                return true;
-            }
-
-            // Check w/o stripped tags
-            similar_text($a, $b, $percentage);
-            if ($percentage >= $threshold) {
-                return true;
-            }
-
-            // Check common prefix/ suffix length
-            $aCleaned = trim($aStripped);
-            $bCleaned = trim($bStripped);
-            if (strlen($aCleaned) === 0 || strlen($bCleaned) === 0) {
-                $aCleaned = $a;
-                $bCleaned = $b;
-            }
-            if (strlen($aCleaned) === 0 || strlen($bCleaned) === 0) {
-                return false;
-            }
-            $prefixIndex = Preprocessor::diffCommonPrefix($aCleaned, $bCleaned);
-            $suffixIndex = Preprocessor::diffCommonSuffix($aCleaned, $bCleaned);
-
-            // Use shorter string, and see how much of it is leftover
-            $len = min(strlen($aCleaned), strlen($bCleaned));
-            $remaining = $len - ($prefixIndex + $suffixIndex);
-            $strLengthPercent = $len / max(strlen($a), strlen($b));
-
-            if ($remaining === 0 && $strLengthPercent > 0.1) {
-                return true;
-            }
-
-            $percentRemaining = $remaining / $len;
-
-            if ($strLengthPercent > 0.1 && $percentRemaining < 0.4) {
-                return true;
-            }
-
-            return false;
-        };
-        $this->lcsService = new LcsService($comparator);
+        $matchStrategy = new ListItemMatchStrategy($this->config->getMatchThreshold());
+        $this->lcsService = new LcsService($matchStrategy);
 
         return $this->listByLines($this->oldText, $this->newText);
     }
 
     /**
-     * @param \simple_html_dom|\simple_html_dom_node $dom
+     * @param string $old
+     * @param string $new
      *
-     * @return \simple_html_dom_node[]|\simple_html_dom_node|null
+     * @return string
      */
-    protected function findListNode($dom)
-    {
-        return $dom->find(implode(', ', static::$listTypes), 0);
-    }
-
     protected function listByLines($old, $new)
     {
         /* @var $newDom \simple_html_dom */
@@ -130,48 +91,86 @@ class ListDiffLines extends ListDiff
     }
 
     /**
+     * @param \simple_html_dom|\simple_html_dom_node $dom
+     *
+     * @return \simple_html_dom_node[]|\simple_html_dom_node|null
+     */
+    protected function findListNode($dom)
+    {
+        return $dom->find(implode(', ', static::$listTypes), 0);
+    }
+
+    /**
      * @param \simple_html_dom_node $oldListNode
      * @param \simple_html_dom_node $newListNode
      *
      * @return array|Operation[]
      */
-    protected function getListItemOperations($oldListNode, $newListNode)
+    protected function getListItemOperations(\simple_html_dom_node $oldListNode, \simple_html_dom_node $newListNode)
     {
         // Prepare arrays of list item content to use in LCS algorithm
         $oldListText = $this->getListTextArray($oldListNode);
         $newListText = $this->getListTextArray($newListNode);
 
-        $j = $this->lcsService->longestCommonSubsequence($oldListText, $newListText);
+        $lcsMatches = $this->lcsService->longestCommonSubsequence($oldListText, $newListText);
 
-
-        $m = count($oldListText);
-        $n = count($newListText);
+        $oldLength = count($oldListText);
+        $newLength = count($newListText);
 
         $operations = [];
-        $lineInOld = 0;
-        $lineInNew = 0;
-        $j[$m + 1] = $n + 1;
-        foreach ($j as $i => $match) {
-            if ($match !== 0) {
-                if ($match > ($lineInNew + 1) && $i === ($lineInOld + 1)) {
-                    // Add items before this
-                    $operations[] = new Operation(Operation::ADDED, $lineInOld, $lineInOld, $lineInNew + 1, $match - 1);
-                } elseif ($i > ($lineInOld + 1) && $match === ($lineInNew + 1)) {
-                    // Delete items before this
-                    $operations[] = new Operation(Operation::DELETED, $lineInOld + 1, $i - 1, $lineInNew, $lineInNew);
-                } elseif ($match !== ($lineInNew + 1) && $i !== ($lineInOld + 1)) {
-                    // Change
-                    $operations[] = new Operation(Operation::CHANGED, $lineInOld + 1, $i - 1, $lineInNew + 1, $match - 1);
-                }
-
-                $lineInNew = $match;
-                $lineInOld = $i;
+        $currentLineInOld = 0;
+        $currentLineInNew = 0;
+        $lcsMatches[$oldLength + 1] = $newLength + 1;
+        foreach ($lcsMatches as $matchInOld => $matchInNew) {
+            // No matching line in new list
+            if ($matchInNew === 0) {
+                continue;
             }
+
+            $nextLineInOld = $currentLineInOld + 1;
+            $nextLineInNew = $currentLineInNew + 1;
+
+            if ($matchInNew > $nextLineInNew && $matchInOld > $nextLineInOld) {
+                // Change
+                $operations[] = new Operation(
+                    Operation::CHANGED,
+                    $nextLineInOld,
+                    $matchInOld - 1,
+                    $nextLineInNew,
+                    $matchInNew - 1
+                );
+            } elseif ($matchInNew > $nextLineInNew && $matchInOld === $nextLineInOld) {
+                // Add items before this
+                $operations[] = new Operation(
+                    Operation::ADDED,
+                    $currentLineInOld,
+                    $currentLineInOld,
+                    $nextLineInNew,
+                    $matchInNew - 1
+                );
+            } elseif ($matchInNew === $nextLineInNew && $matchInOld > $currentLineInOld) {
+                // Delete items before this
+                $operations[] = new Operation(
+                    Operation::DELETED,
+                    $nextLineInOld,
+                    $matchInOld - 1,
+                    $currentLineInNew,
+                    $currentLineInNew
+                );
+            }
+
+            $currentLineInNew = $matchInNew;
+            $currentLineInOld = $matchInOld;
         }
 
         return $operations;
     }
 
+    /**
+     * @param \simple_html_dom_node $listNode
+     *
+     * @return array
+     */
     protected function getListTextArray($listNode)
     {
         $output = array();
@@ -182,6 +181,11 @@ class ListDiffLines extends ListDiff
         return $output;
     }
 
+    /**
+     * @param \simple_html_dom_node $node
+     *
+     * @return string
+     */
     protected function getRelevantNodeText(\simple_html_dom_node $node)
     {
         if (!$node->hasChildNodes()) {
@@ -193,7 +197,7 @@ class ListDiffLines extends ListDiff
             /* @var $child \simple_html_dom_node */
             if (!$child->hasChildNodes()) {
                 $output .= $child->outertext();
-            } elseif (in_array($child->nodeName(), static::$listContentTags)) {
+            } elseif (in_array($child->nodeName(), static::$listContentTags, true)) {
                 $output .= sprintf('<%1$s>%2$s</%1$s>', $child->nodeName(), $this->getRelevantNodeText($child));
             }
         }
@@ -202,35 +206,38 @@ class ListDiffLines extends ListDiff
     }
 
     /**
-     * @param $li
+     * @param \simple_html_dom_node $li
+     *
+     * @return string
      */
     protected function deleteListItem($li)
     {
-        $li->setAttribute('class', trim($li->getAttribute('class').' '.self::CLASS_LIST_ITEM_DELETED));
+        $this->addClassToNode($li, self::CLASS_LIST_ITEM_DELETED);
         $li->innertext = sprintf('<del>%s</del>', $li->innertext);
 
         return $li->outertext;
     }
 
     /**
-     * @param $li
+     * @param \simple_html_dom_node $li
+     * @param bool                  $replacement
      *
      * @return string
      */
     protected function addListItem($li, $replacement = false)
     {
-        $li->setAttribute('class', trim($li->getAttribute('class').' '.($replacement ? self::CLASS_LIST_ITEM_CHANGED : self::CLASS_LIST_ITEM_ADDED)));
+        $this->addClassToNode($li, $replacement ? self::CLASS_LIST_ITEM_CHANGED : self::CLASS_LIST_ITEM_ADDED);
         $li->innertext = sprintf('<ins>%s</ins>', $li->innertext);
 
         return $li->outertext;
     }
 
     /**
-     * @param $operations
-     * @param $oldListNode
-     * @param $newListNode
+     * @param Operation[]|array     $operations
+     * @param \simple_html_dom_node $oldListNode
+     * @param \simple_html_dom_node $newListNode
      *
-     * @return mixed
+     * @return string
      */
     protected function processOperations($operations, $oldListNode, $newListNode)
     {
@@ -300,7 +307,6 @@ class ListDiffLines extends ListDiff
             $lastOperation = $operation->action;
         }
 
-        $replaced = false;
         $oldCount = count($oldListNode->children());
         $newCount = count($newListNode->children());
         while ($indexInOld < $oldCount) {
@@ -329,5 +335,14 @@ class ListDiffLines extends ListDiff
         $newListNode->setAttribute('class', trim($newListNode->getAttribute('class').' diff-list'));
 
         return $newListNode->outertext;
+    }
+
+    /**
+     * @param \simple_html_dom_node $node
+     * @param string                $class
+     */
+    protected function addClassToNode(\simple_html_dom_node $node, $class)
+    {
+        $node->setAttribute('class', trim(sprintf('%s %s', $node->getAttribute('class'), $class)));
     }
 }
