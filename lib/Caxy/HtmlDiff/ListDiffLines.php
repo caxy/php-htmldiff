@@ -148,7 +148,7 @@ class ListDiffLines extends AbstractDiff
                     $nextLineInNew,
                     $matchInNew - 1
                 );
-            } elseif ($matchInNew === $nextLineInNew && $matchInOld > $currentLineInOld) {
+            } elseif ($matchInNew === $nextLineInNew && $matchInOld > $nextLineInOld) {
                 // Delete items before this
                 $operations[] = new Operation(
                     Operation::DELETED,
