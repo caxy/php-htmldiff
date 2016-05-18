@@ -13,6 +13,8 @@ error_reporting(E_ALL);
 
 require __DIR__.'/../../vendor/autoload.php';
 
+$debugOutput = array();
+
 $requestBody = file_get_contents('php://input');
 $requestJson = json_decode($requestBody, true);
 
@@ -183,7 +185,7 @@ function processDiff(Diff $diff, Collection $archive)
     $newText = $diff->getNewContent();
 
     $config = HtmlDiffConfig::create();
-    $config->setMatchThreshold(75);
+    $config->setMatchThreshold(80);
     $htmldiff = HtmlDiff::create($oldText, $newText, $config);
     $diffContent = $htmldiff->build();
     $diffContent = iconv('UTF-8', 'UTF-8//IGNORE', $diffContent);
@@ -224,4 +226,21 @@ function processDiff(Diff $diff, Collection $archive)
     }
 
     return $updates;
+}
+
+function addDebugOutput($value, $key = 'general')
+{
+    global $debugOutput;
+
+    if (!is_string($value)) {
+        $value = var_export($value, true);
+    }
+
+    if (!array_key_exists($key, $debugOutput)) {
+        $debugOutput[$key] = array();
+    }
+
+    $value = iconv('UTF-8', 'UTF-8//IGNORE', $value);
+
+    $debugOutput[$key][] = $value;
 }
