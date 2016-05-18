@@ -91,12 +91,22 @@
                 <div class="card-block" ng-if="!vm.currentDiff.hideSource">
                     <div class="row">
                         <div class="col-md-6">
-                            <h4 class="card-title">Base Text</h4>
-                            <div ng-bind-html="vm.trustHtml(vm.currentDiff.oldContent)"></div>
+                            <h4 class="card-title">
+                                Base Text
+                                <button type="button" class="btn btn-sm btn-secondary clipboard" data-clipboard-text="{{ vm.currentDiff.oldContent }}">
+                                    <i class="fa fa-clipboard"></i>
+                                </button>
+                            </h4>
+                            <div id="oldText" ng-bind-html="vm.trustHtml(vm.currentDiff.oldContent)"></div>
                         </div>
                         <div class="col-md-6">
-                            <h4 class="card-title">New Text</h4>
-                            <div ng-bind-html="vm.trustHtml(vm.currentDiff.newContent)"></div>
+                            <h4 class="card-title">
+                                New Text
+                                <button type="button" class="btn btn-sm btn-secondary clipboard" data-clipboard-text="{{ vm.currentDiff.newContent }}">
+                                    <i class="fa fa-clipboard"></i>
+                                </button>
+                            </h4>
+                            <div id="newText" ng-bind-html="vm.trustHtml(vm.currentDiff.newContent)"></div>
                         </div>
                     </div>
                 </div>

@@ -34,6 +34,7 @@ class Diff implements Persistable
     private $prevStatus;
     private $favorite = false;
     private $notes;
+    private $prevDiffArchiveId;
 
     public function __construct()
     {
@@ -281,6 +282,26 @@ class Diff implements Persistable
     }
 
     /**
+     * @return mixed
+     */
+    public function getPrevDiffArchiveId()
+    {
+        return $this->prevDiffArchiveId;
+    }
+
+    /**
+     * @param mixed $prevDiffArchiveId
+     *
+     * @return Diff
+     */
+    public function setPrevDiffArchiveId($prevDiffArchiveId)
+    {
+        $this->prevDiffArchiveId = $prevDiffArchiveId;
+
+        return $this;
+    }
+
+    /**
      * Provides an array or document to serialize as BSON
      * Called during serialization of the object to BSON. The method must return an array or stdClass.
      * Root documents (e.g. a MongoDB\BSON\Serializable passed to MongoDB\BSON\fromPHP()) will always be serialized as a BSON document.
@@ -303,6 +324,7 @@ class Diff implements Persistable
             'diffContent' => $this->diffContent,
             'favorite' => $this->favorite,
             'notes' => $this->notes,
+            'prevDiffArchiveId' => $this->prevDiffArchiveId,
         ];
     }
 
@@ -328,5 +350,6 @@ class Diff implements Persistable
         $this->diffContent = !empty($data['diffContent']) ? $data['diffContent'] : null;
         $this->favorite = isset($data['favorite']) ? $data['favorite'] : false;
         $this->notes = isset($data['notes']) ? $data['notes'] : null;
+        $this->prevDiffArchiveId = isset($data['prevDiffArchiveId']) ? $data['prevDiffArchiveId'] : null;
     }
 }

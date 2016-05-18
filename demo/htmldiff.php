@@ -21,6 +21,8 @@ function addDebugOutput($value, $key = 'general')
         $debugOutput[$key] = array();
     }
 
+    $value = iconv('UTF-8', 'UTF-8//IGNORE', $value);
+
     $debugOutput[$key][] = $value;
 }
 

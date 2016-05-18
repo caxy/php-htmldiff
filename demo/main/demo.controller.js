@@ -24,7 +24,7 @@
         vm.tableDiffNumber = 1;
         vm.tableDiffing = true;
         vm.editorOptions = {};
-        vm.ckEditorEnabled = true;
+        vm.ckEditorEnabled = false;
 
         vm.trustHtml = trustHtml;
         vm.reset = reset;

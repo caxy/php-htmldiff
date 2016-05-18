@@ -1,9 +1,12 @@
 <?php
 
 use Caxy\HtmlDiff\Demo\Model\Diff;
+use Caxy\HtmlDiff\Demo\Model\DiffArchive;
 use Caxy\HtmlDiff\HtmlDiff;
+use Caxy\HtmlDiff\HtmlDiffConfig;
 use MongoDB\BSON\ObjectID;
 use MongoDB\Client;
+use MongoDB\Collection;
 
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
@@ -19,6 +22,8 @@ if (!isset($requestJson['action'])) {
 
 $mongodb = new Client();
 $collection = $mongodb->tracker->diffs;
+
+$diffArchive = $mongodb->tracker->diffArchive;
 
 $response = null;
 switch ($requestJson['action']) {
@@ -37,7 +42,7 @@ switch ($requestJson['action']) {
             throw new \Exception('Not found.');
         }
 
-        $updates = processDiff($diff);
+        $updates = processDiff($diff, $diffArchive);
 
         $serialized = $diff->bsonSerialize();
         $serialized['_id'] = (string) $serialized['_id'];
@@ -171,19 +176,39 @@ if (false !== $output) {
 
 exit();
 
-function processDiff(Diff $diff)
+function processDiff(Diff $diff, Collection $archive)
 {
     $updates = [];
     $oldText = $diff->getOldContent();
     $newText = $diff->getNewContent();
 
-    $htmldiff = new HtmlDiff($oldText, $newText, 'UTF-8', array());
+    $config = HtmlDiffConfig::create();
+    $config->setMatchThreshold(75);
+    $htmldiff = HtmlDiff::create($oldText, $newText, $config);
     $diffContent = $htmldiff->build();
+    $diffContent = iconv('UTF-8', 'UTF-8//IGNORE', $diffContent);
 
     $diffHash = md5($diffContent);
 
     // check if diff changed
     if ($diffHash !== $diff->getDiffHash()) {
+        if (null !== $diff->getDiffContent()) {
+            $prevDiffArchive = new DiffArchive();
+            $prevDiffArchive->setContent($diff->getDiffContent());
+            $prevDiffArchive->setProposalObjectId($diff->getProposalObjectId());
+            $prevDiffArchive->setStatus($diff->getStatus());
+
+            if (null !== $diff->getPrevDiffArchiveId()) {
+                $prevDiffArchive->setPrev($diff->getPrevDiffArchiveId());
+            }
+
+            $result = $archive->insertOne($prevDiffArchive);
+            $archiveId = $result->getInsertedId();
+
+            $diff->setPrevDiffArchiveId($archiveId);
+            $updates['prevDiffArchiveId'] = $archiveId;
+        }
+
         $diff->setDiffContent($diffContent);
         $updates['diffContent'] = $diffContent;
         if ($diff->getStatus() !== null && $diff->getStatus() !== Diff::STATUS_NONE) {
