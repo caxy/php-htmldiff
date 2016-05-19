@@ -41,7 +41,7 @@ if ($input) {
     }
     $diff->setUseTableDiffing($useTableDiffing);
     $diffOutput = $diff->build();
-    $diffOutput = mb_convert_encoding($diffOutput, 'UTF-8');
+    $diffOutput = iconv('UTF-8', 'UTF-8//IGNORE', $diffOutput);
 
     $jsonOutput = json_encode(array('diff' => $diffOutput, 'debug' => $debugOutput));
 
