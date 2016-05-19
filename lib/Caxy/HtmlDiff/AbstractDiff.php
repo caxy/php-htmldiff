@@ -55,7 +55,12 @@ abstract class AbstractDiff
     /**
      * @var DiffCache[]
      */
-    private $diffCaches = array();
+    protected $diffCaches = array();
+
+    /**
+     * @var \HTMLPurifier
+     */
+    protected $purifier;
 
     /**
      * AbstractDiff constructor.
@@ -70,7 +75,7 @@ abstract class AbstractDiff
     {
         mb_substitute_character(0x20);
 
-        $this->config = HtmlDiffConfig::create()->setEncoding($encoding);
+        $this->setConfig(HtmlDiffConfig::create()->setEncoding($encoding));
 
         if ($specialCaseTags !== null) {
             $this->config->setSpecialCaseTags($specialCaseTags);
@@ -83,12 +88,30 @@ abstract class AbstractDiff
         $this->oldText = $this->purifyHtml($oldText);
         $this->newText = $this->purifyHtml($newText);
         $this->content = '';
+
     }
 
     /**
      * @return bool|string
      */
     abstract public function build();
+
+    /**
+     * Initializes HTMLPurifier with cache location.
+     *
+     * @param null|string $defaultPurifierSerializerCache
+     */
+    public function initPurifier($defaultPurifierSerializerCache = null)
+    {
+        $HTMLPurifierConfig = \HTMLPurifier_Config::createDefault();
+        // Cache.SerializerPath defaults to Null and sets
+        // the location to inside the vendor HTMLPurifier library
+        // under the DefinitionCache/Serializer folder.
+        if (!is_null($defaultPurifierSerializerCache)) {
+            $HTMLPurifierConfig->set('Cache.SerializerPath', $defaultPurifierSerializerCache);
+        }
+        $this->purifier = new \HTMLPurifier($HTMLPurifierConfig);
+    }
 
     /**
      * @return DiffCache|null
@@ -132,6 +155,7 @@ abstract class AbstractDiff
     public function setConfig(HtmlDiffConfig $config)
     {
         $this->config = $config;
+        $this->initPurifier($this->config->getPurifierCacheLocation());
 
         return $this;
     }
@@ -356,7 +380,7 @@ abstract class AbstractDiff
             return $this->getStringBetween($html, '<body>');
         }
 
-        return $html;
+        return $this->purifier->purify($html);
     }
 
     protected function splitInputsToWords()
@@ -392,6 +416,7 @@ abstract class AbstractDiff
                     if ($current_word != '') {
                         $words[] = $current_word;
                     }
+
                     $current_word = '<';
                     $mode = 'tag';
                 } elseif (preg_match("/\s/", $character)) {
