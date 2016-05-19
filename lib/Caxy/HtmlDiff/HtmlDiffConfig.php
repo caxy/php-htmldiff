@@ -43,9 +43,9 @@ class HtmlDiffConfig
         'dl' => '[[REPLACE_DEFINITION_LIST]]',
         'table' => '[[REPLACE_TABLE]]',
         'strong' => '[[REPLACE_STRONG]]',
-        'b' => '[[REPLACE_B]]',
+        'b' => '[[REPLACE_STRONG]]',
         'em' => '[[REPLACE_EM]]',
-        'i' => '[[REPLACE_I]]',
+        'i' => '[[REPLACE_EM]]',
         'a' => '[[REPLACE_A]]',
         'img' => '[[REPLACE_IMG]]',
     );

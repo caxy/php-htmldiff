@@ -97,11 +97,19 @@ class HtmlDiff extends AbstractDiff
             return $this->content;
         }
 
+        // Pre-processing Optimizations
+
+        // 1. Equality
+        if ($this->oldText == $this->newText) {
+            return $this->newText;
+        }
+
         $this->splitInputsToWords();
         $this->replaceIsolatedDiffTags();
         $this->indexNewWords();
 
         $operations = $this->operations();
+
         foreach ($operations as $item) {
             $this->performOperation($item);
         }
@@ -368,7 +376,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function diffList($oldText, $newText)
     {
-        $diff = ListDiff::create($oldText, $newText, $this->config);
+        $diff = ListDiffLines::create($oldText, $newText, $this->config);
 
         return $diff->build();
     }
