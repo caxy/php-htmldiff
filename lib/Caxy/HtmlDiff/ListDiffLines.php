@@ -106,7 +106,7 @@ class ListDiffLines extends AbstractDiff
      *
      * @return array|Operation[]
      */
-    protected function getListItemOperations(\simple_html_dom_node $oldListNode, \simple_html_dom_node $newListNode)
+    protected function getListItemOperations($oldListNode, $newListNode)
     {
         // Prepare arrays of list item content to use in LCS algorithm
         $oldListText = $this->getListTextArray($oldListNode);
@@ -186,7 +186,7 @@ class ListDiffLines extends AbstractDiff
      *
      * @return string
      */
-    protected function getRelevantNodeText(\simple_html_dom_node $node)
+    protected function getRelevantNodeText($node)
     {
         if (!$node->hasChildNodes()) {
             return $node->innertext();
@@ -341,7 +341,7 @@ class ListDiffLines extends AbstractDiff
      * @param \simple_html_dom_node $node
      * @param string                $class
      */
-    protected function addClassToNode(\simple_html_dom_node $node, $class)
+    protected function addClassToNode($node, $class)
     {
         $node->setAttribute('class', trim(sprintf('%s %s', $node->getAttribute('class'), $class)));
     }
