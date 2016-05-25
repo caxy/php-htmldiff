@@ -89,6 +89,8 @@ class TableDiff extends AbstractDiff
      */
     public function build()
     {
+        $this->prepare();
+
         if ($this->hasDiffCache() && $this->getDiffCache()->contains($this->oldText, $this->newText)) {
             $this->content = $this->getDiffCache()->fetch($this->oldText, $this->newText);
 

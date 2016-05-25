@@ -13,12 +13,14 @@ abstract class AbstractDiff
      * @deprecated since 0.1.0
      */
     public static $defaultSpecialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
+
     /**
      * @var array
      *
      * @deprecated since 0.1.0
      */
     public static $defaultSpecialCaseChars = array('.', ',', '(', ')', '\'');
+
     /**
      * @var bool
      *
@@ -35,18 +37,22 @@ abstract class AbstractDiff
      * @var string
      */
     protected $content;
+
     /**
      * @var string
      */
     protected $oldText;
+
     /**
      * @var string
      */
     protected $newText;
+
     /**
      * @var array
      */
     protected $oldWords = array();
+
     /**
      * @var array
      */
@@ -61,6 +67,11 @@ abstract class AbstractDiff
      * @var \HTMLPurifier
      */
     protected $purifier;
+
+    /**
+     * @var \HTMLPurifier_Config|null
+     */
+    protected $purifierConfig = null;
 
     /**
      * AbstractDiff constructor.
@@ -85,10 +96,9 @@ abstract class AbstractDiff
             $this->config->setGroupDiffs($groupDiffs);
         }
 
-        $this->oldText = $this->purifyHtml($oldText);
-        $this->newText = $this->purifyHtml($newText);
+        $this->oldText = $oldText;
+        $this->newText = $newText;
         $this->content = '';
-
     }
 
     /**
@@ -103,14 +113,35 @@ abstract class AbstractDiff
      */
     public function initPurifier($defaultPurifierSerializerCache = null)
     {
-        $HTMLPurifierConfig = \HTMLPurifier_Config::createDefault();
+        $HTMLPurifierConfig = null;
+
+        if (null !== $this->purifierConfig) {
+            $HTMLPurifierConfig  = $this->purifierConfig;
+        } else {
+            $HTMLPurifierConfig = \HTMLPurifier_Config::createDefault();
+        }
+
         // Cache.SerializerPath defaults to Null and sets
         // the location to inside the vendor HTMLPurifier library
         // under the DefinitionCache/Serializer folder.
         if (!is_null($defaultPurifierSerializerCache)) {
             $HTMLPurifierConfig->set('Cache.SerializerPath', $defaultPurifierSerializerCache);
         }
+
         $this->purifier = new \HTMLPurifier($HTMLPurifierConfig);
+    }
+
+    /**
+     * Prepare (purify) the HTML
+     *
+     * @return void
+     */
+    protected function prepare()
+    {
+        $this->initPurifier($this->config->getPurifierCacheLocation());
+
+        $this->oldText = $this->purifyHtml($this->oldText);
+        $this->newText = $this->purifyHtml($this->newText);
     }
 
     /**
@@ -119,7 +150,7 @@ abstract class AbstractDiff
     protected function getDiffCache()
     {
         if (!$this->hasDiffCache()) {
-            return;
+            return null;
         }
 
         $hash = spl_object_hash($this->getConfig()->getCacheProvider());
@@ -155,7 +186,6 @@ abstract class AbstractDiff
     public function setConfig(HtmlDiffConfig $config)
     {
         $this->config = $config;
-        $this->initPurifier($this->config->getPurifierCacheLocation());
 
         return $this;
     }
@@ -320,6 +350,14 @@ abstract class AbstractDiff
     public function isGroupDiffs()
     {
         return $this->config->isGroupDiffs();
+    }
+
+    /**
+     * @param \HTMLPurifier_Config $config
+     */
+    public function setHTMLPurifierConfig(\HTMLPurifier_Config $config)
+    {
+        $this->purifierConfig = $config;
     }
 
     /**
