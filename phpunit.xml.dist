@@ -11,6 +11,12 @@
          bootstrap="./tests/Caxy/Tests/TestInit.php"
 >
 
+    <groups>
+        <exclude>
+            <group>performance</group>
+        </exclude>
+    </groups>
+
     <testsuites>
         <testsuite name="php-htmldiff Test Suite">
             <directory>./tests/Caxy/Tests/HtmlDiff</directory>

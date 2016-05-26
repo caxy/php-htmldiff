@@ -91,6 +91,8 @@ class HtmlDiff extends AbstractDiff
      */
     public function build()
     {
+        $this->prepare();
+
         if ($this->hasDiffCache() && $this->getDiffCache()->contains($this->oldText, $this->newText)) {
             $this->content = $this->getDiffCache()->fetch($this->oldText, $this->newText);
 
@@ -140,6 +142,8 @@ class HtmlDiff extends AbstractDiff
     {
         $this->oldIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->oldWords);
         $this->newIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->newWords);
+
+        $this->fast = array_chunk($this->oldWords, 10);
     }
 
     /**
@@ -692,28 +696,32 @@ class HtmlDiff extends AbstractDiff
         $positionInOld = 0;
         $positionInNew = 0;
         $operations = array();
-        $matches = $this->matchingBlocks();
-        $matches[] = new Match(count($this->oldWords), count($this->newWords), 0);
-        foreach ($matches as $i => $match) {
-            $matchStartsAtCurrentPositionInOld = ($positionInOld == $match->startInOld);
-            $matchStartsAtCurrentPositionInNew = ($positionInNew == $match->startInNew);
-            $action = 'none';
 
-            if ($matchStartsAtCurrentPositionInOld == false && $matchStartsAtCurrentPositionInNew == false) {
+        $matches   = $this->matchingBlocks();
+        $matches[] = new Match(count($this->oldWords), count($this->newWords), 0);
+
+        foreach ($matches as $i => $match) {
+            $matchStartsAtCurrentPositionInOld = ($positionInOld === $match->startInOld);
+            $matchStartsAtCurrentPositionInNew = ($positionInNew === $match->startInNew);
+
+            if ($matchStartsAtCurrentPositionInOld === false && $matchStartsAtCurrentPositionInNew === false) {
                 $action = 'replace';
-            } elseif ($matchStartsAtCurrentPositionInOld == true && $matchStartsAtCurrentPositionInNew == false) {
+            } elseif ($matchStartsAtCurrentPositionInOld === true && $matchStartsAtCurrentPositionInNew === false) {
                 $action = 'insert';
-            } elseif ($matchStartsAtCurrentPositionInOld == false && $matchStartsAtCurrentPositionInNew == true) {
+            } elseif ($matchStartsAtCurrentPositionInOld === false && $matchStartsAtCurrentPositionInNew === true) {
                 $action = 'delete';
             } else { // This occurs if the first few words are the same in both versions
                 $action = 'none';
             }
-            if ($action != 'none') {
+
+            if ($action !== 'none') {
                 $operations[] = new Operation($action, $positionInOld, $match->startInOld, $positionInNew, $match->startInNew);
             }
-            if (count($match) != 0) {
+
+            if (count($match) !== 0) {
                 $operations[] = new Operation('equal', $match->startInOld, $match->endInOld(), $match->startInNew, $match->endInNew());
             }
+
             $positionInOld = $match->endInOld();
             $positionInNew = $match->endInNew();
         }
@@ -742,11 +750,14 @@ class HtmlDiff extends AbstractDiff
     protected function findMatchingBlocks($startInOld, $endInOld, $startInNew, $endInNew, &$matchingBlocks)
     {
         $match = $this->findMatch($startInOld, $endInOld, $startInNew, $endInNew);
+
         if ($match !== null) {
             if ($startInOld < $match->startInOld && $startInNew < $match->startInNew) {
                 $this->findMatchingBlocks($startInOld, $match->startInOld, $startInNew, $match->startInNew, $matchingBlocks);
             }
+
             $matchingBlocks[] = $match;
+
             if ($match->endInOld() < $endInOld && $match->endInNew() < $endInNew) {
                 $this->findMatchingBlocks($match->endInOld(), $endInOld, $match->endInNew(), $endInNew, $matchingBlocks);
             }
@@ -760,9 +771,13 @@ class HtmlDiff extends AbstractDiff
      */
     protected function stripTagAttributes($word)
     {
-        $word = explode(' ', trim($word, '<>'));
+        $space = strpos($word, ' ', 1);
 
-        return '<'.$word[ 0 ].'>';
+        if ($space) {
+            return '<' . substr($word, 1, $space) . '>';
+        }
+
+        return trim($word, '<>');
     }
 
     /**
@@ -779,6 +794,7 @@ class HtmlDiff extends AbstractDiff
         $bestMatchInNew = $startInNew;
         $bestMatchSize = 0;
         $matchLengthAt = array();
+
         for ($indexInOld = $startInOld; $indexInOld < $endInOld; ++$indexInOld) {
             $newMatchLengthAt = array();
             $index = $this->oldWords[ $indexInOld ];
@@ -796,16 +812,15 @@ class HtmlDiff extends AbstractDiff
                 if ($indexInNew >= $endInNew) {
                     break;
                 }
+
                 $newMatchLength = (isset($matchLengthAt[ $indexInNew - 1 ]) ? $matchLengthAt[ $indexInNew - 1 ] : 0) + 1;
                 $newMatchLengthAt[ $indexInNew ] = $newMatchLength;
+
                 if ($newMatchLength > $bestMatchSize ||
                     (
                         $this->isGroupDiffs() &&
                         $bestMatchSize > 0 &&
-                        preg_match(
-                            '/^\s+$/',
-                            implode('', array_slice($this->oldWords, $bestMatchInOld, $bestMatchSize))
-                        )
+                        $this->isOnlyWhitespace($this->array_slice_cached($this->oldWords, $bestMatchInOld, $bestMatchSize))
                     )
                 ) {
                     $bestMatchInOld = $indexInOld - $newMatchLength + 1;
@@ -820,12 +835,42 @@ class HtmlDiff extends AbstractDiff
         if ($bestMatchSize != 0 &&
             (
                 !$this->isGroupDiffs() ||
-                !preg_match('/^\s+$/', implode('', array_slice($this->oldWords, $bestMatchInOld, $bestMatchSize)))
+                false == $this->isOnlyWhitespace($this->array_slice_cached($this->oldWords, $bestMatchInOld, $bestMatchSize))
             )
         ) {
             return new Match($bestMatchInOld, $bestMatchInNew, $bestMatchSize);
         }
 
-        return;
+        return null;
     }
+
+    /**
+     * @param string $str
+     *
+     * @return bool
+     */
+    protected function isOnlyWhitespace($str)
+    {
+        //  Slightly faster then using preg_match
+        return !(strlen(trim($str)) > 0);
+    }
+
+    protected function array_slice_cached($array, $offset, $length = null)
+    {
+        static $lastOffset;
+        static $lastLength;
+        static $cache = null;
+
+        if ($lastLength === $length && $lastOffset == $offset) {
+            return $cache;
+        }
+
+        $lastOffset = $offset;
+        $lastLength = $length;
+
+        $cache = implode('', array_slice($array, $offset, $length));
+
+        return $cache;
+    }
+
 }
