@@ -142,8 +142,6 @@ class HtmlDiff extends AbstractDiff
     {
         $this->oldIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->oldWords);
         $this->newIsolatedDiffTags = $this->createIsolatedDiffTagPlaceholders($this->newWords);
-
-        $this->fast = array_chunk($this->oldWords, 10);
     }
 
     /**
@@ -835,7 +833,7 @@ class HtmlDiff extends AbstractDiff
         if ($bestMatchSize != 0 &&
             (
                 !$this->isGroupDiffs() ||
-                false == $this->isOnlyWhitespace($this->array_slice_cached($this->oldWords, $bestMatchInOld, $bestMatchSize))
+                !$this->isOnlyWhitespace($this->array_slice_cached($this->oldWords, $bestMatchInOld, $bestMatchSize))
             )
         ) {
             return new Match($bestMatchInOld, $bestMatchInNew, $bestMatchSize);
@@ -852,17 +850,44 @@ class HtmlDiff extends AbstractDiff
     protected function isOnlyWhitespace($str)
     {
         //  Slightly faster then using preg_match
-        return !(strlen(trim($str)) > 0);
+        return $str !== "" && (strlen(trim($str)) === 0);
     }
 
-    protected function array_slice_cached($array, $offset, $length = null)
+    /**
+     * Special array_slice function that caches its last request.
+     *
+     * The diff algorithm seems to request the same information many times in a row.
+     * by returning the previous answer the algorithm preforms way faster.
+     *
+     * The result is a string instead of an array, this way we safe on the amount of
+     * memory intensive implode() calls.
+     *
+     * @param &$array
+     * @param $offset
+     * @param null $length
+     *
+     * @return string
+     */
+    protected function array_slice_cached(&$array, $offset, $length = null)
     {
-        static $lastOffset;
-        static $lastLength;
-        static $cache = null;
+        static $instanceId = null;
+        static $lastOffset = null;
+        static $lastLength = null;
+        static $cache      = null;
 
-        if ($lastLength === $length && $lastOffset == $offset) {
+        if (
+            $cache !== null &&
+            isset($array['cacheToken']) && $array['cacheToken'] === $instanceId &&
+            $lastLength === $length &&
+            $lastOffset === $offset
+        ) { // Hit
             return $cache;
+        } // Miss
+
+        if (!isset($array['cacheToken']) || isset($array['cacheToken']) && $array['cacheToken'] !== $instanceId) {
+            $instanceId = uniqid('instance', true);
+
+            $array['cacheToken'] = $instanceId;
         }
 
         $lastOffset = $offset;
@@ -872,5 +897,4 @@ class HtmlDiff extends AbstractDiff
 
         return $cache;
     }
-
 }

@@ -12,8 +12,8 @@ class PerformanceTest extends \PHPUnit_Framework_TestCase
     public function testParagraphPerformance()
     {
         $diff = new HtmlDiff(
-            file_get_contents(__DIR__ . '/../../../../fixtures/Xml/paragraphs.html'),
-            file_get_contents(__DIR__ . '/../../../../fixtures/Xml/paragraphs_changed.html'),
+            file_get_contents(__DIR__ . '/../../../../fixtures/Performance/paragraphs.html'),
+            file_get_contents(__DIR__ . '/../../../../fixtures/Performance/paragraphs_changed.html'),
             'UTF-8', array()
         );
 
