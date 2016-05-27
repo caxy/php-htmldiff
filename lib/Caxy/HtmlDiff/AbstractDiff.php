@@ -74,6 +74,12 @@ abstract class AbstractDiff
     protected $purifierConfig = null;
 
     /**
+     * @see array_slice_cached();
+     * @var bool
+     */
+    protected $resetCache = false;
+
+    /**
      * AbstractDiff constructor.
      *
      * @param string     $oldText
@@ -423,8 +429,26 @@ abstract class AbstractDiff
 
     protected function splitInputsToWords()
     {
-        $this->oldWords = $this->convertHtmlToListOfWords($this->explode($this->oldText));
-        $this->newWords = $this->convertHtmlToListOfWords($this->explode($this->newText));
+        $this->setOldWords($this->convertHtmlToListOfWords($this->explode($this->oldText)));
+        $this->setNewWords($this->convertHtmlToListOfWords($this->explode($this->newText)));
+    }
+
+    /**
+     * @param array $oldWords
+     */
+    protected function setOldWords(array $oldWords)
+    {
+        $this->resetCache = true;
+        $this->oldWords   = $oldWords;
+    }
+
+    /**
+     * @param array $newWords
+     */
+    protected function setNewWords(array $newWords)
+    {
+        $this->resetCache = true;
+        $this->newWords   = $newWords;
     }
 
     /**

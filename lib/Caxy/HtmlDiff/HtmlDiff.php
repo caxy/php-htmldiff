@@ -850,7 +850,7 @@ class HtmlDiff extends AbstractDiff
     protected function isOnlyWhitespace($str)
     {
         //  Slightly faster then using preg_match
-        return $str !== "" && (strlen(trim($str)) === 0);
+        return $str !== '' && (strlen(trim($str)) === 0);
     }
 
     /**
@@ -862,33 +862,31 @@ class HtmlDiff extends AbstractDiff
      * The result is a string instead of an array, this way we safe on the amount of
      * memory intensive implode() calls.
      *
-     * @param &$array
-     * @param $offset
-     * @param null $length
+     * @param array         &$array
+     * @param integer       $offset
+     * @param integer|null  $length
      *
      * @return string
      */
     protected function array_slice_cached(&$array, $offset, $length = null)
     {
-        static $instanceId = null;
         static $lastOffset = null;
         static $lastLength = null;
         static $cache      = null;
 
+        if ($this->resetCache === true) {
+            $cache = null;
+
+            $this->resetCache = false;
+        }
+
         if (
             $cache !== null &&
-            isset($array['cacheToken']) && $array['cacheToken'] === $instanceId &&
             $lastLength === $length &&
             $lastOffset === $offset
         ) { // Hit
             return $cache;
         } // Miss
-
-        if (!isset($array['cacheToken']) || isset($array['cacheToken']) && $array['cacheToken'] !== $instanceId) {
-            $instanceId = uniqid('instance', true);
-
-            $array['cacheToken'] = $instanceId;
-        }
 
         $lastOffset = $offset;
         $lastLength = $length;
