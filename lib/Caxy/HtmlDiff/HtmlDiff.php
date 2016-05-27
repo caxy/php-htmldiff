@@ -874,6 +874,8 @@ class HtmlDiff extends AbstractDiff
         static $lastLength = null;
         static $cache      = null;
 
+        // PHP has no support for by-reference comparing.
+        // to prevent false positive hits, reset the cache when the oldWords or newWords is changed.
         if ($this->resetCache === true) {
             $cache = null;
 
