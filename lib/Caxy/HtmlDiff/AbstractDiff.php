@@ -119,8 +119,6 @@ abstract class AbstractDiff
      */
     public function initPurifier($defaultPurifierSerializerCache = null)
     {
-        $HTMLPurifierConfig = null;
-
         if (null !== $this->purifierConfig) {
             $HTMLPurifierConfig  = $this->purifierConfig;
         } else {
