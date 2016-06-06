@@ -3,9 +3,10 @@
 namespace Caxy\Tests\HtmlDiff\Functional;
 
 use Caxy\HtmlDiff\HtmlDiff;
+use Caxy\Tests\AbstractTest;
 use Caxy\Tests\HtmlDiff\HtmlFileIterator;
 
-class HtmlDiffFunctionalTest extends \PHPUnit_Framework_TestCase
+class HtmlDiffFunctionalTest extends AbstractTest
 {
     /**
      * @dataProvider diffContentProvider
@@ -25,16 +26,5 @@ class HtmlDiffFunctionalTest extends \PHPUnit_Framework_TestCase
     public function diffContentProvider()
     {
         return new HtmlFileIterator(__DIR__.'/../../../../fixtures/HtmlDiff');
-    }
-
-    protected function stripExtraWhitespaceAndNewLines($text)
-    {
-        return trim(
-            preg_replace(
-                '/>\s+</',
-                '><',
-                preg_replace('/\s+/S', " ", preg_replace("/[\n\r]/", '', $text))
-            )
-        );
     }
 }

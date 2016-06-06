@@ -4,8 +4,9 @@ namespace Caxy\Tests\HtmlDiff\Functional;
 
 use Caxy\HtmlDiff\HtmlDiff;
 use Caxy\HtmlDiff\HtmlDiffConfig;
+use Caxy\Tests\AbstractTest;
 
-class HTMLPurifierConfigTest extends \PHPUnit_Framework_TestCase
+class HTMLPurifierConfigTest extends AbstractTest
 {
     /**
      * @var \HTMLPurifier_Config
