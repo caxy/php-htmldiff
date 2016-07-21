@@ -1,0 +1,29 @@
+<oldText>
+    <table class="Standaardtabel">
+        <tbody>
+        <tr>
+            <td> </td>
+            <td>DDD</td>
+            <td>ABC</td>
+            <td>DEF</td>
+        </tr>
+        </tbody>
+    </table>
+</oldText>
+
+<newText>
+    <table class="Standaardtabel">
+        <tbody>
+        <tr>
+            <td> </td>
+            <td>ZXY</td>
+            <td>ABC</td>
+            <td>DEF</td>
+        </tr>
+        </tbody>
+    </table>
+</newText>
+
+<expected>
+    <table class="Standaardtabel"><tr><td rowspan="1" colspan="1"><span class="empty"></span></td><td rowspan="1" colspan="1"><del class="diffmod">DDD </del><ins class="diffmod">ZXY </ins></td><td rowspan="1" colspan="1"><p>ABC</p></td><td rowspan="1" colspan="1"><p>DEF</p></td></tr></table>
+</expected>
