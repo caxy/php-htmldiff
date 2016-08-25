@@ -436,7 +436,7 @@ class ListDiff extends HtmlDiff
     {
         // Add the opening parent node from listType. So if ol, <ol>, etc.
         $this->content = $this->addListTypeWrapper();
-        
+
         $oldIndexCount = 0;
         $diffOrderNewKeys = array_keys($this->diffOrderIndex['new']);
         foreach ($this->diffOrderIndex['new'] as $key => $index) {
@@ -452,7 +452,11 @@ class ListDiff extends HtmlDiff
                 }
                 
                 $match = $this->getArrayByColumnValue($this->textMatches, 'new', $index['position']);
-                $newList = $this->childLists['new'][$match['new']];
+                if ($match && $match['new'] !== null) {
+                    $newList = $this->childLists['new'][$match['new']];
+                } else {
+                    $newList = '';
+                }
                 $oldList = $this->getListByMatch($match, 'old');
                 $this->content .= $this->addListElementToContent($newList, $oldList, $match);
             }
