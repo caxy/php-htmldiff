@@ -170,6 +170,7 @@ you agree to abide by its terms. See [CODE_OF_CONDUCT][code_of_conduct] file.
 
 ## Credits
 
+* [SavageTiger][] for contributing many improvements and fixes to caxy/php-htmldiff! 
 * [rashid2538][] for the port to PHP and the base for our project: [rashid2538/php-htmldiff][upstream]
 * [willdurand][] for an excellent post on [open sourcing libraries][].
 Much of this documentation is based off of the examples in the post.
@@ -196,6 +197,7 @@ php-htmldiff is available under [GNU General Public License, version 2][gnu]. Se
 [code_of_conduct]: https://github.com/caxy/php-htmldiff/blob/master/CODE_OF_CONDUCT.md
 [composer]: http://getcomposer.org/
 [contributor_covenant]: http://contributor-covenant.org/
+[SavageTiger]: https://github.com/SavageTiger
 [rashid2538]: https://github.com/rashid2538
 [willdurand]: https://github.com/willdurand
 [open sourcing libraries]: http://williamdurand.fr/2013/07/04/on-open-sourcing-libraries/
