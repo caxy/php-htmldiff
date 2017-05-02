@@ -60,7 +60,7 @@ class LcsService
             }
         }
 
-        $lcs = array_pad([], $m + 1, 0);
+        $lcs = array_pad(array(), $m + 1, 0);
         $this->compileMatches($c, $a, $b, $m, $n, $lcs);
 
         return $lcs;
