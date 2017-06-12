@@ -24,7 +24,8 @@ class HTMLPurifierConfigTest extends AbstractTest
 
         $this->config->expects($this->atLeastOnce())
             ->method('set')
-            ->with('Cache.SerializerPath', '/tmp');
+            ->with($this->anything(), $this->anything())
+        ;
 
         $this->config->expects($this->any())
             ->method('getHTMLDefinition')
