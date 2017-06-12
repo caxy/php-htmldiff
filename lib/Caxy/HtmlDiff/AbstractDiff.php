@@ -132,6 +132,11 @@ abstract class AbstractDiff
             $HTMLPurifierConfig->set('Cache.SerializerPath', $defaultPurifierSerializerCache);
         }
 
+        // Cache.SerializerPermissions defaults to 0744.
+        // This setting allows the cache files to be deleted by any user, as they are typically
+        // created by the web/php user (www-user, php-fpm, etc.)
+        $HTMLPurifierConfig->set('Cache.SerializerPermissions', 0777);
+
         $this->purifier = new \HTMLPurifier($HTMLPurifierConfig);
     }
 
