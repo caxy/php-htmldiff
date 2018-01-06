@@ -2,7 +2,7 @@
 
 namespace Caxy\HtmlDiff;
 
-class Match
+class Match implements \Countable
 {
     public $startInOld;
     public $startInNew;
@@ -23,5 +23,9 @@ class Match
     public function endInNew()
     {
         return $this->startInNew + $this->size;
+    }
+
+    public function count() {
+        return (int)$this->size;
     }
 }

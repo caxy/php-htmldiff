@@ -474,6 +474,7 @@ abstract class AbstractDiff
         $mode = 'character';
         $current_word = '';
         $words = array();
+        $keepNewLines = $this->getConfig()->isKeepNewLines();
         foreach ($characterString as $i => $character) {
             switch ($mode) {
                 case 'character':
@@ -488,7 +489,7 @@ abstract class AbstractDiff
                     if ($current_word !== '') {
                         $words[] = $current_word;
                     }
-                    $current_word = preg_replace('/\s+/S', ' ', $character);
+                    $current_word = $keepNewLines ? $character : preg_replace('/\s+/S', ' ', $character);
                     $mode = 'whitespace';
                 } else {
                     if (
@@ -526,7 +527,7 @@ abstract class AbstractDiff
                     $mode = 'tag';
                 } elseif (preg_match("/\s/", $character)) {
                     $current_word .= $character;
-                    $current_word = preg_replace('/\s+/S', ' ', $current_word);
+                    if (!$keepNewLines) $current_word = preg_replace('/\s+/S', ' ', $current_word);
                 } else {
                     if ($current_word != '') {
                         $words[] = $current_word;

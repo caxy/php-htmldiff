@@ -567,7 +567,7 @@ class HtmlDiff extends AbstractDiff
                     }
                 }
             }
-            if (count($words) == 0 && count($specialCaseTagInjection) == 0) {
+            if (count($words) == 0 && strlen($specialCaseTagInjection) == 0) {
                 break;
             }
             if ($specialCaseTagInjectionIsBefore) {
