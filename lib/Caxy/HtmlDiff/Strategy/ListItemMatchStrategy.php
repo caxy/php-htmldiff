@@ -63,20 +63,20 @@ class ListItemMatchStrategy implements MatchStrategyInterface
         // Check common prefix/ suffix length
         $aCleaned = trim($aStripped);
         $bCleaned = trim($bStripped);
-        if (strlen($aCleaned) === 0 || strlen($bCleaned) === 0) {
+        if (mb_strlen($aCleaned) === 0 || mb_strlen($bCleaned) === 0) {
             $aCleaned = $a;
             $bCleaned = $b;
         }
-        if (strlen($aCleaned) === 0 || strlen($bCleaned) === 0) {
+        if (mb_strlen($aCleaned) === 0 || mb_strlen($bCleaned) === 0) {
             return false;
         }
         $prefixIndex = Preprocessor::diffCommonPrefix($aCleaned, $bCleaned);
         $suffixIndex = Preprocessor::diffCommonSuffix($aCleaned, $bCleaned);
 
         // Use shorter string, and see how much of it is leftover
-        $len = min(strlen($aCleaned), strlen($bCleaned));
+        $len = min(mb_strlen($aCleaned), mb_strlen($bCleaned));
         $remaining = $len - ($prefixIndex + $suffixIndex);
-        $strLengthPercent = $len / max(strlen($a), strlen($b));
+        $strLengthPercent = $len / max(mb_strlen($a), mb_strlen($b));
 
         if ($remaining === 0 && $strLengthPercent > $this->lengthRatioThreshold) {
             return true;

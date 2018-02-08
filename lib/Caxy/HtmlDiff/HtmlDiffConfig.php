@@ -345,7 +345,7 @@ class HtmlDiffConfig
     public function addIsolatedDiffTag($tag, $placeholder = null)
     {
         if (null === $placeholder) {
-            $placeholder = sprintf('[[REPLACE_%s]]', strtoupper($tag));
+            $placeholder = sprintf('[[REPLACE_%s]]', mb_strtoupper($tag));
         }
 
         if ($this->isIsolatedDiffTag($tag) && $this->isolatedDiffTags[$tag] !== $placeholder) {
