@@ -158,7 +158,7 @@ class HtmlDiff extends AbstractDiff
         foreach ($words as $index => $word) {
             $openIsolatedDiffTag = $this->isOpeningIsolatedDiffTag($word, $currentIsolatedDiffTag);
             if ($openIsolatedDiffTag) {
-                if ($this->isSelfClosingTag($word) || stripos($word, '<img') !== false) {
+                if ($this->isSelfClosingTag($word) || mb_stripos($word, '<img') !== false) {
                     if ($openIsolatedDiffTags === 0) {
                         $isolatedDiffTagIndices[] = array(
                             'start' => $index,
@@ -205,7 +205,7 @@ class HtmlDiff extends AbstractDiff
         $tagsToMatch = $currentIsolatedDiffTag !== null
             ? array($currentIsolatedDiffTag => $this->config->getIsolatedDiffTagPlaceholder($currentIsolatedDiffTag))
             : $this->config->getIsolatedDiffTags();
-        $pattern = '#<%s(\s+[^>]*)?>#iU';
+        $pattern = '#<%s(\s+[^>]*)?>#iUu';
         foreach ($tagsToMatch as $key => $value) {
             if (preg_match(sprintf($pattern, $key), $item)) {
                 return $key;
@@ -217,7 +217,7 @@ class HtmlDiff extends AbstractDiff
 
     protected function isSelfClosingTag($text)
     {
-        return (bool) preg_match('/<[^>]+\/\s*>/', $text);
+        return (bool) preg_match('/<[^>]+\/\s*>/u', $text);
     }
 
     /**
@@ -231,7 +231,7 @@ class HtmlDiff extends AbstractDiff
         $tagsToMatch = $currentIsolatedDiffTag !== null
             ? array($currentIsolatedDiffTag => $this->config->getIsolatedDiffTagPlaceholder($currentIsolatedDiffTag))
             : $this->config->getIsolatedDiffTags();
-        $pattern = '#</%s(\s+[^>]*)?>#iU';
+        $pattern = '#</%s(\s+[^>]*)?>#iUu';
         foreach ($tagsToMatch as $key => $value) {
             if (preg_match(sprintf($pattern, $key), $item)) {
                 return $key;
@@ -354,7 +354,7 @@ class HtmlDiff extends AbstractDiff
         $wrapEnd = '';
 
         if ($stripWrappingTags) {
-            $pattern = '/(^<[^>]+>)|(<\/[^>]+>$)/i';
+            $pattern = '/(^<[^>]+>)|(<\/[^>]+>$)/iu';
             $matches = array();
 
             if (preg_match_all($pattern, $newText, $matches)) {
@@ -441,7 +441,7 @@ class HtmlDiff extends AbstractDiff
     protected function getAttributeFromTag($text, $attribute)
     {
         $matches = array();
-        if (preg_match(sprintf('/<[^>]*\b%s\s*=\s*([\'"])(.*)\1[^>]*>/i', $attribute), $text, $matches)) {
+        if (preg_match(sprintf('/<[^>]*\b%s\s*=\s*([\'"])(.*)\1[^>]*>/iu', $attribute), $text, $matches)) {
             return htmlspecialchars_decode($matches[2]);
         }
 
@@ -567,7 +567,7 @@ class HtmlDiff extends AbstractDiff
                     }
                 }
             }
-            if (count($words) == 0 && strlen($specialCaseTagInjection) == 0) {
+            if (count($words) == 0 && mb_strlen($specialCaseTagInjection) == 0) {
                 break;
             }
             if ($specialCaseTagInjectionIsBefore) {
@@ -575,7 +575,7 @@ class HtmlDiff extends AbstractDiff
             } else {
                 $workTag = $this->extractConsecutiveWords($words, 'tag');
                 if (isset($workTag[ 0 ]) && $this->isOpeningTag($workTag[ 0 ]) && !$this->isClosingTag($workTag[ 0 ])) {
-                    if (strpos($workTag[ 0 ], 'class=')) {
+                    if (mb_strpos($workTag[ 0 ], 'class=')) {
                         $workTag[ 0 ] = str_replace('class="', 'class="diffmod ', $workTag[ 0 ]);
                         $workTag[ 0 ] = str_replace("class='", 'class="diffmod ', $workTag[ 0 ]);
                     } else {
@@ -584,7 +584,7 @@ class HtmlDiff extends AbstractDiff
                 }
 
                 $appendContent = implode('', $workTag).$specialCaseTagInjection;
-                if (isset($workTag[0]) && false !== stripos($workTag[0], '<img')) {
+                if (isset($workTag[0]) && false !== mb_stripos($workTag[0], '<img')) {
                     $appendContent = $this->wrapText($appendContent, $tag, $cssClass);
                 }
                 $this->content .= $appendContent;
@@ -673,7 +673,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function isOpeningTag($item)
     {
-        return preg_match('#<[^>]+>\\s*#iU', $item);
+        return preg_match('#<[^>]+>\\s*#iUu', $item);
     }
 
     /**
@@ -683,7 +683,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function isClosingTag($item)
     {
-        return preg_match('#</[^>]+>\\s*#iU', $item);
+        return preg_match('#</[^>]+>\\s*#iUu', $item);
     }
 
     /**
@@ -769,10 +769,10 @@ class HtmlDiff extends AbstractDiff
      */
     protected function stripTagAttributes($word)
     {
-        $space = strpos($word, ' ', 1);
+        $space = mb_strpos($word, ' ', 1);
 
         if ($space) {
-            return '<' . substr($word, 1, $space) . '>';
+            return '<' . mb_substr($word, 1, $space) . '>';
         }
 
         return trim($word, '<>');
@@ -850,7 +850,7 @@ class HtmlDiff extends AbstractDiff
     protected function isOnlyWhitespace($str)
     {
         //  Slightly faster then using preg_match
-        return $str !== '' && (strlen(trim($str)) === 0);
+        return $str !== '' && (mb_strlen(trim($str)) === 0);
     }
 
     /**
