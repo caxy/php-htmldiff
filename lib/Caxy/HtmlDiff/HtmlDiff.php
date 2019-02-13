@@ -850,7 +850,7 @@ class HtmlDiff extends AbstractDiff
     protected function isOnlyWhitespace($str)
     {
         //  Slightly faster then using preg_match
-        return $str !== '' && ($this->stringUtil->strlen(trim($str)) === 0);
+        return $str !== '' && trim($str) === '';
     }
 
     /**
