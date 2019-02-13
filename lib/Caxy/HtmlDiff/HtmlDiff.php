@@ -543,7 +543,7 @@ class HtmlDiff extends AbstractDiff
             $specialCaseTagInjection = '';
             $specialCaseTagInjectionIsBefore = false;
 
-            if (count($nonTags) != 0) {
+            if (count($nonTags) !== 0) {
                 $text = $this->wrapText(implode('', $nonTags), $tag, $cssClass);
                 $this->content .= $text;
             } else {
@@ -788,6 +788,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function findMatch($startInOld, $endInOld, $startInNew, $endInNew)
     {
+        $groupDiffs     = $this->isGroupDiffs();
         $bestMatchInOld = $startInOld;
         $bestMatchInNew = $startInNew;
         $bestMatchSize = 0;
@@ -816,7 +817,7 @@ class HtmlDiff extends AbstractDiff
 
                 if ($newMatchLength > $bestMatchSize ||
                     (
-                        $this->isGroupDiffs() &&
+                        $groupDiffs &&
                         $bestMatchSize > 0 &&
                         $this->isOnlyWhitespace($this->array_slice_cached($this->oldWords, $bestMatchInOld, $bestMatchSize))
                     )
@@ -830,9 +831,9 @@ class HtmlDiff extends AbstractDiff
         }
 
         // Skip match if none found or match consists only of whitespace
-        if ($bestMatchSize != 0 &&
+        if ($bestMatchSize !== 0 &&
             (
-                !$this->isGroupDiffs() ||
+                !$groupDiffs ||
                 !$this->isOnlyWhitespace($this->array_slice_cached($this->oldWords, $bestMatchInOld, $bestMatchSize))
             )
         ) {

@@ -469,7 +469,7 @@ abstract class AbstractDiff
                     $mode = 'whitespace';
                 } else {
                     if (
-                        (($this->ctypeAlphanumUnicode($character)) && ($this->stringUtil->strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
+                        (($this->ctypeAlphanumUnicode($character) === true) && ($this->stringUtil->strlen($current_word) === 0 || $this->isPartOfWord($current_word))) ||
                         (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
                     ) {
                         $current_word .= $character;
@@ -530,7 +530,7 @@ abstract class AbstractDiff
      */
     protected function isStartOfTag($val)
     {
-        return $val == '<';
+        return $val === '<';
     }
 
     /**
@@ -540,7 +540,7 @@ abstract class AbstractDiff
      */
     protected function isEndOfTag($val)
     {
-        return $val == '>';
+        return $val === '>';
     }
 
     /**
@@ -571,6 +571,6 @@ abstract class AbstractDiff
      */
     protected function ctypeAlphanumUnicode($str)
     {
-        return preg_match("/^[a-zA-Z0-9\pL]+$/u", $str);
+        return preg_match("/^[a-zA-Z0-9\pL]+$/u", $str) === 1;
     }
 }
