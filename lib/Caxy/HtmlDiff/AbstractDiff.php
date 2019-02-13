@@ -2,6 +2,8 @@
 
 namespace Caxy\HtmlDiff;
 
+use Caxy\HtmlDiff\Util\MbStringUtil;
+
 /**
  * Class AbstractDiff.
  */
@@ -80,6 +82,11 @@ abstract class AbstractDiff
     protected $resetCache = false;
 
     /**
+     * @var MbStringUtil
+     */
+    protected $stringUtil;
+
+    /**
      * AbstractDiff constructor.
      *
      * @param string     $oldText
@@ -90,7 +97,7 @@ abstract class AbstractDiff
      */
     public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
     {
-        mb_substitute_character(0x20);
+        $this->stringUtil = new MbStringUtil($oldText, $newText);
 
         $this->setConfig(HtmlDiffConfig::create()->setEncoding($encoding));
 
@@ -493,7 +500,7 @@ abstract class AbstractDiff
                     $mode = 'whitespace';
                 } else {
                     if (
-                        (($this->ctypeAlphanumUnicode($character)) && (mb_strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
+                        (($this->ctypeAlphanumUnicode($character)) && ($this->stringUtil->strlen($current_word) == 0 || $this->isPartOfWord($current_word))) ||
                         (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
                     ) {
                         $current_word .= $character;

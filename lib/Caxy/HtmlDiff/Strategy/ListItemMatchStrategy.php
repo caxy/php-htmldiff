@@ -3,9 +3,15 @@
 namespace Caxy\HtmlDiff\Strategy;
 
 use Caxy\HtmlDiff\Preprocessor;
+use Caxy\HtmlDiff\Util\MbStringUtil;
 
 class ListItemMatchStrategy implements MatchStrategyInterface
 {
+    /**
+     * @var MbStringUtil
+     */
+    protected $stringUtil;
+
     /**
      * @var int
      */
@@ -24,12 +30,14 @@ class ListItemMatchStrategy implements MatchStrategyInterface
     /**
      * ListItemMatchStrategy constructor.
      *
-     * @param int   $similarityThreshold
-     * @param float $lengthRatioThreshold
-     * @param float $commonTextRatioThreshold
+     * @param MbStringUtil $stringUtil
+     * @param int          $similarityThreshold
+     * @param float        $lengthRatioThreshold
+     * @param float        $commonTextRatioThreshold
      */
-    public function __construct($similarityThreshold = 80, $lengthRatioThreshold = 0.1, $commonTextRatioThreshold = 0.6)
+    public function __construct($stringUtil, $similarityThreshold = 80, $lengthRatioThreshold = 0.1, $commonTextRatioThreshold = 0.6)
     {
+        $this->stringUtil = $stringUtil;
         $this->similarityThreshold = $similarityThreshold;
         $this->lengthRatioThreshold = $lengthRatioThreshold;
         $this->commonTextRatioThreshold = $commonTextRatioThreshold;
@@ -63,20 +71,20 @@ class ListItemMatchStrategy implements MatchStrategyInterface
         // Check common prefix/ suffix length
         $aCleaned = trim($aStripped);
         $bCleaned = trim($bStripped);
-        if (mb_strlen($aCleaned) === 0 || mb_strlen($bCleaned) === 0) {
+        if ($this->stringUtil->strlen($aCleaned) === 0 || $this->stringUtil->strlen($bCleaned) === 0) {
             $aCleaned = $a;
             $bCleaned = $b;
         }
-        if (mb_strlen($aCleaned) === 0 || mb_strlen($bCleaned) === 0) {
+        if ($this->stringUtil->strlen($aCleaned) === 0 || $this->stringUtil->strlen($bCleaned) === 0) {
             return false;
         }
-        $prefixIndex = Preprocessor::diffCommonPrefix($aCleaned, $bCleaned);
-        $suffixIndex = Preprocessor::diffCommonSuffix($aCleaned, $bCleaned);
+        $prefixIndex = Preprocessor::diffCommonPrefix($aCleaned, $bCleaned, $this->stringUtil);
+        $suffixIndex = Preprocessor::diffCommonSuffix($aCleaned, $bCleaned, $this->stringUtil);
 
         // Use shorter string, and see how much of it is leftover
-        $len = min(mb_strlen($aCleaned), mb_strlen($bCleaned));
+        $len = min($this->stringUtil->strlen($aCleaned), $this->stringUtil->strlen($bCleaned));
         $remaining = $len - ($prefixIndex + $suffixIndex);
-        $strLengthPercent = $len / max(mb_strlen($a), mb_strlen($b));
+        $strLengthPercent = $len / max($this->stringUtil->strlen($a), $this->stringUtil->strlen($b));
 
         if ($remaining === 0 && $strLengthPercent > $this->lengthRatioThreshold) {
             return true;
