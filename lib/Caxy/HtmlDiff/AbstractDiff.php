@@ -397,43 +397,12 @@ abstract class AbstractDiff
     }
 
     /**
-     * @param string $str
-     * @param string $start
-     * @param string $end
-     *
-     * @return string
-     */
-    protected function getStringBetween($str, $start, $end)
-    {
-        $expStr = mb_split($start, $str, 2);
-        if (count($expStr) > 1) {
-            $expStr = mb_split($end, $expStr[ 1 ]);
-            if (count($expStr) > 1) {
-                array_pop($expStr);
-
-                return implode($end, $expStr);
-            }
-        }
-
-        return '';
-    }
-
-    /**
      * @param string $html
      *
      * @return string
      */
     protected function purifyHtml($html)
     {
-        if (class_exists('Tidy') && false) {
-            $config = array('output-xhtml' => true, 'indent' => false);
-            $tidy = new tidy();
-            $tidy->parseString($html, $config, 'utf8');
-            $html = (string) $tidy;
-
-            return $this->getStringBetween($html, '<body>');
-        }
-
         return $this->purifier->purify($html);
     }
 
