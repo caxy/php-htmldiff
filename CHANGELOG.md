@@ -1,5 +1,12 @@
 # Change Log
 
+## [v0.1.9](https://github.com/caxy/php-htmldiff/tree/v0.1.9) (2019-02-20)
+[Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.8...v0.1.9)
+
+**Merged pull requests:**
+
+- Issue \#77: Performance Fixes [\#81](https://github.com/caxy/php-htmldiff/pull/81) ([SavageTiger](https://github.com/SavageTiger))
+
 ## [v0.1.8](https://github.com/caxy/php-htmldiff/tree/v0.1.8) (2019-01-15)
 [Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.7...v0.1.8)
 
