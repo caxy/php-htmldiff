@@ -4,22 +4,22 @@ namespace Caxy\HtmlDiff;
 
 class Preprocessor
 {
-    public static function diffCommonPrefix($old, $new)
+    public static function diffCommonPrefix($old, $new, $stringUtil)
     {
         // Quick check for common null cases.
-        if (mb_strlen($old) == 0 || mb_strlen($new) == 0 || mb_substr($old, 0, 1) != mb_substr($new, 0, 1)) {
+        if ($stringUtil->strlen($old) == 0 || $stringUtil->strlen($new) == 0 || $stringUtil->substr($old, 0, 1) != $stringUtil->substr($new, 0, 1)) {
             return 0;
         }
 
         // Binary Search
         $pointerMin = 0;
-        $pointerMax = min(mb_strlen($old), mb_strlen($new));
+        $pointerMax = min($stringUtil->strlen($old), $stringUtil->strlen($new));
         $pointerMid = $pointerMax;
         $pointerStart = 0;
         while ($pointerMin < $pointerMid) {
             $cmp = substr_compare(
                 $old,
-                mb_substr($new, $pointerStart, $pointerMid - $pointerStart),
+                $stringUtil->substr($new, $pointerStart, $pointerMid - $pointerStart),
                 $pointerStart,
                 $pointerMid - $pointerStart
             );
@@ -34,22 +34,22 @@ class Preprocessor
         return $pointerMid;
     }
 
-    public static function diffCommonSuffix($old, $new)
+    public static function diffCommonSuffix($old, $new, $stringUtil)
     {
         // Quick check for common null cases.
-        if (mb_strlen($old) == 0 || mb_strlen($new) == 0 || mb_substr($old, mb_strlen($old) - 1, 1) != mb_substr($new, mb_strlen($new) - 1, 1)) {
+        if ($stringUtil->strlen($old) == 0 || $stringUtil->strlen($new) == 0 || $stringUtil->substr($old, $stringUtil->strlen($old) - 1, 1) != $stringUtil->substr($new, $stringUtil->strlen($new) - 1, 1)) {
             return 0;
         }
 
         // Binary Search
         $pointerMin = 0;
-        $pointerMax = min(mb_strlen($old), mb_strlen($new));
+        $pointerMax = min($stringUtil->strlen($old), $stringUtil->strlen($new));
         $pointerMid = $pointerMax;
         $pointerEnd = 0;
-        $oldLen = mb_strlen($old);
-        $newLen = mb_strlen($new);
+        $oldLen = $stringUtil->strlen($old);
+        $newLen = $stringUtil->strlen($new);
         while ($pointerMin < $pointerMid) {
-            if (mb_substr($old, $oldLen - $pointerMid, $pointerMid - $pointerEnd) == mb_substr($new, $newLen - $pointerMid, $pointerMid - $pointerEnd)) {
+            if ($stringUtil->substr($old, $oldLen - $pointerMid, $pointerMid - $pointerEnd) == $stringUtil->substr($new, $newLen - $pointerMid, $pointerMid - $pointerEnd)) {
                 $pointerMin = $pointerMid;
                 $pointerEnd = $pointerMin;
             } else {

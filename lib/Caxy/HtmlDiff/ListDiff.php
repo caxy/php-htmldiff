@@ -233,7 +233,7 @@ class ListDiff extends AbstractDiff
                         $list[] = $word;
                     }
                 } else {
-                    $listType = mb_substr($word, 1, 2);
+                    $listType = $this->stringUtil->substr($word, 1, 2);
                     $listStartTag = $word;
                 }
 
@@ -254,7 +254,7 @@ class ListDiff extends AbstractDiff
                 if ($openListItems === 0) {
                     // New top-level list item
                     $currentListItem = array();
-                    $listItemType = mb_substr($word, 1, 2);
+                    $listItemType = $this->stringUtil->substr($word, 1, 2);
                     $listItemStart = $word;
                 } else {
                     $currentListItem[] = $word;
@@ -290,27 +290,27 @@ class ListDiff extends AbstractDiff
     {
         $filter = $type !== null ? array('<'.$type) : array('<ul', '<ol', '<dl');
 
-        return in_array(mb_substr($word, 0, 3), $filter);
+        return in_array($this->stringUtil->substr($word, 0, 3), $filter);
     }
 
     protected function isClosingListTag($word, $type = null)
     {
         $filter = $type !== null ? array('</'.$type) : array('</ul', '</ol', '</dl');
 
-        return in_array(mb_substr($word, 0, 4), $filter);
+        return in_array($this->stringUtil->substr($word, 0, 4), $filter);
     }
 
     protected function isOpeningListItemTag($word, $type = null)
     {
         $filter = $type !== null ? array('<'.$type) : array('<li', '<dd', '<dt');
 
-        return in_array(mb_substr($word, 0, 3), $filter);
+        return in_array($this->stringUtil->substr($word, 0, 3), $filter);
     }
 
     protected function isClosingListItemTag($word, $type = null)
     {
         $filter = $type !== null ? array('</'.$type) : array('</li', '</dd', '</dt');
 
-        return in_array(mb_substr($word, 0, 4), $filter);
+        return in_array($this->stringUtil->substr($word, 0, 4), $filter);
     }
 }
