@@ -154,6 +154,10 @@ $config
         'i'      => '[[REPLACE_I]]',
         'a'      => '[[REPLACE_A]]',
     ))
+    
+    // Sets whether newline characters are kept or removed when `$htmlDiff->build()` is called.
+    // For example, if your content includes <pre> tags, you might want to set this to true.
+    ->setKeepNewLines(false)
 ;
 
 ```
