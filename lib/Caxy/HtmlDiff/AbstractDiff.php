@@ -66,7 +66,7 @@ abstract class AbstractDiff
     protected $diffCaches = array();
 
     /**
-     * @var \HTMLPurifier
+     * @var \HTMLPurifier|null
      */
     protected $purifier;
 
@@ -154,6 +154,10 @@ abstract class AbstractDiff
      */
     protected function prepare()
     {
+        if (false === $this->config->isPurifierEnabled()) {
+            return;
+        }
+
         $this->initPurifier($this->config->getPurifierCacheLocation());
 
         $this->oldText = $this->purifyHtml($this->oldText);
@@ -403,6 +407,10 @@ abstract class AbstractDiff
      */
     protected function purifyHtml($html)
     {
+        if (null === $this->purifier) {
+            return $html;
+        }
+
         return $this->purifier->purify($html);
     }
 
