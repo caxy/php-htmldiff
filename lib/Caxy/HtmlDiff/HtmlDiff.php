@@ -534,7 +534,7 @@ class HtmlDiff extends AbstractDiff
     protected function insertTag($tag, $cssClass, &$words)
     {
         while (true) {
-            if (!is_countable($words) || count($words) == 0) {
+            if (!is_array($words) || count($words) == 0) {
                 break;
             }
 
@@ -567,7 +567,7 @@ class HtmlDiff extends AbstractDiff
                     }
                 }
             }
-            if ((!is_countable($words) || count($words) == 0) && $this->stringUtil->strlen($specialCaseTagInjection) == 0) {
+            if ((!is_array($words) || count($words) == 0) && $this->stringUtil->strlen($specialCaseTagInjection) == 0) {
                 break;
             }
             if ($specialCaseTagInjectionIsBefore) {
