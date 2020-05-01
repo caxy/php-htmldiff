@@ -628,7 +628,7 @@ class TableDiff extends AbstractDiff
     {
         $dom = new \DOMDocument();
         $dom->loadHTML(mb_convert_encoding(
-            $this->purifier->purify(mb_convert_encoding($text, $this->config->getEncoding(), mb_detect_encoding($text))),
+            $this->purifyHtml(mb_convert_encoding($text, $this->config->getEncoding(), mb_detect_encoding($text))),
             'HTML-ENTITIES',
             $this->config->getEncoding()
         ));
