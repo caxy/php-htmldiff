@@ -2,7 +2,7 @@
 
 namespace Caxy\HtmlDiff;
 
-class Match implements \Countable
+class Match_ implements \Countable
 {
     public $startInOld;
     public $startInNew;
