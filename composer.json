@@ -19,7 +19,7 @@
         "issues": "https://github.com/caxy/php-htmldiff/issues"
     },
     "require": {
-        "php": ">=5.3.3",
+        "php": ">=7.3",
         "ezyang/htmlpurifier": "^4.7",
         "kub-at/php-simple-html-dom-parser": "^1.7"
     },
