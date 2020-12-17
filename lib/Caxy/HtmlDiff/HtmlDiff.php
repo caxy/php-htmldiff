@@ -696,7 +696,7 @@ class HtmlDiff extends AbstractDiff
         $operations = array();
 
         $matches   = $this->matchingBlocks();
-        $matches[] = new Match(count($this->oldWords), count($this->newWords), 0);
+        $matches[] = new MatchingBlock(count($this->oldWords), count($this->newWords), 0);
 
         foreach ($matches as $match) {
             $matchStartsAtCurrentPositionInOld = ($positionInOld === $match->startInOld);
@@ -728,7 +728,7 @@ class HtmlDiff extends AbstractDiff
     }
 
     /**
-     * @return Match[]
+     * @return MatchingBlock[]
      */
     protected function matchingBlocks()
     {
@@ -784,7 +784,7 @@ class HtmlDiff extends AbstractDiff
      * @param int $startInNew
      * @param int $endInNew
      *
-     * @return Match|null
+     * @return MatchingBlock|null
      */
     protected function findMatch($startInOld, $endInOld, $startInNew, $endInNew)
     {
@@ -837,7 +837,7 @@ class HtmlDiff extends AbstractDiff
                 !$this->isOnlyWhitespace($this->array_slice_cached($this->oldWords, $bestMatchInOld, $bestMatchSize))
             )
         ) {
-            return new Match($bestMatchInOld, $bestMatchInNew, $bestMatchSize);
+            return new MatchingBlock($bestMatchInOld, $bestMatchInNew, $bestMatchSize);
         }
 
         return null;
