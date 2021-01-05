@@ -1,5 +1,21 @@
 # Change Log
 
+## [v0.1.10](https://github.com/caxy/php-htmldiff/tree/v0.1.9) (2021-01-05)
+[Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.9...v0.1.10)
+
+### Important:
+
+In order to be compatible with PHP8 we had to upgrade some vendor packages.
+
+Since these vendor packages have dropped support for older versions of PHP we had todo the same, therefore this version is not compatible anymore with PHP versions prior to 7.3.
+
+In case you are not able to upgrade your PHP version, please pin version v0.1.9 of php-htmldiff in your composer config.
+
+### Changes:
+
+- Fixed the keywords that made this version incompatible with PHP8
+- Upgraded PHPUnit dependencies with a PHP8 compatible version
+
 ## [v0.1.9](https://github.com/caxy/php-htmldiff/tree/v0.1.9) (2019-02-20)
 [Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.8...v0.1.9)
 
