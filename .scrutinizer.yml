@@ -3,17 +3,22 @@ imports:
 tools:
     js_hint: true
     php_code_sniffer: true
-    php_cs_fixer:
-        config: { level: psr2 }
-        enabled: true
+
 build:
-    tests:
-        override:
-            -
-                command: 'vendor/bin/phpunit --coverage-clover=code-coverage-file'
-                coverage:
-                    file: 'code-coverage-file'
-                    format: 'php-clover'
+    nodes:
+        analysis:
+            tests:
+                override:
+                    - phpcs-run
+        tests:
+            tests:
+                override:
+                    -
+                        command: 'vendor/bin/phpunit --coverage-clover=code-coverage-file'
+                        coverage:
+                            file: 'code-coverage-file'
+                            format: 'php-clover'
+
 filter:
     excluded_paths:
         - tests/*

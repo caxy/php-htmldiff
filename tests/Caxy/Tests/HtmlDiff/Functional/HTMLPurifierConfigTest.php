@@ -13,7 +13,7 @@ class HTMLPurifierConfigTest extends AbstractTest
      */
     protected $config;
 
-    public function setUp()
+    public function setUp() : void
     {
         $config = \HTMLPurifier_Config::createDefault();
 
