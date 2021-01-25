@@ -81,6 +81,11 @@ class HtmlDiffConfig
     protected $cacheProvider;
 
     /**
+     * @var bool
+     */
+    protected $purifierEnabled = true;
+
+    /**
      * @var null|string
      */
     protected $purifierCacheLocation = null;
@@ -466,6 +471,18 @@ class HtmlDiffConfig
     public function getCacheProvider()
     {
         return $this->cacheProvider;
+    }
+
+    public function isPurifierEnabled(): bool
+    {
+        return $this->purifierEnabled;
+    }
+
+    public function setPurifierEnabled(bool $purifierEnabled = true): self
+    {
+        $this->purifierEnabled = $purifierEnabled;
+
+        return $this;
     }
 
     /**
