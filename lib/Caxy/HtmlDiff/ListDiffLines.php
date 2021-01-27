@@ -3,16 +3,21 @@
 namespace Caxy\HtmlDiff;
 
 use Caxy\HtmlDiff\Strategy\ListItemMatchStrategy;
-use KubAT\PhpSimple\HtmlDomParser;
+use DOMDocument;
+use DOMElement;
+use DOMNode;
+use DOMText;
+use DOMXPath;
+use LogicException;
 
 class ListDiffLines extends AbstractDiff
 {
-    const CLASS_LIST_ITEM_ADDED = 'normal new';
-    const CLASS_LIST_ITEM_DELETED = 'removed';
-    const CLASS_LIST_ITEM_CHANGED = 'replacement';
-    const CLASS_LIST_ITEM_NONE = 'normal';
+    private const CLASS_LIST_ITEM_ADDED   = 'normal new';
+    private const CLASS_LIST_ITEM_DELETED = 'removed';
+    private const CLASS_LIST_ITEM_CHANGED = 'replacement';
+    private const CLASS_LIST_ITEM_NONE    = 'normal';
 
-    protected static $listTypes = array('ul', 'ol', 'dl');
+    protected const LIST_TAG_NAMES = ['ul', 'ol', 'dl'];
 
     /**
      * List of tags that should be included when retrieving
@@ -23,16 +28,21 @@ class ListDiffLines extends AbstractDiff
      *
      * @var array
      */
-    protected static $listContentTags = array(
-        'h1','h2','h3','h4','h5','pre','div','br','hr','code',
-        'input','form','img','span','a','i','b','strong','em',
-        'font','big','del','tt','sub','sup','strike',
-    );
+    protected static $listContentTags = [
+        'h1', 'h2', 'h3', 'h4', 'h5', 'pre', 'div', 'br', 'hr', 'code',
+        'input', 'form', 'img', 'span', 'a', 'i', 'b', 'strong', 'em',
+        'font', 'big', 'del', 'tt', 'sub', 'sup', 'strike',
+    ];
 
     /**
      * @var LcsService
      */
     protected $lcsService;
+
+    /**
+     * @var array<string, DOMElement>
+     */
+    private $nodeCache = [];
 
     /**
      * @param string              $oldText
@@ -65,24 +75,23 @@ class ListDiffLines extends AbstractDiff
             return $this->content;
         }
 
-        $matchStrategy = new ListItemMatchStrategy($this->stringUtil, $this->config->getMatchThreshold());
-        $this->lcsService = new LcsService($matchStrategy);
+        $this->lcsService = new LcsService(
+            new ListItemMatchStrategy($this->stringUtil, $this->config->getMatchThreshold())
+        );
 
         return $this->listByLines($this->oldText, $this->newText);
     }
 
-    /**
-     * @param string $old
-     * @param string $new
-     *
-     * @return string
-     */
-    protected function listByLines($old, $new)
+    protected function listByLines(string $old, string $new) : string
     {
-        /* @var $newDom \simple_html_dom */
-        $newDom = HtmlDomParser::str_get_html($new);
-        /* @var $oldDom \simple_html_dom */
-        $oldDom = HtmlDomParser::str_get_html($old);
+        $new = mb_convert_encoding($new, 'HTML-ENTITIES', "UTF-8");
+        $old = mb_convert_encoding($old, 'HTML-ENTITIES', "UTF-8");
+
+        $newDom = new DOMDocument();
+        $newDom->loadHTML($new);
+
+        $oldDom = new DOMDocument();
+        $oldDom->loadHTML($old);
 
         $newListNode = $this->findListNode($newDom);
         $oldListNode = $this->findListNode($oldDom);
@@ -92,23 +101,23 @@ class ListDiffLines extends AbstractDiff
         return $this->processOperations($operations, $oldListNode, $newListNode);
     }
 
-    /**
-     * @param \simple_html_dom|\simple_html_dom_node $dom
-     *
-     * @return \simple_html_dom_node[]|\simple_html_dom_node|null
-     */
-    protected function findListNode($dom)
+    protected function findListNode(DOMDocument $dom) : DOMNode
     {
-        return $dom->find(implode(', ', static::$listTypes), 0);
+        $xPathQuery = '//' . implode('|//', self::LIST_TAG_NAMES);
+        $xPath      = new DOMXPath($dom);
+        $listNodes  = $xPath->query($xPathQuery);
+
+        if ($listNodes->length > 0) {
+            return $listNodes->item(0);
+        }
+
+        throw new LogicException('Unable to diff list; missing list node');
     }
 
     /**
-     * @param \simple_html_dom_node $oldListNode
-     * @param \simple_html_dom_node $newListNode
-     *
-     * @return array|Operation[]
+     * @return Operation[]
      */
-    protected function getListItemOperations($oldListNode, $newListNode)
+    protected function getListItemOperations(DOMElement $oldListNode, DOMElement $newListNode) : array
     {
         // Prepare arrays of list item content to use in LCS algorithm
         $oldListText = $this->getListTextArray($oldListNode);
@@ -169,79 +178,76 @@ class ListDiffLines extends AbstractDiff
     }
 
     /**
-     * @param \simple_html_dom_node $listNode
-     *
-     * @return array
+     * @return string[]
      */
-    protected function getListTextArray($listNode)
+    protected function getListTextArray(DOMElement $listNode) : array
     {
-        $output = array();
-        foreach ($listNode->children() as $listItem) {
+        $output = [];
+
+        foreach ($listNode->childNodes as $listItem) {
+            if ($listItem instanceof DOMText) {
+                continue;
+            }
+
             $output[] = $this->getRelevantNodeText($listItem);
         }
 
         return $output;
     }
 
-    /**
-     * @param \simple_html_dom_node $node
-     *
-     * @return string
-     */
-    protected function getRelevantNodeText($node)
+    protected function getRelevantNodeText(DOMNode $node) : string
     {
-        if (!$node->hasChildNodes()) {
-            return $node->innertext();
+        if ($node->hasChildNodes() === false) {
+            return $node->textContent;
         }
 
         $output = '';
-        foreach ($node->nodes as $child) {
-            /* @var $child \simple_html_dom_node */
-            if (!$child->hasChildNodes()) {
-                $output .= $child->outertext();
-            } elseif (in_array($child->nodeName(), static::$listContentTags, true)) {
-                $output .= sprintf('<%1$s>%2$s</%1$s>', $child->nodeName(), $this->getRelevantNodeText($child));
+
+        /** @var DOMElement $child */
+        foreach ($node->childNodes as $child) {
+            if ($child->hasChildNodes() === false) {
+                $output .= $this->getOuterText($child);
+
+                continue;
+            }
+
+            if (in_array($child->tagName, static::$listContentTags, true) === true) {
+                $output .= sprintf(
+                    '<%1$s>%2$s</%1$s>',
+                    $child->tagName,
+                    $this->getRelevantNodeText($child)
+                );
             }
         }
 
         return $output;
     }
 
-    /**
-     * @param \simple_html_dom_node $li
-     *
-     * @return string
-     */
-    protected function deleteListItem($li)
+    protected function deleteListItem(DOMElement $li) : string
     {
-        $this->addClassToNode($li, self::CLASS_LIST_ITEM_DELETED);
-        $li->innertext = sprintf('<del>%s</del>', $li->innertext);
+        $this->wrapNodeContent($li, 'del');
 
-        return $li->outertext;
+        $this->appendClassToNode($li, self::CLASS_LIST_ITEM_DELETED);
+
+        return $this->getOuterText($li);
+    }
+
+    protected function addListItem(DOMElement $li, bool $replacement = false) : string
+    {
+        $this->wrapNodeContent($li, 'ins');
+
+        $this->appendClassToNode(
+            $li,
+            $replacement === true ? self::CLASS_LIST_ITEM_CHANGED : self::CLASS_LIST_ITEM_ADDED
+        );
+
+        return $this->getOuterText($li);
     }
 
     /**
-     * @param \simple_html_dom_node $li
-     * @param bool                  $replacement
-     *
-     * @return string
+     * @param Operation[] $operations
      */
-    protected function addListItem($li, $replacement = false)
-    {
-        $this->addClassToNode($li, $replacement ? self::CLASS_LIST_ITEM_CHANGED : self::CLASS_LIST_ITEM_ADDED);
-        $li->innertext = sprintf('<ins>%s</ins>', $li->innertext);
-
-        return $li->outertext;
-    }
-
-    /**
-     * @param Operation[]|array     $operations
-     * @param \simple_html_dom_node $oldListNode
-     * @param \simple_html_dom_node $newListNode
-     *
-     * @return string
-     */
-    protected function processOperations($operations, $oldListNode, $newListNode)
+    protected function processOperations(array $operations, DOMElement $oldListNode, DOMElement $newListNode) : string
     {
         $output = '';
 
@@ -252,41 +258,54 @@ class ListDiffLines extends AbstractDiff
         foreach ($operations as $operation) {
             $replaced = false;
             while ($operation->startInOld > ($operation->action === Operation::ADDED ? $indexInOld : $indexInOld + 1)) {
-                $li = $oldListNode->children($indexInOld);
+                $li = $this->getChildNodeByIndex($oldListNode, $indexInOld);
                 $matchingLi = null;
                 if ($operation->startInNew > ($operation->action === Operation::DELETED ? $indexInNew
                         : $indexInNew + 1)
                 ) {
-                    $matchingLi = $newListNode->children($indexInNew);
+                    $matchingLi = $this->getChildNodeByIndex($newListNode, $indexInNew);
                 }
+
                 if (null !== $matchingLi) {
-                    $htmlDiff = HtmlDiff::create($li->innertext, $matchingLi->innertext, $this->config);
-                    $li->innertext = $htmlDiff->build();
+                    $htmlDiff = HtmlDiff::create(
+                        $this->getInnerHtml($li),
+                        $this->getInnerHtml($matchingLi),
+                        $this->config
+                    );
+
+                    $this->setInnerHtml($li, $htmlDiff->build());
+
                     $indexInNew++;
                 }
+
                 $class = self::CLASS_LIST_ITEM_NONE;
 
                 if ($lastOperation === Operation::DELETED && !$replaced) {
                     $class = self::CLASS_LIST_ITEM_CHANGED;
                     $replaced = true;
                 }
-                $li->setAttribute('class', trim($li->getAttribute('class').' '.$class));
 
-                $output .= $li->outertext;
+                $this->appendClassToNode($li, $class);
+
+                $output .= $this->getOuterText($li);
                 $indexInOld++;
             }
 
             switch ($operation->action) {
                 case Operation::ADDED:
                     for ($i = $operation->startInNew; $i <= $operation->endInNew; $i++) {
-                        $output .= $this->addListItem($newListNode->children($i - 1));
+                        $output .= $this->addListItem(
+                            $this->getChildNodeByIndex($newListNode, $i - 1)
+                        );
                     }
                     $indexInNew = $operation->endInNew;
                     break;
 
                 case Operation::DELETED:
                     for ($i = $operation->startInOld; $i <= $operation->endInOld; $i++) {
-                        $output .= $this->deleteListItem($oldListNode->children($i - 1));
+                        $output .= $this->deleteListItem(
+                            $this->getChildNodeByIndex($oldListNode, $i - 1)
+                        );
                     }
                     $indexInOld = $operation->endInOld;
                     break;
@@ -294,11 +313,16 @@ class ListDiffLines extends AbstractDiff
                 case Operation::CHANGED:
                     $changeDelta = 0;
                     for ($i = $operation->startInOld; $i <= $operation->endInOld; $i++) {
-                        $output .= $this->deleteListItem($oldListNode->children($i - 1));
+                        $output .= $this->deleteListItem(
+                            $this->getChildNodeByIndex($oldListNode, $i - 1)
+                        );
                         $changeDelta--;
                     }
                     for ($i = $operation->startInNew; $i <= $operation->endInNew; $i++) {
-                        $output .= $this->addListItem($newListNode->children($i - 1), $changeDelta < 0);
+                        $output .= $this->addListItem(
+                            $this->getChildNodeByIndex($newListNode, $i - 1),
+                            ($changeDelta < 0)
+                        );
                         $changeDelta++;
                     }
                     $indexInOld = $operation->endInOld;
@@ -309,42 +333,138 @@ class ListDiffLines extends AbstractDiff
             $lastOperation = $operation->action;
         }
 
-        $oldCount = count($oldListNode->children());
-        $newCount = count($newListNode->children());
+        $oldCount = $this->childCountWithoutTextNode($oldListNode);
+        $newCount = $this->childCountWithoutTextNode($newListNode);
+
         while ($indexInOld < $oldCount) {
-            $li = $oldListNode->children($indexInOld);
+            $li = $this->getChildNodeByIndex($oldListNode, $indexInOld);
             $matchingLi = null;
             if ($indexInNew < $newCount) {
-                $matchingLi = $newListNode->children($indexInNew);
+                $matchingLi = $this->getChildNodeByIndex($newListNode, $indexInNew);
             }
+
             if (null !== $matchingLi) {
-                $htmlDiff = HtmlDiff::create($li->innertext(), $matchingLi->innertext(), $this->config);
-                $li->innertext = $htmlDiff->build();
+                $htmlDiff = HtmlDiff::create(
+                    $this->getInnerHtml($li),
+                    $this->getInnerHtml($matchingLi),
+                    $this->config
+                );
+
+                $this->setInnerHtml($li, $htmlDiff->build());
+
                 $indexInNew++;
             }
+
             $class = self::CLASS_LIST_ITEM_NONE;
 
             if ($lastOperation === Operation::DELETED) {
                 $class = self::CLASS_LIST_ITEM_CHANGED;
             }
-            $li->setAttribute('class', trim($li->getAttribute('class').' '.$class));
 
-            $output .= $li->outertext;
+            $this->appendClassToNode($li, $class);
+
+            $output .= $this->getOuterText($li);
             $indexInOld++;
         }
 
-        $newListNode->innertext = $output;
-        $newListNode->setAttribute('class', trim($newListNode->getAttribute('class').' diff-list'));
+        $this->setInnerHtml($newListNode, $output);
+        $this->appendClassToNode($newListNode, 'diff-list');
 
-        return $newListNode->outertext;
+        return $newListNode->ownerDocument->saveHTML($newListNode);
     }
 
-    /**
-     * @param \simple_html_dom_node $node
-     * @param string                $class
-     */
-    protected function addClassToNode($node, $class)
+    protected function appendClassToNode(DOMElement $node, string $class)
     {
-        $node->setAttribute('class', trim(sprintf('%s %s', $node->getAttribute('class'), $class)));
+        $node->setAttribute(
+            'class',
+            trim(sprintf('%s %s', $node->getAttribute('class'), $class))
+        );
+    }
+
+    private function getOuterText(DOMNode $node) : string
+    {
+        return $node->ownerDocument->saveHTML($node);
+    }
+
+    private function getInnerHtml(DOMNode $node) : string
+    {
+        $bufferDom = new DOMDocument('1.0', 'UTF-8');
+
+        foreach($node->childNodes as $childNode)
+        {
+            $bufferDom->appendChild($bufferDom->importNode($childNode, true));
+        }
+
+        return trim($bufferDom->saveHTML());
+    }
+
+    private function setInnerHtml(DOMNode $node, string $html) : void
+    {
+        $html = sprintf('<%s>%s</%s>', 'body', $html, 'body');
+        $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+
+        $node->nodeValue = '';
+
+        $bufferDom = new DOMDocument('1.0', 'UTF-8');
+        $bufferDom->loadHTML($html);
+
+        $bodyNode = $bufferDom->getElementsByTagName('body')->item(0);
+
+        foreach ($bodyNode->childNodes as $childNode) {
+            $node->appendChild($node->ownerDocument->importNode($childNode, true));
+        }
+
+        $this->nodeCache = [];
+    }
+
+    private function wrapNodeContent(DOMElement $node, string $tagName) : void
+    {
+        $childNodes = [];
+
+        foreach ($node->childNodes as $childNode) {
+            $childNodes[] = $childNode;
+        }
+
+        $wrapNode = $node->ownerDocument->createElement($tagName);
+
+        $node->appendChild($wrapNode);
+
+        foreach ($childNodes as $childNode) {
+            $wrapNode->appendChild($childNode);
+        }
+    }
+
+    private function childCountWithoutTextNode(DOMNode $node) : int
+    {
+        $counter = 0;
+
+        foreach ($node->childNodes as $childNode) {
+            if ($childNode instanceof DOMText) {
+                continue;
+            }
+
+            $counter++;
+        }
+
+        return $counter;
+    }
+
+    private function getChildNodeByIndex(DOMNode $node, int $index) : DOMElement
+    {
+        $nodeHash = spl_object_hash($node);
+
+        if (isset($this->nodeCache[$nodeHash]) === true) {
+            return $this->nodeCache[$nodeHash][$index];
+        }
+
+        $listCache[$nodeHash] = [];
+
+        foreach ($node->childNodes as $childNode) {
+            if ($childNode instanceof DOMText === false) {
+                $this->nodeCache[$nodeHash][] = $childNode;
+            }
+        }
+
+        return $this->nodeCache[$nodeHash][$index];
     }
 }

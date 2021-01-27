@@ -4,7 +4,7 @@ namespace Caxy\HtmlDiff;
 
 class Operation
 {
-    const ADDED = 'a';
+    const ADDED   = 'a';
     const DELETED = 'd';
     const CHANGED = 'c';
 
@@ -14,12 +14,12 @@ class Operation
     public $startInNew;
     public $endInNew;
 
-    public function __construct($action, $startInOld, $endInOld, $startInNew, $endInNew)
+    public function __construct(string $action, int $startInOld, int $endInOld, int $startInNew, int $endInNew)
     {
-        $this->action = $action;
+        $this->action     = $action;
         $this->startInOld = $startInOld;
-        $this->endInOld = $endInOld;
+        $this->endInOld   = $endInOld;
         $this->startInNew = $startInNew;
-        $this->endInNew = $endInNew;
+        $this->endInNew   = $endInNew;
     }
 }

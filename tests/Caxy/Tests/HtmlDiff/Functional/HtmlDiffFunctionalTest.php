@@ -20,7 +20,10 @@ class HtmlDiffFunctionalTest extends AbstractTest
         $diff = new HtmlDiff(trim($oldText), trim($newText), 'UTF-8', array());
         $output = $diff->build();
 
-        static::assertEquals($this->stripExtraWhitespaceAndNewLines($expected), $this->stripExtraWhitespaceAndNewLines($output));
+        static::assertEquals(
+            $this->stripExtraWhitespaceAndNewLines($expected),
+            $this->stripExtraWhitespaceAndNewLines($output)
+        );
     }
 
     public function diffContentProvider()
