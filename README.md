@@ -199,8 +199,8 @@ php-htmldiff is available under [GNU General Public License, version 2][gnu]. Se
 * Performance improvements (we have 1 benchmark test, we should probably get more)
     * Algorithm improvements - trimming alike text at start and ends, store nested diff results in memory to re-use (like we do w/ caching)
     * Benchmark using DOMDocument vs. alternatives vs. string parsing
+    * Consider not using string parsing for HtmlDiff in order to avoid having to create many DOMDocument instances in ListDiff and TableDiff
 * Benchmarking
-* Look into removing dependency on php-simple-html-dom-parser library - possibly find alternative or no library at all. Consider how this affects performance.
 * Refactoring (but... tests first)
     * Overall design/architecture improvements
     * API improvements so a new HtmlDiff isn't required for each new diff (especially so that configuration can be re-used)
