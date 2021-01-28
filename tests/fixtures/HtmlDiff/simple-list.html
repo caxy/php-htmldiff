@@ -1,0 +1,45 @@
+<oldText>
+<ol><li>List item one</li>
+    <li>List item two with subitems:
+        <ul><li>Subitem 1</li>
+            <li>Subitem 2</li>
+            <li>
+                <p>
+                    Hi there<br />
+                <ul><li>B</li>
+                    <li>A</li>
+                    <li>B</li>
+                </ul>
+                </p>
+            </li>
+            <li>
+                <dl><li>Deleted list</li></dl>
+            </li>
+        </ul>
+    </li>
+    <li>Final list item</li>
+</ol>
+</oldText>
+
+<newText>
+    <ol><li>List item one</li>
+        <li>List item tw with subitems:
+            <ul><li>Subitem 1</li>
+                <li>Subitem 2</li>
+                <li>
+                    <p>
+                        *.* Hi there<br />
+                    <ul><li>A</li>
+                        <li>C</li>
+                    </ul>
+                    </p>
+                </li>
+            </ul>
+        </li>
+        <li>Final list item</li>
+    </ol>
+</newText>
+
+<expected>
+    <ol class="diff-list"><li class="normal">List item one</li><li class="normal">List item <del class="diffmod">two</del><ins class="diffmod">tw</ins> with subitems: <ul class="diff-list"><li class="normal">Subitem 1</li><li class="normal">Subitem 2</li><li class="removed"><del><p> Hi there<br></p><ul><li>B</li><li>A</li><li>B</li></ul></del></li><li class="replacement"><p class="diffmod"><ins class="diffins"> *.* Hi there</ins><br class="diffmod"></p><ul><li><ins class="diffins">A</ins></li><li class="diffmod"><ins class="diffins">C</ins></li></ul></li><li class="removed"><del>Deleted list</del></li></ul></li><li class="normal">Final list item</li></ol>
+</expected>

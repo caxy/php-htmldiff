@@ -291,6 +291,7 @@ class HtmlDiff extends AbstractDiff
                 }
             }
         }
+
         $this->insertTag('ins', $cssClass, $text);
     }
 
@@ -544,8 +545,7 @@ class HtmlDiff extends AbstractDiff
             $specialCaseTagInjectionIsBefore = false;
 
             if (count($nonTags) !== 0) {
-                $text = $this->wrapText(implode('', $nonTags), $tag, $cssClass);
-                $this->content .= $text;
+                $this->content .= $this->wrapText(implode('', $nonTags), $tag, $cssClass);
             } else {
                 $firstOrDefault = false;
                 foreach ($this->config->getSpecialCaseOpeningTags() as $x) {
@@ -615,15 +615,12 @@ class HtmlDiff extends AbstractDiff
         return $condition == 'tag' ? $this->isTag($word) : !$this->isTag($word);
     }
 
-    /**
-     * @param string $text
-     * @param string $tagName
-     * @param string $cssClass
-     *
-     * @return string
-     */
-    protected function wrapText($text, $tagName, $cssClass)
+    protected function wrapText(string $text, string $tagName, string $cssClass) : string
     {
+        if (trim($text) === '') {
+            return '';
+        }
+
         return sprintf('<%1$s class="%2$s">%3$s</%1$s>', $tagName, $cssClass, $text);
     }
 
