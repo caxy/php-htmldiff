@@ -1,5 +1,16 @@
 # Change Log
 
+## [v0.1.11](https://github.com/caxy/php-htmldiff/tree/v0.1.9) (2021-02-02)
+[Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.10...v0.1.11)
+
+### Changes:
+
+- Fixed a bug where self-closing tags got crippled in HtmlDiff
+- Ported ListDiff from SimpleXML to DOMDocument 
+- Cleanup of old list diff algorithm
+- Possibility to disable html-purifier using a config flag
+- Removed dependency php-simple-html-dom-parser
+
 ## [v0.1.10](https://github.com/caxy/php-htmldiff/tree/v0.1.9) (2021-01-05)
 [Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.9...v0.1.10)
 
