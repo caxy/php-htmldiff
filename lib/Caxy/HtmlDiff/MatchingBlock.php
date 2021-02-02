@@ -3,7 +3,7 @@
 namespace Caxy\HtmlDiff;
 
 /**
- * A (string) block of text is the same between the two provided versions.
+ * A (string) block of text that is the same between the two provided versions.
  */
 class MatchingBlock implements \Countable
 {
