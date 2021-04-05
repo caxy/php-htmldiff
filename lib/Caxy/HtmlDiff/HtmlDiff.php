@@ -18,6 +18,7 @@ class HtmlDiff extends AbstractDiff
      * @var array
      */
     protected $newIsolatedDiffTags;
+
     /**
      * @var array
      */
@@ -116,18 +117,20 @@ class HtmlDiff extends AbstractDiff
         return $this->content;
     }
 
-    protected function indexNewWords()
+    protected function indexNewWords() : void
     {
-        $this->wordIndices = array();
+        $this->wordIndices = [];
+
         foreach ($this->newWords as $i => $word) {
-            if ($this->isTag($word)) {
+            if ($this->isTag($word) === true) {
                 $word = $this->stripTagAttributes($word);
             }
-            if (isset($this->wordIndices[ $word ])) {
-                $this->wordIndices[ $word ][] = $i;
-            } else {
-                $this->wordIndices[ $word ] = array($i);
+
+            if (isset($this->wordIndices[$word]) === false) {
+                $this->wordIndices[$word] = [];
             }
+
+            $this->wordIndices[$word][] = $i;
         }
     }
 
