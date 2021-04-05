@@ -1,6 +1,15 @@
 # Change Log
 
-## [v0.1.11](https://github.com/caxy/php-htmldiff/tree/v0.1.9) (2021-02-02)
+## [v0.1.12](https://github.com/caxy/php-htmldiff/tree/v0.1.12) (2021-04-05)
+[Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.11...v0.1.12)
+
+### Changes:
+
+- Word parser is rebuild to improve performance by 98% (according to xhprof profiler) and reducing code complexity.
+- Whitespace checking improvements in match finding algorithm to improve performance by allot, up to 50% in some of my testing
+
+
+## [v0.1.11](https://github.com/caxy/php-htmldiff/tree/v0.1.11) (2021-02-02)
 [Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.10...v0.1.11)
 
 ### Changes:
@@ -11,7 +20,7 @@
 - Possibility to disable html-purifier using a config flag
 - Removed dependency php-simple-html-dom-parser
 
-## [v0.1.10](https://github.com/caxy/php-htmldiff/tree/v0.1.9) (2021-01-05)
+## [v0.1.10](https://github.com/caxy/php-htmldiff/tree/v0.1.10) (2021-01-05)
 [Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.9...v0.1.10)
 
 ### Important:
