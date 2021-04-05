@@ -13,7 +13,7 @@ class HtmlDiffConfig
     protected $specialCaseTags = array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p');
 
     /**
-     * @var array
+     * @var string[]
      */
     protected $specialCaseChars = array('.', ',', '(', ')', '\'');
 
@@ -126,18 +126,12 @@ class HtmlDiffConfig
         return $this;
     }
 
-    /**
-     * @param array $chars
-     */
     public function setSpecialCaseChars(array $chars)
     {
         $this->specialCaseChars = $chars;
     }
 
-    /**
-     * @return array|null
-     */
-    public function getSpecialCaseChars()
+    public function getSpecialCaseChars() : array
     {
         return $this->specialCaseChars;
     }

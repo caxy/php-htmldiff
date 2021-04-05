@@ -398,8 +398,8 @@ abstract class AbstractDiff
 
     protected function splitInputsToWords()
     {
-        $this->setOldWords($this->convertHtmlToListOfWords($this->explode($this->oldText)));
-        $this->setNewWords($this->convertHtmlToListOfWords($this->explode($this->newText)));
+        $this->setOldWords($this->convertHtmlToListOfWords($this->oldText));
+        $this->setNewWords($this->convertHtmlToListOfWords($this->newText));
     }
 
     /**
@@ -421,146 +421,84 @@ abstract class AbstractDiff
     }
 
     /**
-     * @param string $text
-     *
-     * @return bool
+     * @return string[]
      */
-    protected function isPartOfWord($text)
+    protected function convertHtmlToListOfWords(string $text) : array
     {
-        return $this->ctypeAlphanumUnicode(str_replace($this->config->getSpecialCaseChars(), '', $text));
-    }
+        $words            = [];
+        $sentencesAndTags = [];
 
-    /**
-     * @param array $characterString
-     *
-     * @return array
-     */
-    protected function convertHtmlToListOfWords($characterString)
-    {
-        $mode = 'character';
-        $current_word = '';
-        $words = array();
-        $keepNewLines = $this->getConfig()->isKeepNewLines();
-        foreach ($characterString as $i => $character) {
-            switch ($mode) {
-                case 'character':
-                if ($this->isStartOfTag($character)) {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
-                    }
+        $specialCharacters = '';
 
-                    $current_word = '<';
-                    $mode = 'tag';
-                } elseif (preg_match("/\s/u", $character)) {
-                    if ($current_word !== '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = $keepNewLines ? $character : preg_replace('/\s+/Su', ' ', $character);
-                    $mode = 'whitespace';
-                } else {
-                    if (
-                        (($this->ctypeAlphanumUnicode($character) === true) && ($this->stringUtil->strlen($current_word) === 0 || $this->isPartOfWord($current_word))) ||
-                        (in_array($character, $this->config->getSpecialCaseChars()) && isset($characterString[$i + 1]) && $this->isPartOfWord($characterString[$i + 1]))
-                    ) {
-                        $current_word .= $character;
-                    } else {
-                        $words[] = $current_word;
-                        $current_word = $character;
-                    }
-                }
-                break;
-                case 'tag' :
-                if ($this->isEndOfTag($character)) {
-                    $current_word .= '>';
-                    $words[] = $current_word;
-                    $current_word = '';
-
-                    if (!preg_match('[^\s]u', $character)) {
-                        $mode = 'whitespace';
-                    } else {
-                        $mode = 'character';
-                    }
-                } else {
-                    $current_word .= $character;
-                }
-                break;
-                case 'whitespace':
-                if ($this->isStartOfTag($character)) {
-                    if ($current_word !== '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = '<';
-                    $mode = 'tag';
-                } elseif (preg_match("/\s/u", $character)) {
-                    $current_word .= $character;
-                    if (!$keepNewLines) $current_word = preg_replace('/\s+/Su', ' ', $current_word);
-                } else {
-                    if ($current_word != '') {
-                        $words[] = $current_word;
-                    }
-                    $current_word = $character;
-                    $mode = 'character';
-                }
-                break;
-                default:
-                break;
-            }
+        foreach ($this->config->getSpecialCaseChars() as $char) {
+            $specialCharacters .= '\\' . $char;
         }
-        if ($current_word != '') {
-            $words[] = $current_word;
+
+        // Normalize no-break-spaces to regular spaces
+        $text = str_replace("\xc2\xa0", ' ', $text);
+
+        preg_match_all('/<.+?>|[^<]+/mu', $text, $sentencesAndTags, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($sentencesAndTags[0] as $sentenceOrHtmlTag) {
+            if ($sentenceOrHtmlTag === '') {
+                continue;
+            }
+
+            if ($sentenceOrHtmlTag[0] === '<') {
+                $words[] = $sentenceOrHtmlTag;
+
+                continue;
+            }
+
+            $sentenceOrHtmlTag = $this->normalizeWhitespaceInHtmlSentence($sentenceOrHtmlTag);
+
+            $sentenceSplitIntoWords = [];
+
+            // This regex splits up every word by separating it at every non alpha-numerical, it allows the specialChars
+            // in the middle of a word, but not at the beginning or the end of a word.
+            // Split regex compiles to this (in default config case);
+            // /\s|[\.\,\(\)\']|[a-zA-Z0-9\.\,\(\)'\pL]+[a-zA-Z0-9\pL]|[^\s]/mu
+            $regex = sprintf('/\s|[%s]|[a-zA-Z0-9%s\pL]+[a-zA-Z0-9\pL]|[^\s]/mu', $specialCharacters, $specialCharacters);
+
+            preg_match_all(
+                $regex,
+                $sentenceOrHtmlTag . ' ', // Inject a space at the end to make sure the last word is found by having a space behind it.
+                $sentenceSplitIntoWords,
+                PREG_SPLIT_NO_EMPTY
+            );
+
+            // Remove the last space, since that was added by us for the regex matcher
+            array_pop($sentenceSplitIntoWords[0]);
+
+            foreach ($sentenceSplitIntoWords[0] as $word) {
+                $words[] = $word;
+            }
         }
 
         return $words;
     }
 
-    /**
-     * @param string $val
-     *
-     * @return bool
-     */
-    protected function isStartOfTag($val)
+    protected function normalizeWhitespaceInHtmlSentence(string $sentence) : string
     {
-        return $val === '<';
-    }
+        if ($this->config->isKeepNewLines() === true) {
+            return $sentence;
+        }
 
-    /**
-     * @param string $val
-     *
-     * @return bool
-     */
-    protected function isEndOfTag($val)
-    {
-        return $val === '>';
-    }
+        $sentence = preg_replace('/\s\s+|\r+|\n+|\r\n+/', ' ', $sentence);
 
-    /**
-     * @param string $value
-     *
-     * @return bool
-     */
-    protected function isWhiteSpace($value)
-    {
-        return !preg_match('[^\s]u', $value);
-    }
 
-    /**
-     * @param string $value
-     *
-     * @return array
-     */
-    protected function explode($value)
-    {
-        // as suggested by @onassar
-        return preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY);
-    }
+        $sentenceLength = $this->stringUtil->strlen($sentence);
+        $firstCharacter = $this->stringUtil->substr($sentence, 0, 1);
+        $lastCharacter  = $this->stringUtil->substr($sentence, $sentenceLength -1, 1);
 
-    /**
-     * @param string $str
-     *
-     * @return bool
-     */
-    protected function ctypeAlphanumUnicode($str)
-    {
-        return preg_match("/^[a-zA-Z0-9\pL]+$/u", $str) === 1;
+        if ($firstCharacter === ' ' || $firstCharacter === "\r" || $firstCharacter === "\n") {
+            $sentence = ' ' . ltrim($sentence);
+        }
+
+        if ($sentenceLength > 1 && ($lastCharacter === ' ' || $lastCharacter === "\r" || $lastCharacter === "\n")) {
+            $sentence = rtrim($sentence) . ' ';
+        }
+
+        return $sentence;
     }
 }
