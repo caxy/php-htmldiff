@@ -244,19 +244,19 @@ class HtmlDiff extends AbstractDiff
     {
         switch ($operation->action) {
             case 'equal' :
-            $this->processEqualOperation($operation);
-            break;
+                $this->processEqualOperation($operation);
+                break;
             case 'delete' :
-            $this->processDeleteOperation($operation, 'diffdel');
-            break;
+                $this->processDeleteOperation($operation, 'diffdel');
+                break;
             case 'insert' :
-            $this->processInsertOperation($operation, 'diffins');
-            break;
+                $this->processInsertOperation($operation, 'diffins');
+                break;
             case 'replace':
-            $this->processReplaceOperation($operation);
-            break;
+                $this->processReplaceOperation($operation);
+                break;
             default:
-            break;
+                break;
         }
     }
 
