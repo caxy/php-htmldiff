@@ -3,6 +3,7 @@
 namespace Caxy\Tests\HtmlDiff\Functional;
 
 use Caxy\HtmlDiff\HtmlDiff;
+use Caxy\HtmlDiff\HtmlDiffConfig;
 use Caxy\Tests\AbstractTest;
 use Caxy\Tests\HtmlDiff\HtmlFileIterator;
 
@@ -11,19 +12,24 @@ class HtmlDiffFunctionalTest extends AbstractTest
     /**
      * @dataProvider diffContentProvider
      *
-     * @param $oldText
-     * @param $newText
-     * @param $expected
+     * @param array<string, int|bool|string> $options
      */
-    public function testHtmlDiff($oldText, $newText, $expected)
+    public function testHtmlDiff(string $oldText, string $newText, string $expected, array $options)
     {
-        $diff = new HtmlDiff(trim($oldText), trim($newText), 'UTF-8', array());
+        $diff = new HtmlDiff(trim($oldText), trim($newText), 'UTF-8', []);
+
+        foreach ($options as $option => $value) {
+            $diff->getConfig()->{$option}($value);
+        }
+
         $output = $diff->build();
 
-        static::assertEquals(
-            $this->stripExtraWhitespaceAndNewLines($expected),
-            $this->stripExtraWhitespaceAndNewLines($output)
-        );
+        if (isset($options['setKeepNewLines']) === false || $options['setKeepNewLines'] === false) {
+            $output   = $this->stripExtraWhitespaceAndNewLines($output);
+            $expected = $this->stripExtraWhitespaceAndNewLines($expected);
+        }
+
+        static::assertEquals(trim($expected), trim($output));
     }
 
     public function diffContentProvider()

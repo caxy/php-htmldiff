@@ -2,11 +2,15 @@
 
 namespace Caxy\Tests\HtmlDiff;
 
+use Caxy\HtmlDiff\HtmlDiffConfig;
+use DOMDocument;
+use Exception;
+
 class HtmlFileIterator implements \Iterator
 {
-    protected $files = array();
-    protected $key = 0;
-    protected $loadedDiffs = array();
+    protected $files       = [];
+    protected $key         = 0;
+    protected $loadedDiffs = [];
 
     public function __construct($directory)
     {
@@ -14,10 +18,7 @@ class HtmlFileIterator implements \Iterator
     }
 
     /**
-     * Return the current element
-     * @link  http://php.net/manual/en/iterator.current.php
-     * @return mixed Can return any type.
-     * @since 5.0.0
+     * {@inheritDoc}
      */
     public function current()
     {
@@ -25,10 +26,7 @@ class HtmlFileIterator implements \Iterator
     }
 
     /**
-     * Move forward to next element
-     * @link  http://php.net/manual/en/iterator.next.php
-     * @return void Any returned value is ignored.
-     * @since 5.0.0
+     * {@inheritDoc}
      */
     public function next()
     {
@@ -36,10 +34,7 @@ class HtmlFileIterator implements \Iterator
     }
 
     /**
-     * Return the key of the current element
-     * @link  http://php.net/manual/en/iterator.key.php
-     * @return mixed scalar on success, or null on failure.
-     * @since 5.0.0
+     * {@inheritDoc}
      */
     public function key()
     {
@@ -47,11 +42,7 @@ class HtmlFileIterator implements \Iterator
     }
 
     /**
-     * Checks if current position is valid
-     * @link  http://php.net/manual/en/iterator.valid.php
-     * @return boolean The return value will be casted to boolean and then evaluated.
-     * Returns true on success or false on failure.
-     * @since 5.0.0
+     * {@inheritDoc}
      */
     public function valid()
     {
@@ -59,10 +50,7 @@ class HtmlFileIterator implements \Iterator
     }
 
     /**
-     * Rewind the Iterator to the first element
-     * @link  http://php.net/manual/en/iterator.rewind.php
-     * @return void Any returned value is ignored.
-     * @since 5.0.0
+     * {@inheritDoc}
      */
     public function rewind()
     {
@@ -77,27 +65,59 @@ class HtmlFileIterator implements \Iterator
 
             $html = file_get_contents($filename);
 
-            $oldText = $this->parseTagContent('oldText', $html);
-            $newText = $this->parseTagContent('newText', $html);
-            $expected = $this->parseTagContent('expected', $html);
+            $this->loadedDiffs[$filename] = [
+                $this->parseTagContent('oldText', $html),
+                $this->parseTagContent('newText', $html),
+                $this->parseTagContent('expected', $html),
+                $this->configXmlToArray($this->parseTagContent('options', $html)),
+            ];
 
-            if (null === $expected) {
-                throw new \Exception('HTML fixture content should have an <expected> tag.');
-            }
-
-            $this->loadedDiffs[$filename] = array($oldText, $newText, $expected);
         }
 
         return $this->loadedDiffs[$filename];
     }
 
-    protected function parseTagContent($tagName, $html)
+    /**
+     * @return array<string, int|bool|string>
+     */
+    protected function configXmlToArray(string $optionsXml) : array
     {
-        $matches = array();
-        if (preg_match(sprintf('/<%s\s*[^>]*>(.*)<\/%s\s*>/is', $tagName, $tagName), $html, $matches)) {
+        $config = [];
+
+        $xml = sprintf('<root>%s</root>', $optionsXml);
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $dom->loadXML($xml);
+
+        foreach ($dom->getElementsByTagName('option') as $option) {
+            $type = $option->getAttribute('type');
+
+            switch ($type) {
+                case 'boolean':
+                    $config[$option->getAttribute('name')] = ($option->getAttribute('value') === 'true');
+
+                    break;
+                case 'integer':
+                    $config[$option->getAttribute('name')] = (int) $option->getAttribute('value');
+
+                    break;
+                default:
+                    $config[$option->getAttribute('name')] = (string) $option->getAttribute('value');
+
+                    break;
+            }
+        }
+
+        return $config;
+    }
+
+    protected function parseTagContent(string $tagName, string $content) : string
+    {
+        $matches = [];
+
+        if (preg_match(sprintf('/<%s\s*[^>]*>(.*)<\/%s\s*>/is', $tagName, $tagName), $content, $matches)) {
             return $matches[1];
         }
 
-        return null;
+        throw new Exception('Fixture file should have an ' . $tagName . ' tag');
     }
 }
