@@ -13,14 +13,7 @@ class HtmlDiff extends AbstractDiff
      * @var array
      */
     protected $wordIndices;
-    /**
-     * @var array
-     */
-    protected $oldTables;
-    /**
-     * @var array
-     */
-    protected $newTables;
+
     /**
      * @var array
      */
