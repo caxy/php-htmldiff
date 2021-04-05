@@ -1,0 +1,40 @@
+<options>
+    <option type="boolean" name="setKeepNewLines" value="true" />
+    <option type="boolean" name="setPurifierEnabled" value="false" />
+</options>
+
+<oldText>
+    Please read the non-informative information underneath <br />
+
+    <pre>
+        This is the first paragraph.
+
+
+
+        This is the second paragraph
+    </pre>
+</oldText>
+
+<newText>
+    Please read the non-informative information underneath <br />
+
+    <pre>
+        This is the primary paragraph.
+
+
+
+        This is the secondary paragraph
+    </pre>
+</newText>
+
+<expected>
+    Please read the non-informative information underneath <br />
+
+    <pre>
+        This is the <del class="diffmod">first</del><ins class="diffmod">primary</ins> paragraph.
+
+
+
+        This is the <del class="diffmod">second</del><ins class="diffmod">secondary</ins> paragraph
+    </pre>
+</expected>

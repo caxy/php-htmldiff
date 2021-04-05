@@ -29,7 +29,7 @@ class HtmlDiffFunctionalTest extends AbstractTest
             $expected = $this->stripExtraWhitespaceAndNewLines($expected);
         }
 
-        static::assertEquals($expected, $output);
+        static::assertEquals(trim($expected), trim($output));
     }
 
     public function diffContentProvider()
