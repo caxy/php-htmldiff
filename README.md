@@ -41,6 +41,10 @@ $htmlDiff = new HtmlDiff($oldHtml, $newHtml);
 $content = $htmlDiff->build();
 ```
 
+## CSS Example
+
+See https://github.com/caxy/php-htmldiff/blob/master/demo/codes.css for starter CSS you can use for displaying the HTML diff output.
+
 ## Configuration
 
 The configuration for HtmlDiff is contained in the `Caxy\HtmlDiff\HtmlDiffConfig` class.
