@@ -1,5 +1,12 @@
 # Change Log
 
+## [v0.1.13](https://github.com/caxy/php-htmldiff/tree/v0.1.13) (2021-09-27)
+[Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.12...v0.1.13)
+
+### Changes:
+
+- Add `.gitattributes` file to exclude demo and tests from the exported zip package to reduce package size when installed via composer (#86 - @danepowell). This means `demo/` and `tests/` will no longer be included in the installed package files. In theory this shouldn't be a breaking change, but it could be if you are depending on or referencing any files from those directories.
+
 ## [v0.1.12](https://github.com/caxy/php-htmldiff/tree/v0.1.12) (2021-04-05)
 [Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.11...v0.1.12)
 
