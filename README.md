@@ -15,6 +15,10 @@ bug fixes, and enhancements to the original code.
 
 For more information on these modifications, read the [differences from rashid2538/php-htmldiff][differences] or view the [CHANGELOG][changelog].
 
+## Demo
+
+https://php-htmldiff.caxy.com/
+
 ## Installation
 
 The recommended way to install php-htmldiff is through [Composer][composer].
