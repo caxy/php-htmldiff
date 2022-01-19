@@ -530,73 +530,44 @@ class HtmlDiff extends AbstractDiff
      */
     protected function insertTag($tag, $cssClass, &$words)
     {
-        while (true) {
+        while (count($words) > 0) {
+            $nonTags = $this->extractConsecutiveWords($words, 'noTag');
+
+            if (count($nonTags) > 0) {
+                $this->content .= $this->wrapText(implode('', $nonTags), $tag, $cssClass);
+            }
+
             if (count($words) === 0) {
                 break;
             }
 
-            $nonTags = $this->extractConsecutiveWords($words, 'noTag');
+            $workTag = $this->extractConsecutiveWords($words, 'tag');
 
-            $specialCaseTagInjection = '';
-            $specialCaseTagInjectionIsBefore = false;
+            if (
+                isset($workTag[0]) === true &&
+                $this->isOpeningTag($workTag[0]) === true &&
+                $this->isClosingTag($workTag[0]) === false
+            ) {
+                if ($this->stringUtil->strpos($workTag[0], 'class=')) {
+                    $workTag[0] = str_replace('class="', 'class="diffmod ', $workTag[0]);
+                } else {
+                    $isSelfClosing = $this->stringUtil->strpos($workTag[0], '/>') !== false;
 
-            if (count($nonTags) !== 0) {
-                $this->content .= $this->wrapText(implode('', $nonTags), $tag, $cssClass);
-            } else {
-                $firstOrDefault = false;
-                foreach ($this->config->getSpecialCaseOpeningTags() as $x) {
-                    if (preg_match($x, $words[ 0 ])) {
-                        $firstOrDefault = $x;
-                        break;
-                    }
-                }
-                if ($firstOrDefault) {
-                    $specialCaseTagInjection = '<ins class="mod">';
-                    if ($tag === 'del') {
-                        unset($words[ 0 ]);
-                    }
-                } elseif (array_search($words[ 0 ], $this->config->getSpecialCaseClosingTags()) !== false) {
-                    $specialCaseTagInjection = '</ins>';
-                    $specialCaseTagInjectionIsBefore = true;
-                    if ($tag === 'del') {
-                        unset($words[ 0 ]);
-                    }
-                }
-            }
-            if (count($words) == 0 && $this->stringUtil->strlen($specialCaseTagInjection) == 0) {
-                break;
-            }
-            if ($specialCaseTagInjectionIsBefore) {
-                $this->content .= $specialCaseTagInjection . implode('', $this->extractConsecutiveWords($words, 'tag'));
-            } else {
-                $workTag = $this->extractConsecutiveWords($words, 'tag');
-
-                if (
-                    isset($workTag[0]) === true &&
-                    $this->isOpeningTag($workTag[0]) === true &&
-                    $this->isClosingTag($workTag[0]) === false
-                ) {
-                    if ($this->stringUtil->strpos($workTag[0], 'class=')) {
-                        $workTag[0] = str_replace('class="', 'class="diffmod ', $workTag[0]);
+                    if ($isSelfClosing === true) {
+                        $workTag[0] = str_replace('/>', ' class="diffmod" />', $workTag[0]);
                     } else {
-                        $isSelfClosing = $this->stringUtil->strpos($workTag[0], '/>') !== false;
-
-                        if ($isSelfClosing === true) {
-                            $workTag[0] = str_replace('/>', ' class="diffmod" />', $workTag[0]);
-                        } else {
-                            $workTag[0] = str_replace('>', ' class="diffmod">', $workTag[0]);
-                        }
+                        $workTag[0] = str_replace('>', ' class="diffmod">', $workTag[0]);
                     }
                 }
-
-                $appendContent = implode('', $workTag) . $specialCaseTagInjection;
-
-                if (isset($workTag[0]) === true && $this->stringUtil->stripos($workTag[0], '<img') !== false) {
-                    $appendContent = $this->wrapText($appendContent, $tag, $cssClass);
-                }
-
-                $this->content .= $appendContent;
             }
+
+            $appendContent = implode('', $workTag);
+
+            if (isset($workTag[0]) === true && $this->stringUtil->stripos($workTag[0], '<img') !== false) {
+                $appendContent = $this->wrapText($appendContent, $tag, $cssClass);
+            }
+
+            $this->content .= $appendContent;
         }
     }
 
