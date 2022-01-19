@@ -148,10 +148,7 @@ $config
     
     // List of characters to consider part of a single word when in the middle of text.
     ->setSpecialCaseChars(array('.', ',', '(', ')', '\''))
-    
-    // List of tags to treat as special case tags.
-    ->setSpecialCaseTags(array('strong', 'b', 'i', 'big', 'small', 'u', 'sub', 'sup', 'strike', 's', 'p'))
-    
+        
     // List of tags (and their replacement strings) to be diffed in isolation.
     ->setIsolatedDiffTags(array(
         'ol'     => '[[REPLACE_ORDERED_LIST]]',
