@@ -452,7 +452,7 @@ class HtmlDiff extends AbstractDiff
      */
     protected function isListPlaceholder($text)
     {
-        return $this->isPlaceholderType($text, array('ol', 'dl', 'ul'));
+        return $this->isPlaceholderType($text, ['ol', 'dl', 'ul']);
     }
 
     /**
@@ -478,26 +478,26 @@ class HtmlDiff extends AbstractDiff
     /**
      * @param string       $text
      * @param array|string $types
-     * @param bool         $strict
      *
      * @return bool
      */
-    protected function isPlaceholderType($text, $types, $strict = true)
+    protected function isPlaceholderType($text, $types)
     {
-        if (!is_array($types)) {
-            $types = array($types);
+        if (is_array($types) === false) {
+            $types = [$types];
         }
 
-        $criteria = array();
+        $criteria = [];
+
         foreach ($types as $type) {
-            if ($this->config->isIsolatedDiffTag($type)) {
+            if ($this->config->isIsolatedDiffTag($type) === true) {
                 $criteria[] = $this->config->getIsolatedDiffTagPlaceholder($type);
             } else {
                 $criteria[] = $type;
             }
         }
 
-        return in_array($text, $criteria, $strict);
+        return in_array($text, $criteria, true);
     }
 
     /**
