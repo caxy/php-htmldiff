@@ -1,5 +1,26 @@
 # Change Log
 
+## [v0.1.14](https://github.com/caxy/php-htmldiff/tree/v0.1.13) (2022-01-19)
+[Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.13...v0.1.14)
+
+### Changes:
+
+This release mainly removed everything that is related to the concept of special-case-tags. This was adopted from the
+original library by rashid2538 that this fork is based on. 
+
+The feature tried to wrap the special tags in an extra `<ins / del class='mod'>` tag.
+However, this never really worked properly (the closing tag was not always added to the diff output) and usually ended up crippling the HTML.
+
+Given the feature never really worked, and there is no clear use-case for it, I decided to remove it and fix
+issue 106 and issue 69 in the process where it was sometimes impossible to diff html that contained these special tags or unexpected extra tags got added to the output.
+
+In case you really needed this feature, please open an issue explaining your use-case, in that case this decision can be revisited.
+
+- Deprecated all setSpecialCaseTags() config calls. There is no replacement, but the current expectation is that nobody ever used these calls anyway.
+- Fixed Issue 106 / 69 by removing special-case-tags from the codebase
+- Reduced the CRAP score of insertTag() by allot
+
+
 ## [v0.1.13](https://github.com/caxy/php-htmldiff/tree/v0.1.13) (2021-09-27)
 [Full Changelog](https://github.com/caxy/php-htmldiff/compare/v0.1.12...v0.1.13)
 
