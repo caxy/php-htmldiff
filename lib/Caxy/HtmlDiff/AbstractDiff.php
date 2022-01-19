@@ -94,7 +94,7 @@ abstract class AbstractDiff
      * @param string     $oldText
      * @param string     $newText
      * @param string     $encoding
-     * @param null|array $specialCaseTags
+     * @param null|array $specialCaseTags (this does nothing, it is just here to keep the interface compatible)
      * @param null|bool  $groupDiffs
      */
     public function __construct($oldText, $newText, $encoding = 'UTF-8', $specialCaseTags = null, $groupDiffs = null)
@@ -102,10 +102,6 @@ abstract class AbstractDiff
         $this->stringUtil = new MbStringUtil($oldText, $newText);
 
         $this->setConfig(HtmlDiffConfig::create()->setEncoding($encoding));
-
-        if ($specialCaseTags !== null) {
-            $this->config->setSpecialCaseTags($specialCaseTags);
-        }
 
         if ($groupDiffs !== null) {
             $this->config->setGroupDiffs($groupDiffs);
@@ -313,7 +309,7 @@ abstract class AbstractDiff
      */
     public function getSpecialCaseTags()
     {
-        return $this->config->getSpecialCaseTags();
+        return null;
     }
 
     /**
