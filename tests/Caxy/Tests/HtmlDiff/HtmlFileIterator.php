@@ -2,11 +2,11 @@
 
 namespace Caxy\Tests\HtmlDiff;
 
-use Caxy\HtmlDiff\HtmlDiffConfig;
 use DOMDocument;
 use Exception;
+use Iterator;
 
-class HtmlFileIterator implements \Iterator
+class HtmlFileIterator implements Iterator
 {
     protected $files       = [];
     protected $key         = 0;
@@ -20,7 +20,7 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function current()
+    public function current() : array
     {
         return $this->loadHtmlFile($this->key);
     }
@@ -28,7 +28,7 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function next()
+    public function next() : void
     {
         $this->key++;
     }
@@ -36,7 +36,7 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function key()
+    public function key() : string
     {
         return basename($this->files[$this->key]);
     }
@@ -44,7 +44,7 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function valid()
+    public function valid() : bool
     {
         return isset($this->files[$this->key]);
     }
@@ -52,12 +52,15 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function rewind()
+    public function rewind() : void
     {
         $this->key = 0;
     }
 
-    protected function loadHtmlFile($key)
+    /**
+     * @return array<string, string>
+     */
+    protected function loadHtmlFile($key) : array
     {
         $filename = $this->files[$key];
 

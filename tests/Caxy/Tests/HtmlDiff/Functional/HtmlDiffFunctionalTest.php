@@ -6,6 +6,7 @@ use Caxy\HtmlDiff\HtmlDiff;
 use Caxy\HtmlDiff\HtmlDiffConfig;
 use Caxy\Tests\AbstractTest;
 use Caxy\Tests\HtmlDiff\HtmlFileIterator;
+use PHPUnit\Exception;
 
 class HtmlDiffFunctionalTest extends AbstractTest
 {
@@ -29,7 +30,18 @@ class HtmlDiffFunctionalTest extends AbstractTest
             $expected = $this->stripExtraWhitespaceAndNewLines($expected);
         }
 
-        static::assertEquals(trim($expected), trim($output));
+        try {
+            static::assertEquals(trim($expected), trim($output));
+        } catch (\PHPUnit\Framework\ExpectationFailedException $exception) {
+            $a = $exception->getComparisonFailure()->getActualAsString();
+            $b = $exception->getComparisonFailure()->getExpectedAsString();
+
+
+            file_put_contents('/var/www/html/php-htmldiff/a.html', '<html><body><link rel="stylesheet" href="demo/codes.css"></body><table><tr><td>' . $oldText . '</td><td>' . $newText . '</td></tr><tr><td>' . $a . '</td><td>' . $b . '</td></tr></table></html>');
+            
+            exit;
+        }
+
     }
 
     public function diffContentProvider()

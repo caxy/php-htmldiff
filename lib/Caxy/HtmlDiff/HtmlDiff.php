@@ -531,7 +531,7 @@ class HtmlDiff extends AbstractDiff
     protected function insertTag($tag, $cssClass, &$words)
     {
         while (count($words) > 0) {
-            $nonTags = $this->extractConsecutiveWords($words, 'noTag');
+            $nonTags = $this->extractConsecutiveWords($words, false);
 
             if (count($nonTags) > 0) {
                 $this->content .= $this->wrapText(implode('', $nonTags), $tag, $cssClass);
@@ -541,7 +541,7 @@ class HtmlDiff extends AbstractDiff
                 break;
             }
 
-            $workTag = $this->extractConsecutiveWords($words, 'tag');
+            $workTag = $this->extractConsecutiveWords($words, true);
 
             if (
                 isset($workTag[0]) === true &&
@@ -571,15 +571,9 @@ class HtmlDiff extends AbstractDiff
         }
     }
 
-    /**
-     * @param string $word
-     * @param string $condition
-     *
-     * @return bool
-     */
-    protected function checkCondition($word, $condition)
+    protected function checkCondition(string $word, bool $shouldBeTag) : bool
     {
-        return $condition == 'tag' ? $this->isTag($word) : !$this->isTag($word);
+        return $shouldBeTag === true ? $this->isTag($word) : !$this->isTag($word);
     }
 
     protected function wrapText(string $text, string $tagName, string $cssClass) : string
@@ -593,16 +587,15 @@ class HtmlDiff extends AbstractDiff
 
     /**
      * @param array  $words
-     * @param string $condition
      *
      * @return array
      */
-    protected function extractConsecutiveWords(&$words, $condition)
+    protected function extractConsecutiveWords(&$words, bool $shouldBeTag)
     {
         $indexOfFirstTag = null;
         $words = array_values($words);
         foreach ($words as $i => $word) {
-            if (!$this->checkCondition($word, $condition)) {
+            if ($this->checkCondition($word, $shouldBeTag) === false) {
                 $indexOfFirstTag = $i;
                 break;
             }

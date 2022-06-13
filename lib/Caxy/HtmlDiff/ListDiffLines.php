@@ -349,7 +349,7 @@ class ListDiffLines extends AbstractDiff
                     $this->getInnerHtml($matchingLi),
                     $this->config
                 );
-
+var_dump($htmlDiff->build());
                 $this->setInnerHtml($li, $htmlDiff->build());
 
                 $indexInNew++;
@@ -390,8 +390,7 @@ class ListDiffLines extends AbstractDiff
     {
         $bufferDom = new DOMDocument('1.0', 'UTF-8');
 
-        foreach($node->childNodes as $childNode)
-        {
+        foreach($node->childNodes as $childNode) {
             $bufferDom->appendChild($bufferDom->importNode($childNode, true));
         }
 
@@ -456,8 +455,6 @@ class ListDiffLines extends AbstractDiff
         if (isset($this->nodeCache[$nodeHash]) === true) {
             return $this->nodeCache[$nodeHash][$index];
         }
-
-        $listCache[$nodeHash] = [];
 
         foreach ($node->childNodes as $childNode) {
             if ($childNode instanceof DOMText === false) {
