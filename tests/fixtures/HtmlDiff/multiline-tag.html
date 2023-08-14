@@ -1,0 +1,25 @@
+<options>
+    <option type="boolean" name="setKeepNewLines" value="true" />
+    <option type="boolean" name="setPurifierEnabled" value="false" />
+</options>
+
+<oldText>
+	<li
+		attribute="value">
+		value
+	</li>
+</oldText>
+
+<newText>
+	<li
+		attribute="value">
+		newvalue
+	</li>
+</newText>
+
+<expected>
+	<li
+		attribute="value">
+		<del class="diffmod">value</del><ins class="diffmod">newvalue</ins>
+	</li>
+</expected>
