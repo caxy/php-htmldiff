@@ -584,7 +584,7 @@ class HtmlDiff extends AbstractDiff
 
     protected function wrapText(string $text, string $tagName, string $cssClass) : string
     {
-        if (trim($text) === '') {
+        if (!$this->config->isSpaceMatching() && trim($text) === '') {
             return '';
         }
 

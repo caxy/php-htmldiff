@@ -78,6 +78,11 @@ class HtmlDiffConfig
     protected $purifierCacheLocation = null;
 
     /**
+     * @var bool
+     */
+    protected $spaceMatching = false;
+
+    /**
      * @return HtmlDiffConfig
      */
     public static function create()
@@ -439,6 +444,22 @@ class HtmlDiffConfig
     public function getPurifierCacheLocation()
     {
         return $this->purifierCacheLocation;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSpaceMatching()
+    {
+        return $this->spaceMatching;
+    }
+
+    /**
+     * @param bool $keepNewLines
+     */
+    public function setSpaceMatching($spaceMatching)
+    {
+        $this->spaceMatching = $spaceMatching;
     }
 
     /**
