@@ -50,6 +50,7 @@ class HtmlDiffConfig
         'a' => '[[REPLACE_A]]',
         'img' => '[[REPLACE_IMG]]',
         'pre' => '[[REPLACE_PRE]]',
+        'picture' => '[[REPLACE_PICTURE]]',
     );
 
     /**
