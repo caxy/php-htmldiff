@@ -84,8 +84,8 @@ class ListDiffLines extends AbstractDiff
 
     protected function listByLines(string $old, string $new) : string
     {
-        $new = mb_convert_encoding($new, 'HTML-ENTITIES', "UTF-8");
-        $old = mb_convert_encoding($old, 'HTML-ENTITIES', "UTF-8");
+        $new = mb_encode_numericentity($new, [0x80, 0x10FFFF, 0, ~0], 'UTF-8');
+        $old = mb_encode_numericentity($old, [0x80, 0x10FFFF, 0, ~0], 'UTF-8');
 
         $newDom = new DOMDocument();
         $newDom->loadHTML($new);
@@ -401,7 +401,7 @@ class ListDiffLines extends AbstractDiff
     private function setInnerHtml(DOMNode $node, string $html) : void
     {
         $html = sprintf('<%s>%s</%s>', 'body', $html, 'body');
-        $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        $html = mb_encode_numericentity($html, [0x80, 0x10FFFF, 0, ~0], 'UTF-8');
 
         $node->nodeValue = '';
 
