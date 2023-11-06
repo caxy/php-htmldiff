@@ -433,7 +433,7 @@ abstract class AbstractDiff
         // Normalize no-break-spaces to regular spaces
         $text = str_replace("\xc2\xa0", ' ', $text);
 
-        preg_match_all('/<.+?>|[^<]+/mu', $text, $sentencesAndTags, PREG_SPLIT_NO_EMPTY);
+        preg_match_all('/<.+?>|[^<]+/mus', $text, $sentencesAndTags, PREG_SPLIT_NO_EMPTY);
 
         foreach ($sentencesAndTags[0] as $sentenceOrHtmlTag) {
             if ($sentenceOrHtmlTag === '') {
