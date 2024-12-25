@@ -31,7 +31,7 @@ class HtmlDiff extends AbstractDiff
      *
      * @return self
      */
-    public static function create($oldText, $newText, HtmlDiffConfig $config = null)
+    public static function create($oldText, $newText, ?HtmlDiffConfig $config = null)
     {
         $diff = new self($oldText, $newText);
 
