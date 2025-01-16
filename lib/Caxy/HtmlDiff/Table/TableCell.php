@@ -25,7 +25,7 @@ class TableCell extends AbstractTableElement
      *
      * @return $this
      */
-    public function setRow(TableRow $row = null)
+    public function setRow(?TableRow $row = null)
     {
         $this->row = $row;
 

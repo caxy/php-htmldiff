@@ -30,7 +30,7 @@ class TableRow extends AbstractTableElement
      *
      * @return $this
      */
-    public function setTable(Table $table = null)
+    public function setTable(?Table $table = null)
     {
         $this->table = $table;
 

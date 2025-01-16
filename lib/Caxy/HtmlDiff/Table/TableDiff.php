@@ -54,7 +54,7 @@ class TableDiff extends AbstractDiff
      *
      * @return self
      */
-    public static function create($oldText, $newText, HtmlDiffConfig $config = null)
+    public static function create($oldText, $newText, ?HtmlDiffConfig $config = null)
     {
         $diff = new self($oldText, $newText);
 
@@ -549,7 +549,7 @@ class TableDiff extends AbstractDiff
      *
      * @return \DOMElement
      */
-    protected function getNewCellNode(TableCell $oldCell = null, TableCell $newCell = null)
+    protected function getNewCellNode(?TableCell $oldCell = null, ?TableCell $newCell = null)
     {
         // If only one cell exists, use it
         if (!$oldCell || !$newCell) {
@@ -654,7 +654,7 @@ class TableDiff extends AbstractDiff
      * @param Table         $table
      * @param \DOMNode|null $node
      */
-    protected function parseTable(Table $table, \DOMNode $node = null)
+    protected function parseTable(Table $table, ?\DOMNode $node = null)
     {
         if ($node === null) {
             $node = $table->getDomNode();
