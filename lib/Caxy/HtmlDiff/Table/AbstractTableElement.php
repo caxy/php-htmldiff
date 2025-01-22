@@ -17,7 +17,7 @@ abstract class AbstractTableElement
      *
      * @param \DOMElement|null $domNode
      */
-    public function __construct(\DOMElement $domNode = null)
+    public function __construct(?\DOMElement $domNode = null)
     {
         $this->domNode = $domNode;
     }
