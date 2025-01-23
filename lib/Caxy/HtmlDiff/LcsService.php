@@ -17,7 +17,7 @@ class LcsService
      *
      * @param MatchStrategyInterface $matchStrategy
      */
-    public function __construct(MatchStrategyInterface $matchStrategy = null)
+    public function __construct(?MatchStrategyInterface $matchStrategy = null)
     {
         if (null === $matchStrategy) {
             $matchStrategy = new EqualMatchStrategy();

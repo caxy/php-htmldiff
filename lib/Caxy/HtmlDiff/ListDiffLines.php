@@ -51,7 +51,7 @@ class ListDiffLines extends AbstractDiff
      *
      * @return ListDiffLines
      */
-    public static function create($oldText, $newText, HtmlDiffConfig $config = null)
+    public static function create($oldText, $newText, ?HtmlDiffConfig $config = null)
     {
         $diff = new self($oldText, $newText);
 
