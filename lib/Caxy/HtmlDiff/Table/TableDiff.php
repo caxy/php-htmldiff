@@ -627,7 +627,7 @@ class TableDiff extends AbstractDiff
     protected function createDocumentWithHtml($text)
     {
         $dom = new \DOMDocument();
-        $dom->loadHTML(htmlspecialchars_decode(iconv('UTF-8', 'ISO-8859-1', htmlentities($text, ENT_COMPAT, 'UTF-8')), ENT_QUOTES));
+        $dom->loadHTML(htmlspecialchars_decode(iconv('UTF-8', 'ISO-8859-1//IGNORE', htmlentities($text, ENT_COMPAT, 'UTF-8')), ENT_QUOTES));
 
         return $dom;
     }
