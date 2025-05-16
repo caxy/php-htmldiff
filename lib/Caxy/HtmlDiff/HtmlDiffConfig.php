@@ -400,7 +400,7 @@ class HtmlDiffConfig
      *
      * @return $this
      */
-    public function setCacheProvider(\Doctrine\Common\Cache\Cache $cacheProvider = null)
+    public function setCacheProvider(?\Doctrine\Common\Cache\Cache $cacheProvider = null)
     {
         $this->cacheProvider = $cacheProvider;
 
