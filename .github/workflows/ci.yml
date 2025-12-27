@@ -10,6 +10,8 @@ jobs:
   test:
     name: PHP ${{ matrix.php-version }} Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     strategy:
       fail-fast: false
@@ -56,6 +58,8 @@ jobs:
   code-quality:
     name: Code Quality
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code
