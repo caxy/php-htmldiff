@@ -87,11 +87,18 @@ class ListDiffLines extends AbstractDiff
         $new = mb_encode_numericentity($new, [0x80, 0x10FFFF, 0, ~0], 'UTF-8');
         $old = mb_encode_numericentity($old, [0x80, 0x10FFFF, 0, ~0], 'UTF-8');
 
+        // Suppress libxml errors to avoid warnings from malformed HTML fragments
+        $previousLibxmlUseInternalErrors = libxml_use_internal_errors(true);
+
         $newDom = new DOMDocument();
         $newDom->loadHTML($new);
 
         $oldDom = new DOMDocument();
         $oldDom->loadHTML($old);
+
+        // Restore previous libxml error handling state
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousLibxmlUseInternalErrors);
 
         $newListNode = $this->findListNode($newDom);
         $oldListNode = $this->findListNode($oldDom);
@@ -405,8 +412,15 @@ class ListDiffLines extends AbstractDiff
 
         $node->nodeValue = '';
 
+        // Suppress libxml errors to avoid warnings from malformed HTML fragments
+        $previousLibxmlUseInternalErrors = libxml_use_internal_errors(true);
+
         $bufferDom = new DOMDocument('1.0', 'UTF-8');
         $bufferDom->loadHTML($html);
+
+        // Restore previous libxml error handling state
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousLibxmlUseInternalErrors);
 
         $bodyNode = $bufferDom->getElementsByTagName('body')->item(0);
 

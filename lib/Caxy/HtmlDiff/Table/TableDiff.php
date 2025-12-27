@@ -626,8 +626,15 @@ class TableDiff extends AbstractDiff
      */
     protected function createDocumentWithHtml($text)
     {
+        // Suppress libxml errors to avoid warnings from malformed HTML fragments
+        $previousLibxmlUseInternalErrors = libxml_use_internal_errors(true);
+
         $dom = new \DOMDocument();
         $dom->loadHTML(htmlspecialchars_decode(iconv('UTF-8', 'ISO-8859-1//IGNORE', htmlentities($text, ENT_COMPAT, 'UTF-8')), ENT_QUOTES));
+
+        // Restore previous libxml error handling state
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousLibxmlUseInternalErrors);
 
         return $dom;
     }

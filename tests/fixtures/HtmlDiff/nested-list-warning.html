@@ -1,0 +1,46 @@
+<options>
+    <option type="boolean" name="setKeepNewLines" value="true" />
+</options>
+
+<oldText><ol>
+        <li>
+          <ol>
+            <li>This sentence.</li>
+          </ol>
+        </li>
+        <li>:
+          <ol>
+            <li>Another item</li>
+          </ol>
+        </li>
+      </ol>
+      <ol>
+        <li>:</li>
+        <li>Saturn</li>
+      </ol></oldText>
+
+<newText><ol>
+    <li>
+     <ol>
+     <li>This sentence.</li>
+     </ol>
+     </li>
+     <li>:
+      <ol>
+      <li>Another item</li>
+      </ol>
+      </li>
+      <li>:
+      <ol>
+      <li>Saturn</li>
+      </ol>
+      </li>
+    </ol></newText>
+
+<expected><ol class="diff-list"><li class="normal new"><ins>
+     <ol>
+     <li>This sentence.</li>
+     </ol>
+     </ins></li><li class="normal"><ins class="diffins">:
+      </ins><ol class="diff-list"><li class="removed"><del>This sentence.</del></li><li class="replacement"><ins>Another item</ins></li></ol></li><li class="normal">:
+      <ol class="diff-list"><li class="removed"><del>Another item</del></li><li class="replacement"><ins>Saturn</ins></li></ol></li></ol><ol class="diffmod"><li class="diffmod"><del class="diffdel">:</del></li><li class="diffmod"><del class="diffdel">Saturn</del></li></ol></expected>
