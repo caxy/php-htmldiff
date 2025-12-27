@@ -590,8 +590,8 @@ class TableDiff extends AbstractDiff
         $newContent = $newCell ? $this->getInnerHtml($newCell->getDomNode()) : '';
 
         $htmlDiff = HtmlDiff::create(
-            mb_convert_encoding($oldContent, 'UTF-8', 'HTML-ENTITIES'),
-            mb_convert_encoding($newContent, 'UTF-8', 'HTML-ENTITIES'),
+            html_entity_decode($oldContent, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+            html_entity_decode($newContent, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
             $this->config
         );
         $diff = $htmlDiff->build();
