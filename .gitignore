@@ -4,3 +4,5 @@ vendor/
 /demo/node_modules
 .DS_Store
 .idea
+.phpunit.result.cache
+coverage.xml
