@@ -62,7 +62,6 @@ class HtmlFileIterator implements \Iterator
         $filename = $this->files[$key];
 
         if (!isset($this->loadedDiffs[$filename])) {
-
             $html = file_get_contents($filename);
 
             $this->loadedDiffs[$filename] = [
@@ -71,7 +70,6 @@ class HtmlFileIterator implements \Iterator
                 $this->parseTagContent('expected', $html),
                 $this->configXmlToArray($this->parseTagContent('options', $html)),
             ];
-
         }
 
         return $this->loadedDiffs[$filename];

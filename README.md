@@ -1,9 +1,8 @@
 php-htmldiff
 ============
 
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/quality-score.png?b=master)][badge_score]
-[![Build Status](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/build.png?b=master)][badge_status]
-[![Code Coverage](https://scrutinizer-ci.com/g/caxy/php-htmldiff/badges/coverage.png?b=master)][badge_coverage]
+[![CI](https://github.com/caxy/php-htmldiff/workflows/CI/badge.svg)][badge_ci]
+[![Code Coverage](https://codecov.io/gh/caxy/php-htmldiff/branch/master/graph/badge.svg)][badge_coverage]
 [![Packagist](https://img.shields.io/packagist/dt/caxy/php-htmldiff.svg)][badge_packagist]
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/caxy/php-htmldiff.svg)][badge_resolve]
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/caxy/php-htmldiff.svg)][badge_issues]
@@ -213,9 +212,8 @@ php-htmldiff is available under [GNU General Public License, version 2][gnu]. Se
 * Add documentation on alternative htmldiff engines and perhaps some comparisons
 
 
-[badge_score]: https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master
-[badge_status]: https://scrutinizer-ci.com/g/caxy/php-htmldiff/build-status/master
-[badge_coverage]: https://scrutinizer-ci.com/g/caxy/php-htmldiff/?branch=master
+[badge_ci]: https://github.com/caxy/php-htmldiff/actions/workflows/ci.yml
+[badge_coverage]: https://codecov.io/gh/caxy/php-htmldiff
 [badge_packagist]: https://packagist.org/packages/caxy/php-htmldiff
 [badge_resolve]: http://isitmaintained.com/project/caxy/php-htmldiff "Average time to resolve an issue"
 [badge_issues]: http://isitmaintained.com/project/caxy/php-htmldiff "Percentage of issues still open"

@@ -243,13 +243,13 @@ class HtmlDiff extends AbstractDiff
     protected function performOperation($operation)
     {
         switch ($operation->action) {
-            case 'equal' :
+            case 'equal':
                 $this->processEqualOperation($operation);
                 break;
-            case 'delete' :
+            case 'delete':
                 $this->processDeleteOperation($operation, 'diffdel');
                 break;
-            case 'insert' :
+            case 'insert':
                 $this->processInsertOperation($operation, 'diffins');
                 break;
             case 'replace':
@@ -334,7 +334,7 @@ class HtmlDiff extends AbstractDiff
         } elseif ($this->isImagePlaceholder($placeholder)) {
             return $this->diffElementsByAttribute($oldText, $newText, 'src', 'img');
         } elseif ($this->isPicturePlaceholder($placeholder)) {
-           return $this->diffPicture($oldText, $newText);
+            return $this->diffPicture($oldText, $newText);
         }
 
         return $this->diffElements($oldText, $newText, $stripWrappingTags);
@@ -401,7 +401,8 @@ class HtmlDiff extends AbstractDiff
      *
      * @return string
      */
-    protected function diffPicture($oldText, $newText) {
+    protected function diffPicture($oldText, $newText)
+    {
         if ($oldText !== $newText) {
             return sprintf(
                 '%s%s',
@@ -410,7 +411,7 @@ class HtmlDiff extends AbstractDiff
             );
         }
         return $this->diffElements($oldText, $newText);
-  }
+    }
 
     protected function diffElementsByAttribute($oldText, $newText, $attribute, $element)
     {
@@ -567,8 +568,7 @@ class HtmlDiff extends AbstractDiff
 
             $workTag = $this->extractConsecutiveWords($words, 'tag');
 
-            if (
-                isset($workTag[0]) === true &&
+            if (isset($workTag[0]) === true &&
                 $this->isOpeningTag($workTag[0]) === true &&
                 $this->isClosingTag($workTag[0]) === false
             ) {
@@ -848,8 +848,7 @@ class HtmlDiff extends AbstractDiff
             $this->resetCache = false;
         }
 
-        if (
-            $cache !== null &&
+        if ($cache !== null &&
             $lastWordCount === $wordCount &&
             $lastStartingWordOffset === $startingAtWord
         ) { // Hit
