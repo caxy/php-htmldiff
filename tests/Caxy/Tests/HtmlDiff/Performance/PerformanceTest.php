@@ -19,7 +19,8 @@ class PerformanceTest extends AbstractTest
         $diff = new HtmlDiff(
             file_get_contents(self::FIXTURE_PATH . 'paragraphs.html'),
             file_get_contents(self::FIXTURE_PATH . 'paragraphs_changed.html'),
-            'UTF-8', array()
+            'UTF-8',
+            array()
         );
 
         $output = $diff->build();

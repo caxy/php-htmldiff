@@ -390,8 +390,7 @@ class ListDiffLines extends AbstractDiff
     {
         $bufferDom = new DOMDocument('1.0', 'UTF-8');
 
-        foreach($node->childNodes as $childNode)
-        {
+        foreach ($node->childNodes as $childNode) {
             $bufferDom->appendChild($bufferDom->importNode($childNode, true));
         }
 
