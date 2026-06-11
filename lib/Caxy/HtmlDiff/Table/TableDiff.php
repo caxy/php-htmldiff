@@ -626,8 +626,18 @@ class TableDiff extends AbstractDiff
      */
     protected function createDocumentWithHtml($text)
     {
+        // As DOMDocument::loadHTML() does not support UTF-8 properly without specifying the encoding in the HTML,
+        // we convert all non-ASCII characters to numeric entities.
+        $convmap = [
+            0x80,           // Leave ASCII range intact
+            0x10FFFF,       // Convert the rest of the Unicode range
+            0,
+            0xFFFFFF,
+        ];
+        $text = mb_encode_numericentity($text, $convmap, 'UTF-8');
+
         $dom = new \DOMDocument();
-        $dom->loadHTML(htmlspecialchars_decode(iconv('UTF-8', 'ISO-8859-1//IGNORE', htmlentities($text, ENT_COMPAT, 'UTF-8')), ENT_QUOTES));
+        $dom->loadHTML($text);
 
         return $dom;
     }
