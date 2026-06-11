@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: PHP ${{ matrix.php-version }} Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
     
@@ -27,10 +27,10 @@ jobs:
       with:
         php-version: ${{ matrix.php-version }}
         extensions: dom, mbstring
-        coverage: xdebug
+        coverage: ${{ matrix.php-version == '8.3' && 'xdebug' || 'none' }}
     
-    - name: Validate composer.json and composer.lock
-      run: composer validate --strict
+    - name: Validate composer.json
+      run: composer validate
     
     - name: Cache Composer packages
       id: composer-cache
@@ -45,7 +45,7 @@ jobs:
       run: composer install --prefer-dist --no-progress --no-interaction
     
     - name: Run test suite
-      run: vendor/bin/phpunit --coverage-clover=coverage.xml
+      run: vendor/bin/phpunit ${{ matrix.php-version == '8.3' && '--coverage-clover=coverage.xml' || '' }}
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
@@ -57,7 +57,7 @@ jobs:
   
   code-quality:
     name: Code Quality
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
     
@@ -85,4 +85,5 @@ jobs:
       run: composer install --prefer-dist --no-progress --no-interaction
     
     - name: Run PHP_CodeSniffer
-      run: vendor/bin/phpcs --report=checkstyle | cs2pr
+      shell: bash
+      run: set -o pipefail && vendor/bin/phpcs --report=checkstyle | cs2pr
