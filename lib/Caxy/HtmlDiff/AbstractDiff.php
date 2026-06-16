@@ -430,8 +430,10 @@ abstract class AbstractDiff
             $specialCharacters .= '\\' . $char;
         }
 
-        // Normalize no-break-spaces to regular spaces
-        $text = str_replace("\xc2\xa0", ' ', $text);
+        // Normalize no-break-spaces to regular spaces (unless space matching is enabled)
+        if (!$this->config->isSpaceMatching()) {
+            $text = str_replace("\xc2\xa0", ' ', $text);
+        }
 
         preg_match_all('/<.+?>|[^<]+/mus', $text, $sentencesAndTags, PREG_SPLIT_NO_EMPTY);
 
@@ -480,7 +482,12 @@ abstract class AbstractDiff
             return $sentence;
         }
 
-        $sentence = preg_replace('/\s\s+|\r+|\n+|\r\n+/', ' ', $sentence);
+        // When space matching is enabled, preserve multiple spaces
+        if ($this->config->isSpaceMatching()) {
+            $sentence = preg_replace('/\r+|\n+|\r\n+/', ' ', $sentence);
+        } else {
+            $sentence = preg_replace('/\s\s+|\r+|\n+|\r\n+/', ' ', $sentence);
+        }
 
 
         $sentenceLength = $this->stringUtil->strlen($sentence);
