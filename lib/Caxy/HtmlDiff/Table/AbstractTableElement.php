@@ -2,6 +2,10 @@
 
 namespace Caxy\HtmlDiff\Table;
 
+use Dom\Element;
+use Dom\HTMLDocument;
+use Dom\Node;
+
 /**
  * Class AbstractTableElement.
  */
@@ -15,15 +19,15 @@ abstract class AbstractTableElement
     /**
      * AbstractTableElement constructor.
      *
-     * @param \DOMElement|null $domNode
+     * @param Element|null $domNode
      */
-    public function __construct(?\DOMElement $domNode = null)
+    public function __construct(?Element $domNode = null)
     {
         $this->domNode = $domNode;
     }
 
     /**
-     * @return \DOMElement
+     * @return Element
      */
     public function getDomNode()
     {
@@ -31,11 +35,11 @@ abstract class AbstractTableElement
     }
 
     /**
-     * @param \DOMElement $domNode
+     * @param Element $domNode
      *
      * @return $this
      */
-    public function setDomNode(\DOMElement $domNode)
+    public function setDomNode(Element $domNode)
     {
         $this->domNode = $domNode;
 
@@ -69,25 +73,26 @@ abstract class AbstractTableElement
     }
 
     /**
-     * @param \DOMDocument $domDocument
+     * @param HTMLDocument $domDocument
      *
-     * @return \DOMElement
+     * @return Node
      */
-    public function cloneNode(\DOMDocument $domDocument)
+    public function cloneNode(HTMLDocument $domDocument)
     {
-        return $domDocument->importNode($this->getDomNode()->cloneNode(false), false);
+        return $domDocument->importNode($this->getDomNode()->cloneNode(false) ?? NULL, false);
     }
 
     /**
-     * @param \DOMElement $node
+     * @param HTMLDocument $node
      *
      * @return string
      */
     public static function htmlFromNode($node)
     {
-        $domDocument = new \DOMDocument();
+
+        $domDocument = HTMLDocument::createFromString('<!DOCTYPE html><html><body></body></html>');
         $newNode = $domDocument->importNode($node, true);
-        $domDocument->appendChild($newNode);
+        $domDocument->querySelector('body')->appendChild($newNode);
 
         return trim($domDocument->saveHTML());
     }

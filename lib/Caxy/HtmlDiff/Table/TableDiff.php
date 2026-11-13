@@ -6,6 +6,9 @@ use Caxy\HtmlDiff\AbstractDiff;
 use Caxy\HtmlDiff\HtmlDiff;
 use Caxy\HtmlDiff\HtmlDiffConfig;
 use Caxy\HtmlDiff\Operation;
+use Dom\Element;
+use Dom\HTMLDocument;
+use Dom\Node;
 
 /**
  * Class TableDiff.
@@ -23,12 +26,12 @@ class TableDiff extends AbstractDiff
     protected $newTable = null;
 
     /**
-     * @var null|\DOMElement
+     * @var null|Element
      */
     protected $diffTable = null;
 
     /**
-     * @var null|\DOMDocument
+     * @var null|HTMLDocument
      */
     protected $diffDom = null;
 
@@ -99,7 +102,7 @@ class TableDiff extends AbstractDiff
 
         $this->buildTableDoms();
 
-        $this->diffDom = new \DOMDocument();
+        $this->diffDom = $this->createEmptyHtmlDocument();
 
         $this->indexCellValues($this->newTable);
 
@@ -114,9 +117,9 @@ class TableDiff extends AbstractDiff
 
     protected function diffTableContent()
     {
-        $this->diffDom = new \DOMDocument();
+        $this->diffDom = $this->createEmptyHtmlDocument();
         $this->diffTable = $this->newTable->cloneNode($this->diffDom);
-        $this->diffDom->appendChild($this->diffTable);
+        $this->diffDom->querySelector('body')->appendChild($this->diffTable);
 
         $oldRows = $this->oldTable->getRows();
         $newRows = $this->newTable->getRows();
@@ -428,7 +431,7 @@ class TableDiff extends AbstractDiff
     {
         // create tr dom element
         $rowToClone = $newRow ?: $oldRow;
-        /* @var $diffRow \DOMElement */
+        /* @var $diffRow Element */
         $diffRow = $this->diffDom->importNode($rowToClone->getDomNode()->cloneNode(false), false);
 
         $oldCells = $oldRow ? $oldRow->getCells() : array();
@@ -438,9 +441,9 @@ class TableDiff extends AbstractDiff
 
         $extraRow = null;
 
-        /* @var $expandCells \DOMElement[] */
+        /* @var $expandCells Element[] */
         $expandCells = array();
-        /* @var $cellsWithMultipleRows \DOMElement[] */
+        /* @var $cellsWithMultipleRows Element[] */
         $cellsWithMultipleRows = array();
 
         $newCellCount = count($newCells);
@@ -468,7 +471,7 @@ class TableDiff extends AbstractDiff
 
             if ($oldCell && $newCell->getColspan() != $oldCell->getColspan()) {
                 if (null === $extraRow) {
-                    /* @var $extraRow \DOMElement */
+                    /* @var $extraRow Element */
                     $extraRow = $this->diffDom->importNode($rowToClone->getDomNode()->cloneNode(false), false);
                 }
 
@@ -526,7 +529,7 @@ class TableDiff extends AbstractDiff
 
         if ($extraRow || $forceExpansion) {
             foreach ($appliedRowSpans as $rowSpanCells) {
-                /* @var $rowSpanCells \DOMElement[] */
+                /* @var $rowSpanCells Element[] */
                 foreach ($rowSpanCells as $extendCell) {
                     $rowspan = $extendCell->getAttribute('rowspan') ?: 1;
                     $extendCell->setAttribute('rowspan', 1 + $rowspan);
@@ -547,7 +550,7 @@ class TableDiff extends AbstractDiff
      * @param TableCell|null $oldCell
      * @param TableCell|null $newCell
      *
-     * @return \DOMElement
+     * @return Element
      */
     protected function getNewCellNode(?TableCell $oldCell = null, ?TableCell $newCell = null)
     {
@@ -560,7 +563,7 @@ class TableDiff extends AbstractDiff
             $oldNode = $oldCell->getDomNode();
             $newNode = $newCell->getDomNode();
 
-            /* @var $clone \DOMElement */
+            /* @var $clone Element */
             $clone = $newNode->cloneNode(false);
 
             $oldRowspan = $oldNode->getAttribute('rowspan') ?: 1;
@@ -580,7 +583,7 @@ class TableDiff extends AbstractDiff
      * @param TableCell|null $newCell
      * @param bool           $usingExtraRow
      *
-     * @return \DOMElement
+     * @return Element
      */
     protected function diffCells($oldCell, $newCell, $usingExtraRow = false)
     {
@@ -622,14 +625,13 @@ class TableDiff extends AbstractDiff
     /**
      * @param string $text
      *
-     * @return \DOMDocument
+     * @return HTMLDocument
      */
     protected function createDocumentWithHtml($text)
     {
-        $dom = new \DOMDocument();
-        $dom->loadHTML(htmlspecialchars_decode(iconv('UTF-8', 'ISO-8859-1//IGNORE', htmlentities($text, ENT_COMPAT, 'UTF-8')), ENT_QUOTES));
+        $html = preg_match('/^\s*<!doctype\b/i', $text) === 1 ? $text : '<!DOCTYPE html>' . $text;
 
-        return $dom;
+        return HTMLDocument::createFromString($html, overrideEncoding: $this->getConfig()->getEncoding());
     }
 
     /**
@@ -641,7 +643,7 @@ class TableDiff extends AbstractDiff
     {
         $dom = $this->createDocumentWithHtml($text);
 
-        $tableNode = $dom->getElementsByTagName('table')->item(0);
+        $tableNode = $dom->querySelector('table');
 
         $table = new Table($tableNode);
 
@@ -651,10 +653,10 @@ class TableDiff extends AbstractDiff
     }
 
     /**
-     * @param Table         $table
-     * @param \DOMNode|null $node
+     * @param Table $table
+     * @param Node|null $node
      */
-    protected function parseTable(Table $table, ?\DOMNode $node = null)
+    protected function parseTable(Table $table, ?Node $node = null)
     {
         if ($node === null) {
             $node = $table->getDomNode();
@@ -665,7 +667,7 @@ class TableDiff extends AbstractDiff
         }
 
         foreach ($node->childNodes as $child) {
-            if ($child->nodeName === 'tr') {
+            if ($child instanceof Element && strtolower($child->tagName) === 'tr') {
                 $row = new TableRow($child);
                 $table->addRow($row);
 
@@ -684,7 +686,7 @@ class TableDiff extends AbstractDiff
         $node = $row->getDomNode();
 
         foreach ($node->childNodes as $child) {
-            if (in_array($child->nodeName, array('td', 'th'))) {
+            if ($child instanceof Element && in_array(strtolower($child->tagName), array('td', 'th'), true)) {
                 $cell = new TableCell($child);
                 $row->addCell($cell);
             }
@@ -692,55 +694,49 @@ class TableDiff extends AbstractDiff
     }
 
     /**
-     * @param \DOMNode $node
+     * @param Element $node
      *
      * @return string
      */
-    protected function getInnerHtml($node)
+    protected function getInnerHtml(Element $node)
     {
         $innerHtml = '';
-        $children = $node->childNodes;
 
-        foreach ($children as $child) {
-            $innerHtml .= $this->htmlFromNode($child);
+        foreach ($node->childNodes as $child) {
+            // The legacy per-node serializer added a newline after each child.
+            $innerHtml .= $child->ownerDocument->saveHtml($child) . "\n";
         }
 
         return $innerHtml;
     }
 
     /**
-     * @param \DOMNode $node
+     * @param Node $node
      *
      * @return string
      */
-    protected function htmlFromNode($node)
+    protected function htmlFromNode(Node $node)
     {
-        $domDocument = new \DOMDocument();
-        $newNode = $domDocument->importNode($node, true);
-        $domDocument->appendChild($newNode);
-
-        return $domDocument->saveHTML();
+        return $node->ownerDocument->saveHtml($node);
     }
 
     /**
-     * @param \DOMNode $node
-     * @param string   $html
+     * @param Element $node
+     * @param string  $html
      */
-    protected function setInnerHtml($node, $html)
+    protected function setInnerHtml(Element $node, $html)
     {
-        // DOMDocument::loadHTML does not allow empty strings.
+        // Preserve the existing placeholder behavior for empty cell content.
         if ($this->stringUtil->strlen(trim($html)) === 0) {
             $html = '<span class="empty"></span>';
+        } elseif (strip_tags($html) === $html) {
+            // Preserve the paragraph wrapper produced by legacy
+            // DOMDocument::loadHTML()  when reparsing plain-text cell
+            // fragments.
+            $html = '<p>' . rtrim($html, "\r\n") . '</p>';
         }
 
-        $doc = $this->createDocumentWithHtml($html);
-        $fragment = $node->ownerDocument->createDocumentFragment();
-        $root = $doc->getElementsByTagName('body')->item(0);
-        foreach ($root->childNodes as $child) {
-            $fragment->appendChild($node->ownerDocument->importNode($child, true));
-        }
-
-        $node->appendChild($fragment);
+        $node->innerHTML = $html;
     }
 
     /**
@@ -765,7 +761,7 @@ class TableDiff extends AbstractDiff
      * @param TableRow        $tableRow
      * @param DiffRowPosition $position
      * @param array           $cellsWithMultipleRows
-     * @param \DOMNode        $diffRow
+     * @param Node            $diffRow
      * @param string          $diffType
      * @param bool            $usingExtraRow
      */
@@ -798,11 +794,11 @@ class TableDiff extends AbstractDiff
      * @param null|TableCell  $oldCell
      * @param null|TableCell  $newCell
      * @param array           $cellsWithMultipleRows
-     * @param \DOMElement     $diffRow
+     * @param Element         $diffRow
      * @param DiffRowPosition $position
      * @param bool            $usingExtraRow
      *
-     * @return \DOMElement
+     * @return Element
      */
     protected function diffCellsAndIncrementCounters(
         $oldCell,
@@ -887,5 +883,13 @@ class TableDiff extends AbstractDiff
         }
 
         return ($totalCount > 0) ? ($thresholdCount / $totalCount) : 0;
+    }
+
+    private function createEmptyHtmlDocument(): HTMLDocument
+    {
+        return HTMLDocument::createFromString(
+            '<!DOCTYPE html><html><body></body></html>',
+            overrideEncoding: $this->getConfig()->getEncoding()
+        );
     }
 }

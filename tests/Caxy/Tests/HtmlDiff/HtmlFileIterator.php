@@ -20,7 +20,7 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function current()
+    public function current(): mixed
     {
         return $this->loadHtmlFile($this->key);
     }
@@ -28,7 +28,7 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function next()
+    public function next(): void
     {
         $this->key++;
     }
@@ -36,7 +36,7 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function key()
+    public function key(): mixed
     {
         return basename($this->files[$this->key]);
     }
@@ -44,7 +44,7 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function valid()
+    public function valid(): bool
     {
         return isset($this->files[$this->key]);
     }
@@ -52,7 +52,7 @@ class HtmlFileIterator implements \Iterator
     /**
      * {@inheritDoc}
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->key = 0;
     }
