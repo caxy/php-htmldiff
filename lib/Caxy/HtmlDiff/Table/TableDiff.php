@@ -157,7 +157,7 @@ class TableDiff extends AbstractDiff
         $matches = $this->getRowMatches($oldMatchData, $newMatchData);
         $this->diffTableRowsWithMatches($oldRows, $newRows, $matches);
 
-        $this->content = $this->htmlFromNode($this->diffTable);
+        $this->content = $this->diffTable->ownerDocument->saveHtml($this->diffTable);
     }
 
     /**
@@ -724,16 +724,6 @@ class TableDiff extends AbstractDiff
     }
 
     /**
-     * @param Node $node
-     *
-     * @return string
-     */
-    protected function htmlFromNode(Node $node)
-    {
-        return $node->ownerDocument->saveHtml($node);
-    }
-
-    /**
      * @param Element $node
      * @param string  $html
      */
@@ -743,9 +733,8 @@ class TableDiff extends AbstractDiff
         if ($this->stringUtil->strlen(trim($html)) === 0) {
             $html = '<span class="empty"></span>';
         } elseif (strip_tags($html) === $html) {
-            // Preserve the paragraph wrapper produced by legacy
-            // DOMDocument::loadHTML()  when reparsing plain-text cell
-            // fragments.
+            // The legacy parser automatically wraps loose text in paragraphs.
+            // See https://www.php.net/manual/en/domdocument.loadhtml.php
             $html = '<p>' . rtrim($html, "\r\n") . '</p>';
         }
 
