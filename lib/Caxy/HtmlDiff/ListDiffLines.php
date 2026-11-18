@@ -214,8 +214,12 @@ class ListDiffLines extends AbstractDiff
 
             // Note - the new HTML5 parser does not normalize tag names.
             $tagName = strtolower($child->tagName);
-            if ($child instanceof Element && in_array($tagName, static::$listContentTags, true)) {
-                $output .= sprintf('<%1$s>%2$s</%1$s>', $tagName, $this->getRelevantNodeText($child));
+            if (in_array($tagName, static::$listContentTags, true)) {
+                $output .= sprintf(
+                    '<%1$s>%2$s</%1$s>',
+                    $tagName,
+                    $this->getRelevantNodeText($child)
+                );
             }
         }
 
