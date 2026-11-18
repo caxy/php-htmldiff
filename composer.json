@@ -19,7 +19,7 @@
         "issues": "https://github.com/caxy/php-htmldiff/issues"
     },
     "require": {
-        "php": ">=7.3",
+        "php": ">=8.4",
         "ezyang/htmlpurifier": "^4.7",
         "ext-dom": "*",
         "ext-mbstring": "*"
