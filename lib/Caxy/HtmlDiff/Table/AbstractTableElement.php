@@ -79,7 +79,7 @@ abstract class AbstractTableElement
      */
     public function cloneNode(HTMLDocument $domDocument)
     {
-        return $domDocument->importNode($this->getDomNode()->cloneNode(false) ?? NULL, false);
+        return $domDocument->importNode($this->getDomNode()->cloneNode(false), false);
     }
 
     /**
