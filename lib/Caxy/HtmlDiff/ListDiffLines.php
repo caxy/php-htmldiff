@@ -103,12 +103,12 @@ class ListDiffLines extends AbstractDiff
         return $this->processOperations($operations, $oldListNode, $newListNode);
     }
 
-    protected function findListNode(HTMLDocument $dom) : Element
+    protected function findListNode(HTMLDocument $dom) : Node
     {
-        $xPathQuery = implode(', ', self::LIST_TAG_NAMES);
-        $listNode  = $dom->querySelector($xPathQuery);
+        $query = implode(', ', self::LIST_TAG_NAMES);
+        $listNode  = $dom->querySelector($query);
 
-        if ($listNode instanceof Element) {
+        if ($listNode !== null) {
             return $listNode;
         }
 
@@ -118,7 +118,7 @@ class ListDiffLines extends AbstractDiff
     /**
      * @return Operation[]
      */
-    protected function getListItemOperations(Element $oldListNode, Element $newListNode) : array
+    protected function getListItemOperations(Node $oldListNode, Node $newListNode) : array
     {
         // Prepare arrays of list item content to use in LCS algorithm
         $oldListText = $this->getListTextArray($oldListNode);
@@ -181,7 +181,7 @@ class ListDiffLines extends AbstractDiff
     /**
      * @return string[]
      */
-    protected function getListTextArray(Element $listNode) : array
+    protected function getListTextArray(Node $listNode) : array
     {
         $output = [];
 
@@ -246,7 +246,7 @@ class ListDiffLines extends AbstractDiff
     /**
      * @param Operation[] $operations
      */
-    protected function processOperations(array $operations, Element $oldListNode, Element $newListNode) : string
+    protected function processOperations(array $operations, Node $oldListNode, Node $newListNode) : string
     {
         $output = '';
 
@@ -372,7 +372,7 @@ class ListDiffLines extends AbstractDiff
         return $newListNode->ownerDocument->saveHtml($newListNode);
     }
 
-    protected function appendClassToNode(Element $node, string $class)
+    protected function appendClassToNode(Node $node, string $class)
     {
         $node->setAttribute(
             'class',
@@ -390,14 +390,14 @@ class ListDiffLines extends AbstractDiff
         return trim($node->innerHTML);
     }
 
-    private function setInnerHtml(Element $node, string $html) : void
+    private function setInnerHtml(Node $node, string $html) : void
     {
         $node->innerHTML = $html;
 
         $this->nodeCache = [];
     }
 
-    private function wrapNodeContent(Element $node, string $tagName) : void
+    private function wrapNodeContent(Node $node, string $tagName) : void
     {
         $childNodes = [];
 
@@ -429,7 +429,7 @@ class ListDiffLines extends AbstractDiff
         return $counter;
     }
 
-    private function getChildNodeByIndex(Element $node, int $index) : Element
+    private function getChildNodeByIndex(Node $node, int $index) : Element
     {
         $nodeHash = spl_object_hash($node);
 
