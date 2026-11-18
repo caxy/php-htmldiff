@@ -271,8 +271,8 @@ class ListDiffLines extends AbstractDiff
 
                 if (null !== $matchingLi) {
                     $htmlDiff = HtmlDiff::create(
-                        $this->getInnerHtml($li),
-                        $this->getInnerHtml($matchingLi),
+                        trim($li->innerHTML),
+                        trim($matchingLi->innerHTML),
                         $this->config
                     );
 
@@ -348,8 +348,8 @@ class ListDiffLines extends AbstractDiff
 
             if (null !== $matchingLi) {
                 $htmlDiff = HtmlDiff::create(
-                    $this->getInnerHtml($li),
-                    $this->getInnerHtml($matchingLi),
+                    trim($li->innerHTML),
+                    trim($matchingLi->innerHTML),
                     $this->config
                 );
 
@@ -387,11 +387,6 @@ class ListDiffLines extends AbstractDiff
     private function getOuterText(Node $node) : string
     {
         return $node->ownerDocument->saveHtml($node);
-    }
-
-    private function getInnerHtml(Element $node) : string
-    {
-        return trim($node->innerHTML);
     }
 
     private function setInnerHtml(Node $node, string $html) : void
