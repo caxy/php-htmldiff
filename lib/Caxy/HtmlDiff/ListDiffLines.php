@@ -95,8 +95,8 @@ class ListDiffLines extends AbstractDiff
         $newDom = HTMLDocument::createFromString($new, 0, 'UTF-8');
         $oldDom = HTMLDocument::createFromString($old, 0, 'UTF-8');
 
-        $oldListNode = $this->findListNode($oldDom);
         $newListNode = $this->findListNode($newDom);
+        $oldListNode = $this->findListNode($oldDom);
 
         $operations = $this->getListItemOperations($oldListNode, $newListNode);
 
