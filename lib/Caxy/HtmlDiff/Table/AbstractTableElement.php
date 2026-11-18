@@ -89,7 +89,6 @@ abstract class AbstractTableElement
      */
     public static function htmlFromNode($node)
     {
-
         $domDocument = HTMLDocument::createFromString('<!DOCTYPE html><html><body></body></html>');
         $newNode = $domDocument->importNode($node, true);
         $domDocument->querySelector('body')->appendChild($newNode);

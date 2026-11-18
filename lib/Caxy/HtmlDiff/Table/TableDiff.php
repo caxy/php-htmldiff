@@ -102,7 +102,11 @@ class TableDiff extends AbstractDiff
 
         $this->buildTableDoms();
 
-        $this->diffDom = $this->createEmptyHtmlDocument();
+        $this->diffDom = HTMLDocument::createFromString(
+            '<!DOCTYPE html><html><body></body></html>',
+            0,
+            $this->getConfig()->getEncoding()
+        );
 
         $this->indexCellValues($this->newTable);
 
@@ -117,7 +121,11 @@ class TableDiff extends AbstractDiff
 
     protected function diffTableContent()
     {
-        $this->diffDom = $this->createEmptyHtmlDocument();
+        $this->diffDom = HTMLDocument::createFromString(
+            '<!DOCTYPE html><html><body></body></html>',
+            0,
+            $this->getConfig()->getEncoding()
+        );
         $this->diffTable = $this->newTable->cloneNode($this->diffDom);
         $this->diffDom->querySelector('body')->appendChild($this->diffTable);
 
@@ -885,11 +893,4 @@ class TableDiff extends AbstractDiff
         return ($totalCount > 0) ? ($thresholdCount / $totalCount) : 0;
     }
 
-    private function createEmptyHtmlDocument(): HTMLDocument
-    {
-        return HTMLDocument::createFromString(
-            '<!DOCTYPE html><html><body></body></html>',
-            overrideEncoding: $this->getConfig()->getEncoding()
-        );
-    }
 }
