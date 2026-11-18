@@ -637,9 +637,12 @@ class TableDiff extends AbstractDiff
      */
     protected function createDocumentWithHtml($text)
     {
-        $html = preg_match('/^\s*<!doctype\b/i', $text) === 1 ? $text : '<!DOCTYPE html>' . $text;
-
-        return HTMLDocument::createFromString($html, overrideEncoding: $this->getConfig()->getEncoding());
+        // The HTML5 parser requires a doctype specified. This is a backwards
+        // compatibility tweak that will add a doctype if it's not specified.
+        if (preg_match('/^\s*<!doctype\b/i', $text) !== 1) {
+          $text = '<!DOCTYPE html>' . $text;
+        }
+        return HTMLDocument::createFromString($text, 0, $this->getConfig()->getEncoding());
     }
 
     /**
@@ -675,6 +678,8 @@ class TableDiff extends AbstractDiff
         }
 
         foreach ($node->childNodes as $child) {
+            // Type safety: text nodes do not have the tagName property. The
+            // HTML5 parser also does not do automatic case conversion.
             if ($child instanceof Element && strtolower($child->tagName) === 'tr') {
                 $row = new TableRow($child);
                 $table->addRow($row);
