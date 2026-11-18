@@ -83,21 +83,20 @@ class ListDiffLines extends AbstractDiff
 
     protected function listByLines(string $old, string $new) : string
     {
-        $newDom = HTMLDocument::createFromString(
-            preg_match('/^\s*<!doctype\b/i', $new) === 1 ? $new : '<!DOCTYPE html>' . $new,
-            overrideEncoding: 'UTF-8'
-        );
-        $oldDom = HTMLDocument::createFromString(
-            preg_match('/^\s*<!doctype\b/i', $old) === 1 ? $old : '<!DOCTYPE html>' . $old,
-            overrideEncoding: 'UTF-8'
-        );
+        // The HTML5 parser requires a doctype specified. This is a backwards
+        // compatibility tweak that will add a doctype if it's not specified.
+        if (preg_match('/^\s*<!doctype\b/i', $old) !== 1) {
+            $old = '<!DOCTYPE html>' . $old;
+        }
+        if (preg_match('/^\s*<!doctype\b/i', $new) !== 1) {
+            $new = '<!DOCTYPE html>' . $new;
+        }
+
+        $newDom = HTMLDocument::createFromString($new, 0, 'UTF-8');
+        $oldDom = HTMLDocument::createFromString($old, 0, 'UTF-8');
 
         $oldListNode = $this->findListNode($oldDom);
-        $newListNode = $newDom->querySelector($oldListNode->tagName);
-
-        if (!$newListNode instanceof Element) {
-            $newListNode = $this->findListNode($newDom);
-        }
+        $newListNode = $this->findListNode($newDom);
 
         $operations = $this->getListItemOperations($oldListNode, $newListNode);
 
